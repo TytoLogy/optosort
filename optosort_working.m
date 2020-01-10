@@ -97,7 +97,6 @@ BPfilt.Fnyq = Dinf.indev.Fs / 2;
 BPfilt.cutoff = BPfilt.Fc / BPfilt.Fnyq;
 [BPfilt.b, BPfilt.a] = butter(BPfilt.forder, BPfilt.cutoff, 'bandpass');
 
-
 % create output .nex file name
 NexFile = [F.base '.nex'];
 % start new nex file data
@@ -116,52 +115,16 @@ end
 %		(2) make a note of the length of each sweep to use for
 %				markers/timestamps
 %		(3) after cSweeps is built, convert to a row vector using cell2mat
-% initialize sweep indices to empty arrays
+% 
+% !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% This will have to be modified to deal with multiple files!!!!
+% 　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
+[cSweeps, startSweepBin, endSweepBin] = buildChannelData(Channels, BPfilt, D, Dinf);
 
-[cSweeps2, s1, s2] = buildChannelData(Channels, BPfilt, D, Dinf);
+% convert cSweeps to vector
+cVector = cell2mat(cSweeps);
 
-
-%%
-sweepStartSample = [];
-sweepEndSample = [];
-% loop through channels
-for c = 1:length(Channels)
-	channel = Channels(c);
-	% initialize cSweeps to a row cell "vector"
-	cSweeps = cell(1, Dinf.nread);
-	% loop through each sweep
-	for s = 1:Dinf.nread
-		% assign channel sweep data to cSweeps after filtering
-		% need to transpose to row vector
-		cSweeps{1, s} = D{s}.datatrace(:, channel)';
-		% remove initial offset
-		cSweeps{1, s} = cSweeps{1, s} - cSweeps{1, s}(1);
-		% filter data
-		cSweeps{1, s} = filtfilt(BPfilt.b, BPfilt.a, ...
-									sin2array(cSweeps{1, s}, ...
-										Dinf.indev.Fs, BPfilt.ramp));
-		% plot raw and filtered data
-		plot(D{s}.datatrace(:, channel)', 'k');
-		hold on
-			plot(cSweeps{1, s}, 'b');
-		hold off
-		drawnow
-	end
-
-	% build list of sweep start and end indices (in units of samples)
-	if isempty(sweepStartSample)
-		% initialize sweepStartSample and sweepEndSample to store stop/start
-		% locations
-		sweepStartSample = zeros(1, Dinf.nread);
-		sweepEndSample = zeros(1, Dinf.nread);
-		% store index points
-		if s ~= 1
-			sweepStartSample(s) = sweepEndSample(s-1) + 1;
-		else
-			sweepStartSample(s) = 1;
-		end
-		sweepEndSample(s) = sweepStartSample(s) + length(cSweeps{1, s});
-	end
-end
-
+% convert bins to timestamps; need to subtract 1 to start at time = 0
+startSweepTime = (startSweepBin - 1) / Dinf.indev.Fs;
+endSweepTime = (endSweepBin - 1) / Dinf.indev.Fs;
 
