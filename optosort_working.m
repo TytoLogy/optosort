@@ -97,11 +97,6 @@ BPfilt.Fnyq = Dinf.indev.Fs / 2;
 BPfilt.cutoff = BPfilt.Fc / BPfilt.Fnyq;
 [BPfilt.b, BPfilt.a] = butter(BPfilt.forder, BPfilt.cutoff, 'bandpass');
 
-% create output .nex file name
-NexFile = [F.base '.nex'];
-% start new nex file data
-nD = nexCreateFileData(Dinf.indev.Fs);
-
 % check to make sure consistent # of sweeps (aka trials)
 if Dinf.nread ~= length(D)
 	error('%s: mismatch in Dinf.nread (%d) and length(D) (%d)', ...
@@ -119,12 +114,22 @@ end
 % !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % This will have to be modified to deal with multiple files!!!!
 % 　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
-[cSweeps, startSweepBin, endSweepBin] = buildChannelData(Channels, BPfilt, D, Dinf);
-
-% convert cSweeps to vector
+[cSweeps, startSweepBin, endSweepBin] = buildChannelData(Channels, BPfilt, ...
+																				D, Dinf);
+% convert cSweeps to vector (or matrix)
+% this will be a matrix of format
+% 	[# channels, (# sweeps) * (# samples per sweep)
 cVector = cell2mat(cSweeps);
 
-% convert bins to timestamps; need to subtract 1 to start at time = 0
+% convert samples to timestamps; need to subtract 1 to start at time = 0
 startSweepTime = (startSweepBin - 1) / Dinf.indev.Fs;
 endSweepTime = (endSweepBin - 1) / Dinf.indev.Fs;
+
+%% write output
+% create output .nex file name
+NexFile = [F.base '.nex'];
+% start new nex file data
+nD = nexCreateFileData(Dinf.indev.Fs);
+
+% add 
 
