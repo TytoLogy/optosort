@@ -55,6 +55,7 @@ function [cD, startI, endI] = buildChannelData(Channels, BPfilt, D, Dinf, vararg
 deOffset = true;
 plotSweeps = false;
 filterData = true;
+DEBUG = false;
 
 if ~isempty(varargin)
 	argIndx = 1;
@@ -77,6 +78,15 @@ if ~isempty(varargin)
 					plotSweeps = false;
 				end
 				argIndx = argIndx + 2;
+			case {'DEBUG'}
+				tmpArg = varargin{argIndx + 1};
+				if strcmpi(tmpArg(1), 'Y')
+					DEBUG = true;
+				else
+					DEBUG = false;
+				end
+				argIndx = argIndx + 2;
+				
 			otherwise
 				error('%s: unknown input arg %s', mfilename, varargin{argIndx});
 		end
@@ -120,10 +130,6 @@ for c = 1:length(Channels)
 										sin2array(cD{c, s}, ...
 										Dinf.indev.Fs, BPfilt.ramp));
 		end
-		
-% 		% %%%% DEBUG
-% 		cD{c, s}(1) = exp(1);
-% 		cD{c, s}(end) = -exp(1);
 
 		% plot raw and filtered data
 		if plotSweeps
@@ -135,7 +141,6 @@ for c = 1:length(Channels)
 			drawnow
 		end
 		
-		
 		% build list of sweep start and end indices (in units of samples)
 		% store index points
 		if s ~= 1
@@ -146,11 +151,19 @@ for c = 1:length(Channels)
 		end
 		tmpEndI(s) = tmpStartI(s) + length(cD{c, s}) - 1;
 	end
-	
+	% assign sweep indices to cell arrays
 	startI{c} = tmpStartI;
 	endI{c} = tmpEndI;
-
-
 end
 
+if DEBUG
+	% loop through channels
+	for c = 1:length(Channels)
+		% loop through each sweep
+		for s = 1:Dinf.nread
+			cD{c, s}(1) = exp(1);
+			cD{c, s}(end) = -exp(1);
+		end
+	end
+end
 
