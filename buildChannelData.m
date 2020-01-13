@@ -28,8 +28,10 @@ function [cD, startI, endI] = buildChannelData(Channels, BPfilt, D, Dinf, vararg
 % Output Arguments:
 % 	cD			{# Channels, # sweeps} cell array of channel sweep data
 % 				each element of cD will be a row vector of raw data for a sweep
-% 	startI	[# sweeps] vector holding start sample timestamp for each sweep
-% 	endI		[# sweeps] vector holding end samples timestamp for each sweep
+% 	startI	{# Channels, 1} cell array with each element being
+% 					[# sweeps] vector holding start sample timestamp for each sweep
+% 	endI		{# Channels, 1} cell array with each element being
+% 					[# sweeps] vector holding end samples timestamp for each sweep
 % 
 %------------------------------------------------------------------------
 % See also: 
@@ -89,16 +91,19 @@ end
 % process data
 %------------------------------------------------------------------------
 
-% initialize sweep indices to empty arrays
-startI = [];
-endI = [];
-
 % initialize cD to a store sweeps for each channel
 cD = cell(length(Channels), Dinf.nread);
+% initialize startI and endI to store start and end sample bins
+startI = cell(length(Channels), 1);
+endI = cell(length(Channels), 1);
 
 % loop through channels
 for c = 1:length(Channels)
 	channel = Channels(c);
+	% initialize startI and endI to store stop/start locations
+	tmpStartI = zeros(1, Dinf.nread);
+	tmpEndI = zeros(1, Dinf.nread);
+
 	% loop through each sweep
 	for s = 1:Dinf.nread
 		% assign channel sweep data to cD after filtering
@@ -109,16 +114,17 @@ for c = 1:length(Channels)
 			cD{c, s} = cD{c, s} - cD{c, s}(1);
 		end
 		
-		% %%%% DEBUG
-		cD{c, s}(1) = exp(1);
-		cD{c, s}(end) = -exp(1);
-		
 		% filter data
 		if filterData
 			cD{c, s} = filtfilt(BPfilt.b, BPfilt.a, ...
 										sin2array(cD{c, s}, ...
 										Dinf.indev.Fs, BPfilt.ramp));
 		end
+		
+% 		% %%%% DEBUG
+% 		cD{c, s}(1) = exp(1);
+% 		cD{c, s}(end) = -exp(1);
+
 		% plot raw and filtered data
 		if plotSweeps
 			plot(D{s}.datatrace(:, channel)', 'k');
@@ -128,22 +134,23 @@ for c = 1:length(Channels)
 			title(sprintf('Channel: %d  Sweep: %d(%d)', channel, s, Dinf.nread));
 			drawnow
 		end
-	end
-
-	% build list of sweep start and end indices (in units of samples)
-	if isempty(startI)
-		% initialize startI and endI to store stop/start
-		% locations
-		startI = zeros(1, Dinf.nread);
-		endI = zeros(1, Dinf.nread);
+		
+		
+		% build list of sweep start and end indices (in units of samples)
 		% store index points
 		if s ~= 1
-			startI(s) = endI(s-1) + 1;
+			tmpStartI(s) = tmpEndI(s-1) + 1;
 		else
-			startI(s) = 1;
+			% start index is 1
+			tmpStartI(s) = 1;
 		end
-		endI(s) = startI(s) + length(cD{c, s});
+		tmpEndI(s) = tmpStartI(s) + length(cD{c, s}) - 1;
 	end
+	
+	startI{c} = tmpStartI;
+	endI{c} = tmpEndI;
+
+
 end
 
 

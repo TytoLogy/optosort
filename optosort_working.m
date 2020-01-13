@@ -89,7 +89,7 @@ for c = 1:16
 end
 legend(tl);
 
-%% setup output
+%% setup for channel data conversion
 
 % build filter for neural data
 BPfilt.Fs = Dinf.indev.Fs;
@@ -103,7 +103,7 @@ if Dinf.nread ~= length(D)
 				mfilename, Dinf.nread, length(D));
 end
 
-% get data for each channel
+%% get data for each channel and convert to row vector format
 % algorithm:
 %		(1) put each sweep for this channel in a {1, # sweeps} cell array
 %				cSweeps
@@ -122,8 +122,25 @@ end
 cVector = cell2mat(cSweeps);
 
 % convert samples to timestamps; need to subtract 1 to start at time = 0
-startSweepTime = (startSweepBin - 1) / Dinf.indev.Fs;
-endSweepTime = (endSweepBin - 1) / Dinf.indev.Fs;
+% startSweepTime = (startSweepBin - 1) / Dinf.indev.Fs;
+% endSweepTime = (endSweepBin - 1) / Dinf.indev.Fs;
+
+%% check
+plot(cVector(1, :));
+
+%% 
+% find starts as indicated by exp(1)
+sIndx = find(cVector(1, :) == exp(1));
+% find end
+eIndx = find(cVector(1, :) == -exp(1));
+
+hold on
+plot(sIndx, cVector(1, sIndx), 'g.')
+plot(eIndx, cVector(1, eIndx), 'r.')
+hold off
+grid on
+grid minor
+
 
 %% write output
 % create output .nex file name
