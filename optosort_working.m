@@ -120,7 +120,6 @@ end
 % convert cSweeps to vector (or matrix)
 % this will be a matrix of format
 % 	[# channels, (# sweeps) * (# samples per sweep)
-cVector = cell2mat(cSweeps);
 cVector = cell(nChannels, 1);
 startSweepTime = cell(nChannels, 1);
 endSweepTime = cell(nChannels, 1);
