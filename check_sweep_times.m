@@ -1,34 +1,32 @@
+function checkstatus = check_sweep_times(sweepbins)
 %------------------------------------------------------------------------
-% defineSampleData.m
+% Output = function_template(Input)
 %------------------------------------------------------------------------
-% TytoLogy:Experiments:optosort
+% <project>:<subproject>:<function_name>
 %------------------------------------------------------------------------
-% defines path to sample data for testing
 % 
+% Description
+% 
+%------------------------------------------------------------------------
+% Input Arguments:
+% 	Input		input info
+% 
+% Output Arguments:
+% 	Output	output info
+%
 %------------------------------------------------------------------------
 % See also: 
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
-%  Sharad J. Shanbhag
-%	sshanbhag@neomed.edu
+% Sharad J. Shanbhag
+% sshanbhag@neomed.edu
 %------------------------------------------------------------------------
-% Created: 8 January, 2020 (SJS)
+% Created: XX XXXX, 2020 (SJS)
 %
 % Revisions:
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
 
-DataPath = '~/Work/Data/TestData/MT_IC';
-DataFile = {'1372_20191126_03_01_1500_FREQ_TUNING.dat'; ...
-				'1372_20191126_03_01_1500_BBN.dat'; ...
-				'1372_20191126_03_01_1500_FRA.dat'; };
-TestFile = {'1372_20191126_03_01_1500_FREQ_TUNING_testdata.mat'; ...
-				'1372_20191126_03_01_1500_BBN_testdata.mat'; ...
-				'1372_20191126_03_01_1500_FRA_testdata.mat'; };
-nFiles = length(DataFile);
-clear F;
-for f = 1:nFiles
-	F(f) = parse_opto_filename(DataFile{f}); %#ok<SAGROW>
-end
+tmp = cell2mat(sweepbins);
