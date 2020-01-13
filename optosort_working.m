@@ -53,6 +53,7 @@ fprintf('Animal: %s\n', F.animal);
 % channel(s) of data to obtain
 % channel = 8;
 Channels = [11 9 14];
+nChannels = length(Channels);
 
 % filter info
 BPfilt.Fc = [100 5000];
@@ -120,33 +121,68 @@ end
 % this will be a matrix of format
 % 	[# channels, (# sweeps) * (# samples per sweep)
 cVector = cell2mat(cSweeps);
+cVector = cell(nChannels, 1);
+startSweepTime = cell(nChannels, 1);
+endSweepTime = cell(nChannels, 1);
+for c = 1:nChannels
+	cVector{c} = cell2mat(cSweeps(c, :));
+	% convert samples to timestamps; need to subtract 1 to start at time = 0
+	startSweepTime{c} = (startSweepBin{c} - 1) / Dinf.indev.Fs;
+	endSweepTime{c} = (endSweepBin{c} - 1) / Dinf.indev.Fs;
+end
 
-% convert samples to timestamps; need to subtract 1 to start at time = 0
-% startSweepTime = (startSweepBin - 1) / Dinf.indev.Fs;
-% endSweepTime = (endSweepBin - 1) / Dinf.indev.Fs;
+%% do a check on start sweep times
+tmpStart = cell2mat(startSweepBin);
+tmpEnd = cell2mat(endSweepBin);
 
-%% check
-plot(cVector(1, :));
-
-%% 
-% find starts as indicated by exp(1)
-sIndx = find(cVector(1, :) == exp(1));
-% find end
-eIndx = find(cVector(1, :) == -exp(1));
-
-hold on
-plot(sIndx, cVector(1, sIndx), 'g.')
-plot(eIndx, cVector(1, eIndx), 'r.')
-hold off
-grid on
-grid minor
-
-
+if sum((sum(tmpStart - tmpStart(1, :))))
+	warning('Inconsistent startSweepBin values across channels!!!!');
+else
+	fprintf('startSweepBin values are consistent across channels\n');
+end
+if sum((sum(tmpEnd - tmpEnd(1, :))))
+	warning('Inconsistent endSweepBin values across channels!!!!');
+else
+	fprintf('endSweepBin values are consistent across channels\n');
+end
 %% write output
 % create output .nex file name
-NexFile = [F.base '.nex'];
+NexFileName = [F.base '.nex'];
 % start new nex file data
 nD = nexCreateFileData(Dinf.indev.Fs);
 
-% add 
+% add each channel's data as a continuous variable
+%{
+specify start time (t(1)), digitizing frequency (Fs), data and name
+[nexFile] = nexAddContinuous( nexFile, startTime, adFreq, values, name ) 
+        -- adds continuous variable to nexFile data structure
+
+INPUT:
+  nexFile - nex file data structure created in nexCreateFileData
+  startTime - time of the first data point in seconds
+  adFreq - A/D sampling rate of continuous variable in samples per second
+  values - vector of continuous variable values in milliVolts
+  name - continuous variable name  
+%}
+nD = nexAddContinuous(nD, startSweepTime{c}(1), Dinf.indev.Fs, ...
+									cVector{c}, sprintf('spikechan_%d', Channels(c)));
+								
+% add start sweep time stamps as event - assume consistent across channels!
+%{
+[nexFile] = nexAddEvent( nexFile, timestamps, name ) -- adds an event 
+            (series of timestamps) to nexFile data structure
+
+INPUT:
+  nexFile - nex file data structure created in nexCreateFileData
+  timestamps - vector of event timestamps in seconds
+  name - event name
+%}
+% events must be in column format...?
+nD = nexAddEvent(nD, startSweepTime{1}, 'startsweep');
+% add end sweep time stamps as event - assume consistent across channels!
+nD = nexAddEvent(nD, endSweepTime{1}, 'endsweep');
+
+% write to nexfile
+writeNexFile(nD, NexFileName);
+
 
