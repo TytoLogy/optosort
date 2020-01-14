@@ -1,20 +1,24 @@
 function varargout = export_for_plexon(varargin)
 %------------------------------------------------------------------------
-% [] = export_for_plexon('DataList', <data file list>)
+% [] = export_for_plexon(DataFileStruct)
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
 % 
 % exports raw sweep data for analysis using Plexon. Output is in .nex
 % (Neural Explorere) format
+%
+% Will require toolbox from Neural Explorer:
+% https://www.neuroexplorer.com/downloads/HowToReadAndWriteNexAndNex5FilesInMatlab.zip
 % 
 %------------------------------------------------------------------------
 % Input Arguments:
 %	With no inputs provided, a dialog will open to specify a file with a 
-%	list of .dat files to process.
+%	list of .dat files to process (not yet implemented!!!!)
 %
-% 	'DataList'	<file with list of data files.m>
-% 
+% DataFileStruct	<file with list of data files.m>
+%	see exportTest.m for example
+%
 % Output Arguments:
 % 	Output	output info
 %
@@ -332,6 +336,8 @@ end
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 function varargout = defineSampleData(varargin)
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -377,4 +383,33 @@ function varargout = defineSampleData(varargin)
 		varargout{2} = Channels;
 	end
 	
+end
+
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+function checkstatus = check_sweeps(sweepbins)
+%------------------------------------------------------------------------
+% checkstatus = check_sweeps(sweepbins)
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+% 
+% Description
+% 
+%------------------------------------------------------------------------
+% Input Arguments:
+% 	sweepbins		{nchannels, 1} cell array of vectors, where 
+% 						each element is an array [1, nsweeps] of sweep bins
+% 
+% Output Arguments:
+% 	checkstatus		true if sweep times are inconsistent, false if all
+%						are consistent (equal)
+%
+%------------------------------------------------------------------------
+	tmp = cell2mat(sweepbins);
+
+	if sum((sum(tmp - tmp(1, :)))) ~= 0
+		checkstatus = true;
+	else
+		checkstatus = false;
+	end
 end
