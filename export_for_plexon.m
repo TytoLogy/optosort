@@ -1,6 +1,6 @@
-function varargout = export_for_sorting(varargin)
+function varargout = export_for_plexon(varargin)
 %------------------------------------------------------------------------
-% [] = export_for_sorting('DataList', <data file list>)
+% [] = export_for_plexon('DataList', <data file list>)
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
@@ -40,6 +40,11 @@ function varargout = export_for_sorting(varargin)
 sepstr = '----------------------------------------------------';
 NEX_UTIL_PATH = ['~/Work/Code/Matlab/stable/Toolbox/NeuroExplorer' ...
 					'/HowToReadAndWriteNexAndNex5FilesInMatlab'];
+
+% filter info
+defaultFilter.Fc = [300 4000];
+defaultFilter.forder = 5;
+defaultFilter.ramp = 1;
 %------------------------------------------------------------------------
 % Setup
 %------------------------------------------------------------------------
@@ -68,14 +73,57 @@ if ~exist('readOptoData', 'file')
 end
 
 %------------------------------------------------------------------------
+% Check inputs
+%------------------------------------------------------------------------
+if nargin == 1
+	tmp = varargin{1};
+	if ~isstruct(tmp)
+		error('%s: input must be a valid sample data struct!');
+	end
+	tmpPath = tmp.DataPath;
+	tmpFile = tmp.DataFile;
+	tmpTest = tmp.TestFile;
+	Channels = tmp.Channels;
+	if isfield(tmp, 'BPfilt')
+		BPfilt = tmp.BPfilt;
+	else
+		BPfilt = defaultFilter;
+	end
+	% if file elements are not cells (i.e., just strings), convert to cell.
+	if ~iscell(tmpPath)
+		DataPath = {tmpPath};
+	else
+		DataPath = tmpPath;
+	end
+	if ~iscell(tmpFile)
+		DataFile = {tmpFile};
+	else
+		DataFile = tmpFile;
+	end
+	if ~iscell(tmpTest)
+		TestFile = {tmpTest};
+	else
+		TestFile = tmpTest;
+	end
+	if ~isnumeric(Channels)
+		error('%s: Channels must be a numeric array!', mfilename);
+	end
+	% define path to data file and data file for testing
+	F = defineSampleData(DataPath, DataFile, TestFile);
+	clear tmp tmpPath tmpFile tmpTest DataPath DataFile TestFile
+else
+	% define path to data file and data file for testing
+	[F, Channels] = defineSampleData();
+	% for now use default filter
+	BPfilt = defaultFilter;
+end
+
+%------------------------------------------------------------------------
 % Get Data File(s) information
 %------------------------------------------------------------------------
-
-% define path to data file and data file for testing
-F = defineSampleData('1372_20191126_93_01_1500_exportlist.m');
-fprintf('DataPath = %s\n', DataPath);
+nFiles = length(F);
 for f = 1:nFiles
-	fprintf('DataFile{%d} = %s\n', f, DataFile{f});
+	fprintf('DataFile{%d} = %s\n', f, F(f).file);
 end
 fprintf('Animal: %s\n', F(1).animal);
 
@@ -84,17 +132,12 @@ fprintf('Animal: %s\n', F(1).animal);
 % recording session and recording location!!!
 % ¡¡¡¡¡¡¡
 
-% channel(s) of data to obtain
-% channel = 8;
-Channels = [11 9 14];
+% # channel(s) of data to obtain
 nChannels = length(Channels);
 
-% filter info
-BPfilt.Fc = [300 4000];
-BPfilt.forder = 5;
-BPfilt.ramp = 1;
-
-%% loop through files
+%------------------------------------------------------------------------
+% Read data
+%------------------------------------------------------------------------
 
 % allocate some things
 % bins for start and end of each file's data
@@ -116,9 +159,11 @@ fData = repmat(	struct(		'DataPath', '', ...
 										'Dinf', [] ...
 								), ...
 						1, nFiles);
+
+% loop through files
 for f = 1:nFiles
 	% save parse file info
-	fData(f).Finfo = F(f);
+	fData(f).F = F(f);
 	% get data for each file and channel and convert to row vector format
 	% algorithm:
 	%		(1) put each sweep for this channel in a {1, # sweeps} cell array
@@ -129,12 +174,12 @@ for f = 1:nFiles
 	% 
 	% read in data
 	% use readOptoData to read in raw data. 
-	[D, Dinf] = readOptoData(fullfile(DataPath, DataFile{f}));
+	[D, Dinf] = readOptoData(fullfile(F(f).path, F(f).file));
 	% Fix test info
 	Dinf = correctTestType(Dinf);
-	% store file info
-	fData(f).DataPath = DataPath;
-	fData(f).DataFile = DataFile{f};
+% 	% store file info
+% 	fData(f).DataPath = DataPath;
+% 	fData(f).DataFile = DataFile{f};
 	% build filter for neural data
 	BPfilt.Fs = Dinf.indev.Fs;
 	BPfilt.Fnyq = Dinf.indev.Fs / 2;
@@ -196,8 +241,9 @@ for f = 1:nFiles
 	end
 end
 
-%% Create file and sweep start/end bin and timestamp vectors
-
+%------------------------------------------------------------------------
+% Create file and sweep start/end bin and timestamp vectors
+%------------------------------------------------------------------------
 %check sampling rates
 if ~all(tmpFs(1) == tmpFs)
 	error('Sample Rate Mismatch!!!');
@@ -218,19 +264,21 @@ startTimes = (startBins - 1) ./ Fs;
 endTimes = (endBins - 1) ./ Fs;
 
 
-%% convert (concatenate) cSweeps to vector for each channel, add to nex struct
+%------------------------------------------------------------------------
+% convert (concatenate) cSweeps to vector for each channel, add to nex struct
+%------------------------------------------------------------------------
 % to save on memory requirements, clear channel data after adding to nex
 % data struct.
 
 % create output .nex file name 
 %	assume data from first file is consistent with others!!!!!!!!!
-NexFileName = [	fData(1).Finfo.animal '_' ...
-						fData(1).Finfo.datecode '_' ...
-						fData(1).Finfo.unit '_' ...
-						fData(1).Finfo.penetration '_' ...
-						fData(1).Finfo.depth ...
+NexFileName = [	fData(1).F.animal '_' ...
+						fData(1).F.datecode '_' ...
+						fData(1).F.unit '_' ...
+						fData(1).F.penetration '_' ...
+						fData(1).F.depth ...
 						'.nex'];
-					
+fprintf('Exporting data to %s\n', NexFileName);
 % start new nex file data struct
 nD = nexCreateFileData(Fs);
 
@@ -267,7 +315,19 @@ nD = nexAddEvent(nD, force_col(fileEndTime), 'fileend');
 % write to nexfile
 writeNexFile(nD, NexFileName);
 
+if nargout
+	varargout{1} = nD;
 end
+%------------------------------------------------------------------------
+% END OF MAIN FUNCTION DEFINITION
+%------------------------------------------------------------------------
+end
+
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+% NESTED FUNCTIONS
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 
 function varargout = defineSampleData(varargin)
 %------------------------------------------------------------------------
@@ -277,23 +337,41 @@ function varargout = defineSampleData(varargin)
 % defines path to sample data for testing
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
-	DataPath = {};
-	DataFile = {};
-	TestFile = {};
-	if nargin
-		if exist(varargin{1}, 'file')
-			eval(varargin{1})
-		end
-	end
-	if any([isempty(DataPath) isempty(DataFile)])
-		% do something to load data file names
+	Channels = [];
+	
+	% check inputs 
+	if nargin == 0
+		% do something to get data files from user
+		DataPath = {};
+		DataFile = {};
+		TestFile = {};
+		Channels = [];
+	elseif nargin == 3
+		% assign values to DataPath, DataFile and TestFile
+		DataPath = varargin{1};
+		DataFile = varargin{2};
+		TestFile = varargin{3};
+	else
+		error('%s->defineSampleData: invalid inputs', mfilename)
 	end
 
+	% loop through # of data files
 	for f = 1:length(DataFile)
-		F(f) = parse_opto_filename(DataFile{f}); %#ok<AGROW>
-		F(f).path = DataPath; %#ok<AGROW>
-		F(f).file = DataFile{f}; %#ok<AGROW>
-		F(f).testfile = TestFile{f}; %#ok<AGROW>
+		tmpF = parse_opto_filename(DataFile{f});
+		if length(DataPath) == 1
+			% only 1 element in DataPath so assume all data files are on this
+			% path
+			tmpF.path = DataPath{1};
+		else
+			tmpF.path = DataPath{f};
+		end
+		tmpF.file = DataFile{f}; 
+		tmpF.testfile = TestFile{f}; 
+		F(f) = tmpF; %#ok<AGROW>
 	end
 	varargout{1} = F;
+	if nargout == 2
+		varargout{2} = Channels;
+	end
+	
 end

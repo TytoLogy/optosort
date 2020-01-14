@@ -1,9 +1,9 @@
 %------------------------------------------------------------------------
-% defineSampleData.m
+% exportTest.m
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
-% defines path to sample data for testing
+% sample script to show how to export data for spike sorting
 % 
 %------------------------------------------------------------------------
 % See also: 
@@ -20,15 +20,44 @@
 % TO DO:
 %------------------------------------------------------------------------
 
-DataPath = '~/Work/Data/TestData/MT_IC';
-DataFile = {'1372_20191126_03_01_1500_FREQ_TUNING.dat'; ...
+%------------------------------------------------------------------------
+% PATHS TO DATA FILES
+%------------------------------------------------------------------------
+% can specify individual file paths... these must match the paths in
+% F.DataFile!!!!!!
+% F.DataPath = {'~/Work/Data/TestData/MT_IC';
+% 				'~/Work/Data/TestData/MT_IC'; ...
+% 				'~/Work/Data/TestData/MT_IC'; };
+% or single path
+F.DataPath = '~/Work/Data/TestData/MT_IC';
+
+%------------------------------------------------------------------------
+% PATHS TO DATA FILES
+%------------------------------------------------------------------------
+F.DataFile = {'1372_20191126_03_01_1500_FREQ_TUNING.dat'; ...
 				'1372_20191126_03_01_1500_BBN.dat'; ...
 				'1372_20191126_03_01_1500_FRA.dat'; };
-TestFile = {'1372_20191126_03_01_1500_FREQ_TUNING_testdata.mat'; ...
+F.TestFile = {'1372_20191126_03_01_1500_FREQ_TUNING_testdata.mat'; ...
 				'1372_20191126_03_01_1500_BBN_testdata.mat'; ...
 				'1372_20191126_03_01_1500_FRA_testdata.mat'; };
-nFiles = length(DataFile);
-clear F;
-for f = 1:nFiles
-	F(f) = parse_opto_filename(DataFile{f}); %#ok<SAGROW>
-end
+F.Channels = [11 9 14];
+
+%------------------------------------------------------------------------
+% filter parameters for raw neural data
+%------------------------------------------------------------------------
+% [highpass lowpass] cutoff frequencies in Hz
+BPfilt.Fc = [300 4000];
+% order of filter. note that the filtfilt() function in MATLAB is used,
+% so the effective order is doubled. 
+BPfilt.forder = 5;
+% ramp time (ms) to apply to each sweep in order to cutdown on onset/offset
+% transients from filtering
+BPfilt.ramp = 1;
+% assign filter spec to F struct
+F.BPfilt = BPfilt;
+
+%------------------------------------------------------------------------
+% run!
+%------------------------------------------------------------------------
+export_for_plexon(F);
+
