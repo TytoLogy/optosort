@@ -1,6 +1,6 @@
-function checkstatus = check_sweep_times(sweepbins)
+function checkstatus = check_sweeps(sweepbins)
 %------------------------------------------------------------------------
-% Output = function_template(Input)
+% checkstatus = check_sweeps(sweepbins)
 %------------------------------------------------------------------------
 % <project>:<subproject>:<function_name>
 %------------------------------------------------------------------------
@@ -9,10 +9,12 @@ function checkstatus = check_sweep_times(sweepbins)
 % 
 %------------------------------------------------------------------------
 % Input Arguments:
-% 	Input		input info
+% 	sweepbins		{nchannels, 1} cell array of vectors, where 
+% 						each element is an array [1, nsweeps] of sweep bins
 % 
 % Output Arguments:
-% 	Output	output info
+% 	checkstatus		true if sweep times are inconsistent, false if all
+%						are consistent (equal)
 %
 %------------------------------------------------------------------------
 % See also: 
@@ -22,7 +24,7 @@ function checkstatus = check_sweep_times(sweepbins)
 % Sharad J. Shanbhag
 % sshanbhag@neomed.edu
 %------------------------------------------------------------------------
-% Created: XX XXXX, 2020 (SJS)
+% Created: 13 January, 2020 (SJS)
 %
 % Revisions:
 %------------------------------------------------------------------------
@@ -30,3 +32,9 @@ function checkstatus = check_sweep_times(sweepbins)
 %------------------------------------------------------------------------
 
 tmp = cell2mat(sweepbins);
+
+if sum((sum(tmp - tmp(1, :)))) ~= 0
+	checkstatus = true;
+else
+	checkstatus = false;
+end

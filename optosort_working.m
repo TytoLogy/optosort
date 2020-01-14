@@ -68,6 +68,11 @@ BPfilt.ramp = 1;
 
 %% loop through files
 
+% allocate some things
+fileIDstartbin = zeros(nFiles, 1);
+fileIDendbin = zeros(nFiles, 1);
+tmpFs = zeros(nFiles, 1);
+
 for f = 1:nFiles
 
 	% get data for each file and channel and convert to row vector format
@@ -99,45 +104,74 @@ for f = 1:nFiles
 	% build into sweeps by channel format
 	fprintf('Test type: %s\n', Dinf.test.Type);
 	[fData(f).cSweeps, fData(f).startSweepBin, fData(f).endSweepBin] = ...
-					buildChannelData(Channels, BPfilt, D, Dinf);
-	% store info for later use
-	fData(f).fileIDstartbin = fData(f).startSweepBin{1}(1);
-	fData(f).fileIDendbin = fData(f).endSweepBin{1}(end);
+					buildChannelData(Channels, BPfilt, D, Dinf); %#ok<*SAGROW>
+	% check the start and end sweep bin data for consistency
+	if check_sweeps(fData(f).startSweepBin)
+		warning('Inconsistent startSweepBin values across channels!!!!');
+	end
+	if check_sweeps(fData(f).endSweepBin)
+		warning('Inconsistent endSweepBin values across channels!!!!');
+	end
+	% store sample for start of this file (should be 1); use channel 1 value
+	fData(f).fileStartBin = fData(f).startSweepBin{1}(1);
+	% store sample for end of this file
+	fData(f).fileEndBin = fData(f).endSweepBin{1}(end);
+	% store file information struct
 	fData(f).Dinf = Dinf;
-end
-
-%% convert cSweeps to vector (or matrix)
-% this will be a matrix of format
-% 	[# channels, (# sweeps) * (# samples per sweep)
-cVector = cell(nChannels, 1);
-fileIDbin = zeros(1, nFiles);
-fileIDTime = zeros(1, nFiles);
-startSweepTime = cell(nChannels, 1);
-endSweepTime = cell(nChannels, 1);
-
-%% concatenate sweep times
-
-for f = 1:nFiles
+	% to avoid any issues, should make sure sample rates are consistent
+	% need in implement a check somehow.  this code doesn't work:
+	% if any(Dinf.indev.Fs ~= [fData(:).Dinf.indev.Fs])
+	%	error('Sample Rate Mismatch found!');
+	% end
+	tmpFs(f) = fData(f).Dinf.indev.Fs;
+	
 	% calculate start and end bins for each file's data
 	if f == 1
-		fileIDstartbin(f) = fData(f).fileIDstartbin;
-		fileIDendbin(f) = fData(f).fileIDendbin;
+		fileStartBin(f) = fData(f).fileStartBin;
+		fileEndBin(f) = fData(f).fileEndBin;
 	else
 		% add 1 to prior end bin for start
-		fileIDstartbin(f) = fileIDendbin(f-1) + 1;
-		fileIDendbin(f) = fileIDstartbin(f) + fData(f).fileIDendbin - 1;
-	end
-	% now build and concatenate data sweeps
-	for c = 1:nChannels
-		
-		
-		
+		fileStartBin(f) = fileStartBin(f-1) + 1;
+		fileEndBin(f) = fileStartBin(f) + fData(f).fileEndBin - 1;
 	end
 end
 
+% check sampling rates
+if ~all(tmpFs(1) == tmpFs)
+	error('Sample Rate Mismatch!!!');
+else
+	% store overall sample rate
+	Fs = tmpFs(1);
+end
+
+%% convert cSweeps to vector (or matrix) for each channel
+% to save on memory requirements, clear channel data after adding to nex
+% data struct.
+
+% create output .nex file name
+NexFileName = [F.base '.nex'];
+% start new nex file data
+nD = nexCreateFileData(Fs);
 
 
-%%
+% channel
+c = 1;
+% this will be a matrix of format
+% 	[# channels, (# sweeps) * (# samples per sweep)
+cVector = cell(1, nFiles);
+for f = 1:nFiles
+	cVector{1, f} = fData(f).cSweeps(c, :);
+end
+% concatenate cell array and convert to vector
+% steps:
+%	concatenate: tmp = [cVector{:}];
+%	tmpVector = cell2mat(tmp);
+
+nD = nexAddContinuous(nD, startSweepTime{c}(1), Dinf.indev.Fs, ...
+									cell2mat([cVector{:}]), sprintf('spikechan_%d', Channels(c)));
+
+
+%% Convert sweep samples to time (seconds)
 
 
 for c = 1:nChannels
@@ -147,16 +181,13 @@ for c = 1:nChannels
 	endSweepTime{c} = (endSweepBin{c} - 1) / Dinf.indev.Fs;
 end
 
-%% do a check on start sweep times
-tmpStart = cell2mat(startSweepBin);
-tmpEnd = cell2mat(endSweepBin);
-
-if sum((sum(tmpStart - tmpStart(1, :))))
+%% do a check on sweep bins
+if check_sweeps(startSweepBin)
 	warning('Inconsistent startSweepBin values across channels!!!!');
 else
 	fprintf('startSweepBin values are consistent across channels\n');
 end
-if sum((sum(tmpEnd - tmpEnd(1, :))))
+if check_sweeps(endSweepBin)
 	warning('Inconsistent endSweepBin values across channels!!!!');
 else
 	fprintf('endSweepBin values are consistent across channels\n');
