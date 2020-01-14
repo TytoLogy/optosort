@@ -131,7 +131,7 @@ for f = 1:nFiles
 		fileEndBin(f) = fData(f).fileEndBin;
 	else
 		% add 1 to prior end bin for start
-		fileStartBin(f) = fileStartBin(f-1) + 1;
+		fileStartBin(f) = fileEndBin(f-1) + 1;
 		fileEndBin(f) = fileStartBin(f) + fData(f).fileEndBin - 1;
 	end
 end
@@ -144,6 +144,10 @@ else
 	Fs = tmpFs(1);
 end
 
+% convert file start/end bins to times
+fileStartTime = (fileStartBin - 1) ./ Fs;
+fileEndTime = (fileEndBin - 1) ./ Fs;
+
 %% convert cSweeps to vector (or matrix) for each channel
 % to save on memory requirements, clear channel data after adding to nex
 % data struct.
@@ -154,22 +158,24 @@ NexFileName = [F.base '.nex'];
 nD = nexCreateFileData(Fs);
 
 
-% channel
-c = 1;
-% this will be a matrix of format
-% 	[# channels, (# sweeps) * (# samples per sweep)
-cVector = cell(1, nFiles);
-for f = 1:nFiles
-	cVector{1, f} = fData(f).cSweeps(c, :);
-end
-% concatenate cell array and convert to vector
-% steps:
-%	concatenate: tmp = [cVector{:}];
-%	tmpVector = cell2mat(tmp);
-
-nD = nexAddContinuous(nD, startSweepTime{c}(1), Dinf.indev.Fs, ...
+% loop through channels
+for c = 1:nChannels
+	% this will be a matrix of format
+	% 	[# channels, (# sweeps) * (# samples per sweep)
+	cVector = cell(1, nFiles);
+	for f = 1:nFiles
+		cVector{1, f} = fData(f).cSweeps(c, :);
+	end
+	% concatenate cell array and convert to vector
+	% steps:
+	%	concatenate: tmp = [cVector{:}];
+	%	tmpVector = cell2mat(tmp);
+	nD = nexAddContinuous(nD, fileStartTime(1), Fs, ...
 									cell2mat([cVector{:}]), sprintf('spikechan_%d', Channels(c)));
+	clear cVector
+end
 
+%% convert 
 
 %% Convert sweep samples to time (seconds)
 
