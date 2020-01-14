@@ -62,19 +62,31 @@ BPfilt.Fc = [300 4000];
 BPfilt.forder = 5;
 BPfilt.ramp = 1;
 
-%% setup for channel data conversion
-
-
-
 %% loop through files
 
 % allocate some things
-fileIDstartbin = zeros(nFiles, 1);
-fileIDendbin = zeros(nFiles, 1);
+% bins for start and end of each file's data
+fileIDstartbin = zeros(1, nFiles);
+fileIDendbin = zeros(1, nFiles);
+% bins for all sweep starts and ends
+sweepStartBin = cell(1, nFiles);
+sweepEndBin = cell(1, nFiles);
+% each file's sampling rate for neural data
 tmpFs = zeros(nFiles, 1);
-
+% struct to hold everything for each file
+fData = repmat(	struct(		'DataPath', '', ...
+										'DataFile', '', ...
+										'cSweeps', {}, ...
+										'startSweepBin', {}, ...
+										'endSweepBin', {}, ...
+										'fileStartBin', [], ...
+										'fileEndBin', [], ...
+										'Dinf', [] ...
+								), ...
+						1, nFiles);
 for f = 1:nFiles
-
+	% save parse file info
+	fData(f).Finfo = F(f);
 	% get data for each file and channel and convert to row vector format
 	% algorithm:
 	%		(1) put each sweep for this channel in a {1, # sweeps} cell array
@@ -83,12 +95,14 @@ for f = 1:nFiles
 	%				markers/timestamps
 	%		(3) after cSweeps is built, convert to a row vector using cell2mat
 	% 
-
 	% read in data
 	% use readOptoData to read in raw data. 
 	[D, Dinf] = readOptoData(fullfile(DataPath, DataFile{f}));
 	% Fix test info
 	Dinf = correctTestType(Dinf);
+	% store file info
+	fData(f).DataPath = DataPath;
+	fData(f).DataFile = DataFile{f};
 	% build filter for neural data
 	BPfilt.Fs = Dinf.indev.Fs;
 	BPfilt.Fnyq = Dinf.indev.Fs / 2;
@@ -107,7 +121,8 @@ for f = 1:nFiles
 					buildChannelData(Channels, BPfilt, D, Dinf); %#ok<*SAGROW>
 	% check the start and end sweep bin data for consistency
 	if check_sweeps(fData(f).startSweepBin)
-		warning('Inconsistent startSweepBin values across channels!!!!');
+		warning(['File %s: Inconsistent startSweepBin' ...
+							'values across channels!!!!'], fData(f).DataFile);
 	end
 	if check_sweeps(fData(f).endSweepBin)
 		warning('Inconsistent endSweepBin values across channels!!!!');
@@ -125,7 +140,7 @@ for f = 1:nFiles
 	% end
 	tmpFs(f) = fData(f).Dinf.indev.Fs;
 	
-	% calculate start and end bins for each file's data
+	% calculate overall start and end bins for each file's data
 	if f == 1
 		fileStartBin(f) = fData(f).fileStartBin;
 		fileEndBin(f) = fData(f).fileEndBin;
@@ -136,7 +151,22 @@ for f = 1:nFiles
 	end
 end
 
-% check sampling rates
+% assign values for bins
+for f = 1:nFiles
+	% calculate start and end sweep bins for each file's data
+	if f == 1
+		sweepStartBin{f} = fData(f).startSweepBin{1};
+		sweepEndBin{f} = fData(f).endSweepBin{1};
+	else
+		% add previous file's final endSweepBin value as offset
+		sweepStartBin{f} = fData(f).startSweepBin{1} + sweepEndBin{f-1}(end);
+		sweepEndBin{f} = fData(f).endSweepBin{1} + sweepEndBin{f-1}(end);
+	end
+end
+
+%% Create file and sweep start/end bin and timestamp vectors
+
+%check sampling rates
 if ~all(tmpFs(1) == tmpFs)
 	error('Sample Rate Mismatch!!!');
 else
@@ -148,15 +178,29 @@ end
 fileStartTime = (fileStartBin - 1) ./ Fs;
 fileEndTime = (fileEndBin - 1) ./ Fs;
 
-%% convert cSweeps to vector (or matrix) for each channel
+% convert sweep bin cells to vectors...
+startBins = [sweepStartBin{:}];
+endBins = [sweepEndBin{:}];
+% ... and then to times
+startTimes = (startBins - 1) ./ Fs;
+endTimes = (endBins - 1) ./ Fs;
+
+
+%% convert (concatenate) cSweeps to vector for each channel, add to nex struct
 % to save on memory requirements, clear channel data after adding to nex
 % data struct.
 
-% create output .nex file name
-NexFileName = [F.base '.nex'];
-% start new nex file data
+% create output .nex file name 
+%	assume data from first file is consistent with others!!!!!!!!!
+NexFileName = [	fData(1).Finfo.animal '_' ...
+						fData(1).Finfo.datecode '_' ...
+						fData(1).Finfo.unit '_' ...
+						fData(1).Finfo.penetration '_' ...
+						fData(1).Finfo.depth ...
+						'.nex'];
+					
+% start new nex file data struct
 nD = nexCreateFileData(Fs);
-
 
 % loop through channels
 for c = 1:nChannels
@@ -166,77 +210,31 @@ for c = 1:nChannels
 	for f = 1:nFiles
 		cVector{1, f} = fData(f).cSweeps(c, :);
 	end
-	% concatenate cell array and convert to vector
+	% concatenate cell array, convert to vector, add to nex struct
 	% steps:
 	%	concatenate: tmp = [cVector{:}];
 	%	tmpVector = cell2mat(tmp);
+	%  add to nex struct:
+	%	[nexFile] = nexAddContinuous( nexFile, startTime, adFreq, values, name)
 	nD = nexAddContinuous(nD, fileStartTime(1), Fs, ...
-									cell2mat([cVector{:}]), sprintf('spikechan_%d', Channels(c)));
+									cell2mat([cVector{:}]), ...
+									sprintf('spikechan_%d', Channels(c)));
+	% clear cVector to save memory
 	clear cVector
 end
 
-%% convert 
-
-%% Convert sweep samples to time (seconds)
-
-
-for c = 1:nChannels
-	cVector{c} = cell2mat(cSweeps(c, :));
-	% convert samples to timestamps; need to subtract 1 to start at time = 0
-	startSweepTime{c} = (startSweepBin{c} - 1) / Dinf.indev.Fs;
-	endSweepTime{c} = (endSweepBin{c} - 1) / Dinf.indev.Fs;
-end
-
-%% do a check on sweep bins
-if check_sweeps(startSweepBin)
-	warning('Inconsistent startSweepBin values across channels!!!!');
-else
-	fprintf('startSweepBin values are consistent across channels\n');
-end
-if check_sweeps(endSweepBin)
-	warning('Inconsistent endSweepBin values across channels!!!!');
-else
-	fprintf('endSweepBin values are consistent across channels\n');
-end
-%% write output
-% create output .nex file name
-NexFileName = [F.base '.nex'];
-% start new nex file data
-nD = nexCreateFileData(Dinf.indev.Fs);
-
-% add each channel's data as a continuous variable
-%{
-specify start time (t(1)), digitizing frequency (Fs), data and name
-[nexFile] = nexAddContinuous( nexFile, startTime, adFreq, values, name ) 
-        -- adds continuous variable to nexFile data structure
-
-INPUT:
-  nexFile - nex file data structure created in nexCreateFileData
-  startTime - time of the first data point in seconds
-  adFreq - A/D sampling rate of continuous variable in samples per second
-  values - vector of continuous variable values in milliVolts
-  name - continuous variable name  
-%}
-for c = 1:nChannels
-	nD = nexAddContinuous(nD, startSweepTime{c}(1), Dinf.indev.Fs, ...
-									cVector{c}, sprintf('spikechan_%d', Channels(c)));
-end								
 % add start sweep time stamps as event - assume consistent across channels!
-%{
-[nexFile] = nexAddEvent( nexFile, timestamps, name ) -- adds an event 
-            (series of timestamps) to nexFile data structure
-
-INPUT:
-  nexFile - nex file data structure created in nexCreateFileData
-  timestamps - vector of event timestamps in seconds
-  name - event name
-%}
+%  [nexFile] = nexAddEvent( nexFile, timestamps, name )
 % events must be in column format...?
-nD = nexAddEvent(nD, startSweepTime{1}, 'startsweep');
+nD = nexAddEvent(nD, force_col(startTimes), 'startsweep');
 % add end sweep time stamps as event - assume consistent across channels!
-nD = nexAddEvent(nD, endSweepTime{1}, 'endsweep');
-
+nD = nexAddEvent(nD, force_col(endTimes), 'endsweep');
+% add file times
+nD = nexAddEvent(nD, force_col(fileStartTime), 'filestart');
+nD = nexAddEvent(nD, force_col(fileEndTime), 'fileend');
 % write to nexfile
 writeNexFile(nD, NexFileName);
+
+
 
 
