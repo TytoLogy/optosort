@@ -80,41 +80,44 @@ if nargin == 1
 	if ~isstruct(tmp)
 		error('%s: input must be a valid sample data struct!');
 	end
-	tmpPath = tmp.DataPath;
-	tmpFile = tmp.DataFile;
-	tmpTest = tmp.TestFile;
-	Channels = tmp.Channels;
+	% assign values, fixing some things as necessary
+	% if file elements are not cells (i.e., just strings), convert to cell.
+	if ~iscell(tmp.DataPath)
+		tmp.DataPath = {tmp.DataPath};
+	else
+		tmp.DataPath = tmp.DataPath;
+	end
+	if ~iscell(tmp.DataFile)
+		tmp.DataFile = {tmp.DataFile};
+	else
+		tmp.DataFile = tmp.DataFile;
+	end
+	if ~iscell(tmp.TestFile)
+		tmp.TestFile = {tmp.TestFile};
+	else
+		tmp.TestFile = tmp.TestFile;
+	end
+	% check Channels
+	if ~isnumeric(tmp.Channels)
+		error('%s: Channels must be a numeric array!', mfilename);
+	else
+		Channels = tmp.Channels;
+	end
+	% filter options
 	if isfield(tmp, 'BPfilt')
 		BPfilt = tmp.BPfilt;
 	else
+		% use default
 		BPfilt = defaultFilter;
 	end
-	% if file elements are not cells (i.e., just strings), convert to cell.
-	if ~iscell(tmpPath)
-		DataPath = {tmpPath};
-	else
-		DataPath = tmpPath;
-	end
-	if ~iscell(tmpFile)
-		DataFile = {tmpFile};
-	else
-		DataFile = tmpFile;
-	end
-	if ~iscell(tmpTest)
-		TestFile = {tmpTest};
-	else
-		TestFile = tmpTest;
-	end
-	if ~isnumeric(Channels)
-		error('%s: Channels must be a numeric array!', mfilename);
-	end
 	% define path to data file and data file for testing
-	F = defineSampleData(DataPath, DataFile, TestFile);
-	clear tmp tmpPath tmpFile tmpTest DataPath DataFile TestFile
+	F = defineSampleData(tmp.DataPath, tmp.DataFile, tmp.TestFile);
+	clear tmp
 else
 	% define path to data file and data file for testing
 	[F, Channels] = defineSampleData();
-	% for now use default filter
+	% for now use default filter - probably want to have UI for user to
+	% specify
 	BPfilt = defaultFilter;
 end
 
