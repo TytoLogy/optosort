@@ -1,6 +1,6 @@
 function varargout = export_for_plexon(varargin)
 %------------------------------------------------------------------------
-% [] = export_for_plexon(DataFileStruct)
+% [nD, nexInfo] = export_for_plexon(DataFileStruct)
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
@@ -20,8 +20,18 @@ function varargout = export_for_plexon(varargin)
 %	see exportTest.m for example
 %
 % Output Arguments:
-% 	Output	output info
-%
+% 	nD		NeuroExplorer nex data struct written to output file
+%	nexInfo	struct with information about data written to .nex file:
+% 		NexFileName			name of _nexinfo.mat file
+% 		fData					struct array with info about data files
+% 		sweepStartBin		sample index for sweep start
+% 		sweepEndBin			sample index for sweep end
+% 		fileStartBin		sample index for data start for each data file
+% 		fileEndBin			sample index for data end for each data file
+% 		startTimes			start times (seconds) for each sweep
+% 		endTimes				end times (seconds) for each sweep
+% 		fileStartTime		start times (seconds) for data from each file
+% 		fileEndTime			end times (seconds) for data from each file
 %------------------------------------------------------------------------
 % See also: 
 %------------------------------------------------------------------------
@@ -33,6 +43,7 @@ function varargout = export_for_plexon(varargin)
 % Created: 14 January, 2020 (SJS)
 %
 % Revisions:
+%	15 Jan 2020 (SJS): added documentation, writing info to .mat file
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -270,12 +281,14 @@ endBins = [sweepEndBin{:}];
 startTimes = (startBins - 1) ./ Fs;
 endTimes = (endBins - 1) ./ Fs;
 
-
 %------------------------------------------------------------------------
-% convert (concatenate) cSweeps to vector for each channel, add to nex struct
+% convert (concatenate) cSweeps to vector for each channel, 
+% add to nex struct, create event times, add to nex struct, write to 
+% .nex file
 %------------------------------------------------------------------------
 % to save on memory requirements, clear channel data after adding to nex
 % data struct.
+%------------------------------------------------------------------------
 
 % create output .nex file name 
 %	assume data from first file is consistent with others!!!!!!!!!
@@ -322,8 +335,41 @@ nD = nexAddEvent(nD, force_col(fileEndTime), 'fileend');
 % write to nexfile
 writeNexFile(nD, NexFileName);
 
+%------------------------------------------------------------------------
+% write useful information to _nexinfo.mat file
+%------------------------------------------------------------------------
+
+% create output _nexinfo.mat file name - base is same as .nex file
+NexinfoFileName = [	fData(1).F.animal '_' ...
+							fData(1).F.datecode '_' ...
+							fData(1).F.unit '_' ...
+							fData(1).F.penetration '_' ...
+							fData(1).F.depth ...
+							'_nexinfo.mat'];
+
+% create nexInfo struct to hold sweep/file bin and time data
+nexInfo = struct(	'NexFileName', NexFileName, ...
+						'fData', fData, ...
+						'sweepStartBin', sweepStartBin, ...
+						'sweepEndBin', sweepEndBin, ...
+						'fileStartBin', fileStartBin, ...
+						'fileEndBin', fileEndBin, ...
+						'startTimes', startTimes, ...
+						'endTimes', endTimes, ...
+						'fileStartTime', fileStartTime, ...
+						'fileEndTime', fileEndTime ...
+);
+
+save(NexinfoFileName, 'nexInfo', '-MAT');
+
+%------------------------------------------------------------------------
+% output
+%------------------------------------------------------------------------
 if nargout
 	varargout{1} = nD;
+	if nargout > 1
+		varargout{2} = nexInfo;
+	end
 end
 %------------------------------------------------------------------------
 % END OF MAIN FUNCTION DEFINITION

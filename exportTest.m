@@ -30,7 +30,7 @@
 % 				'~/Work/Data/TestData/MT_IC'; };
 % or single path
 F.DataPath = '~/Work/Data/TestData/MT_IC';
-F.DataPath = '/Volumes/SJS_XFER/Work/MT-IC-R-data'
+F.DataPath = '/Volumes/SJS_XFER/Work/MT-IC-R-data';
 %------------------------------------------------------------------------
 % DATA FILES
 %------------------------------------------------------------------------
