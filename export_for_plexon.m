@@ -51,11 +51,9 @@ function varargout = export_for_plexon(varargin)
 %------------------------------------------------------------------------
 % Initial things to define
 %------------------------------------------------------------------------
-
 sepstr = '----------------------------------------------------';
 NEX_UTIL_PATH = ['~/Work/Code/Matlab/stable/Toolbox/NeuroExplorer' ...
 					'/HowToReadAndWriteNexAndNex5FilesInMatlab'];
-
 % filter info
 defaultFilter.Fc = [300 4000];
 defaultFilter.forder = 5;
@@ -63,11 +61,10 @@ defaultFilter.ramp = 1;
 %------------------------------------------------------------------------
 % Setup
 %------------------------------------------------------------------------
-
-fprintf('\n%s\n', sepstr);
+fprintf('\n%s\n%s\n', sepstr, sepstr);
 fprintf('%s running...\n', mfilename);
-fprintf('%s\n', sepstr);
-
+fprintf('\n%s\n%s\n', sepstr, sepstr);
+sendmsg('Checking paths');
 % add path to .nex file utils
 if ~exist('nexCreateFileData', 'file')
 	if exist(NEX_UTIL_PATH, 'dir')
@@ -79,7 +76,6 @@ if ~exist('nexCreateFileData', 'file')
 		error('%s: NEX utils not found', mfilename);
 	end
 end
-
 % check for path to readOptoData
 if ~exist('readOptoData', 'file')
 	fprintf('¡¡¡¡¡readOptoData function not found!!!!!!!\n');
@@ -139,16 +135,13 @@ end
 %------------------------------------------------------------------------
 % Get Data File(s) information
 %------------------------------------------------------------------------
+sendmsg('Data Files:');
+% determine # of files
 nFiles = length(F);
 for f = 1:nFiles
 	fprintf('DataFile{%d} = %s\n', f, F(f).file);
 end
 fprintf('Animal: %s\n', F(1).animal);
-
-% !!!!!!!
-% in future, will need to have user specify all the files for this
-% recording session and recording location!!!
-% ¡¡¡¡¡¡¡
 
 % # channel(s) of data to obtain
 nChannels = length(Channels);
@@ -156,6 +149,7 @@ nChannels = length(Channels);
 %------------------------------------------------------------------------
 % Read data
 %------------------------------------------------------------------------
+sendmsg('Reading data');
 
 % allocate some things
 % bins for start and end of each file's data
@@ -172,6 +166,7 @@ fData = repmat(	struct(		'DataPath', '', ...
 										'cSweeps', {}, ...
 										'startSweepBin', {}, ...
 										'endSweepBin', {}, ...
+										'sweepLen', [], ...
 										'fileStartBin', [], ...
 										'fileEndBin', [], ...
 										'Dinf', [] ...
@@ -212,7 +207,8 @@ for f = 1:nFiles
 	
 	% build into sweeps by channel format
 	fprintf('Test type: %s\n', Dinf.test.Type);
-	[fData(f).cSweeps, fData(f).startSweepBin, fData(f).endSweepBin] = ...
+	[fData(f).cSweeps, ...
+		fData(f).startSweepBin, fData(f).endSweepBin, fData(f).sweepLen] = ...
 					buildChannelData(Channels, BPfilt, D, Dinf);
 	% check the start and end sweep bin data for consistency
 	if check_sweeps(fData(f).startSweepBin)
@@ -246,6 +242,7 @@ for f = 1:nFiles
 	end
 end
 
+sendmsg('Building start and end sweep indices:');
 % assign values for bins
 for f = 1:nFiles
 	% calculate start and end sweep bins for each file's data
@@ -289,6 +286,7 @@ endTimes = (endBins - 1) ./ Fs;
 % to save on memory requirements, clear channel data after adding to nex
 % data struct.
 %------------------------------------------------------------------------
+sendmsg('Adding continuous and event data to nex struct:');
 
 % create output .nex file name 
 %	assume data from first file is consistent with others!!!!!!!!!
@@ -332,6 +330,8 @@ nD = nexAddEvent(nD, force_col(endTimes), 'endsweep');
 % add file times
 nD = nexAddEvent(nD, force_col(fileStartTime), 'filestart');
 nD = nexAddEvent(nD, force_col(fileEndTime), 'fileend');
+
+sendmsg(sprintf('Writing nex file %s:', NexFileName));
 % write to nexfile
 writeNexFile(nD, NexFileName);
 
@@ -348,18 +348,21 @@ NexinfoFileName = [	fData(1).F.animal '_' ...
 							'_nexinfo.mat'];
 
 % create nexInfo struct to hold sweep/file bin and time data
-nexInfo = struct(	'NexFileName', NexFileName, ...
-						'fData', fData, ...
-						'sweepStartBin', sweepStartBin, ...
-						'sweepEndBin', sweepEndBin, ...
-						'fileStartBin', fileStartBin, ...
-						'fileEndBin', fileEndBin, ...
-						'startTimes', startTimes, ...
-						'endTimes', endTimes, ...
-						'fileStartTime', fileStartTime, ...
-						'fileEndTime', fileEndTime ...
-);
+nexInfo.NexFileName = NexFileName;
+nexInfo.fData = fData;
+nexInfo.nFiles = nFiles;
+nexInfo.Fs = Fs;
+nexInfo.sweepStartBin = sweepStartBin;
+nexInfo.sweepEndBin = sweepEndBin;
+nexInfo.fileStartBin = fileStartBin;
+nexInfo.fileEndBin = fileEndBin;
+nexInfo.startTimes = startTimes;
+nexInfo.endTimes = endTimes;
+nexInfo.fileStartTime = fileStartTime;
+nexInfo.fileEndTime = fileEndTime;
 
+% save to matfile
+sendmsg(sprintf('Writing _nexinfo.mat file %s:', NexinfoFileName));
 save(NexinfoFileName, 'nexInfo', '-MAT');
 
 %------------------------------------------------------------------------
@@ -437,19 +440,14 @@ function checkstatus = check_sweeps(sweepbins)
 %------------------------------------------------------------------------
 % checkstatus = check_sweeps(sweepbins)
 %------------------------------------------------------------------------
-%------------------------------------------------------------------------
-% 
-% Description
-% 
+% Check consistency of sweep bins across channels
 %------------------------------------------------------------------------
 % Input Arguments:
 % 	sweepbins		{nchannels, 1} cell array of vectors, where 
 % 						each element is an array [1, nsweeps] of sweep bins
-% 
 % Output Arguments:
 % 	checkstatus		true if sweep times are inconsistent, false if all
 %						are consistent (equal)
-%
 %------------------------------------------------------------------------
 	tmp = cell2mat(sweepbins);
 
@@ -458,4 +456,21 @@ function checkstatus = check_sweeps(sweepbins)
 	else
 		checkstatus = false;
 	end
+end
+
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+function sendmsg(msgstr)
+%------------------------------------------------------------------------
+% sendmsg(msgstr)
+%------------------------------------------------------------------------
+% displays message between two separation strings of dashes
+%------------------------------------------------------------------------
+% Input Arguments:
+% 	msgstr		string to display
+% Output Arguments:
+% 	none
+%------------------------------------------------------------------------
+	sepstr = '----------------------------------------------------';
+	fprintf('%s\n%s\n%s\n', sepstr, msgstr, sepstr);
 end

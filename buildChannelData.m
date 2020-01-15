@@ -1,8 +1,8 @@
-function [cD, startI, endI] = buildChannelData(Channels, BPfilt, D, Dinf, varargin)
+function [cD, varargout] = buildChannelData(Channels, BPfilt, D, Dinf, varargin)
 %------------------------------------------------------------------------
-% Output = function_template(Input)
+% [cD, varargout] = buildChannelData(Channels, BPfilt, D, Dinf, varargin)
 %------------------------------------------------------------------------
-% <project>:<subproject>:<function_name>
+% TytoLogy
 %------------------------------------------------------------------------
 % 
 % get data for each channel
@@ -32,7 +32,7 @@ function [cD, startI, endI] = buildChannelData(Channels, BPfilt, D, Dinf, vararg
 % 					[# sweeps] vector holding start sample timestamp for each sweep
 % 	endI		{# Channels, 1} cell array with each element being
 % 					[# sweeps] vector holding end samples timestamp for each sweep
-% 
+%	sweepLen	[# Channels, # sweeps] matrix of # of samples in each sweep
 %------------------------------------------------------------------------
 % See also: 
 %------------------------------------------------------------------------
@@ -106,6 +106,8 @@ cD = cell(length(Channels), Dinf.nread);
 % initialize startI and endI to store start and end sample bins
 startI = cell(length(Channels), 1);
 endI = cell(length(Channels), 1);
+% samples in each sweep
+sweepLen = zeros(length(Channels), Dinf.nread);
 
 % loop through channels
 for c = 1:length(Channels)
@@ -131,6 +133,9 @@ for c = 1:length(Channels)
 										Dinf.indev.Fs, BPfilt.ramp));
 		end
 
+		% store length of sweep
+		sweepLen(c, s) = length(cD{c, s});
+		
 		% plot raw and filtered data
 		if plotSweeps
 			plot(D{s}.datatrace(:, channel)', 'k');
@@ -161,9 +166,15 @@ if DEBUG
 	for c = 1:length(Channels)
 		% loop through each sweep
 		for s = 1:Dinf.nread
+			% replace start and end value of each sweep with known value
 			cD{c, s}(1) = exp(1);
 			cD{c, s}(end) = -exp(1);
 		end
 	end
 end
 
+if nargout > 1
+	varargout{1} = startI;
+	varargout{2} = endI;
+	varargout{3} = sweepLen;
+end
