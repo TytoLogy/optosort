@@ -29,7 +29,8 @@
 % 				'~/Work/Data/TestData/MT_IC'; ...
 % 				'~/Work/Data/TestData/MT_IC'; };
 % or single path
-F.DataPath = '~/Work/Data/TestData/MT_IC';
+% F.DataPath = '~/Work/Data/TestData/MT_IC';
+F.DataPath = '/Volumes/Wenstrup Laboratory/By User/SJS/Data/SpikeSort';
 % F.DataPath = '/Volumes/SJS_XFER/Work/MT-IC-R-data';
 %------------------------------------------------------------------------
 % DATA FILES
