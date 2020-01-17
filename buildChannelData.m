@@ -97,21 +97,51 @@ if isempty(BPfilt)
 	filterData = false;
 end
 
+% channel information
+nChannelsToRead = length(Channels);
+% check if list of channels to read is longer than # recorded
+if nChannelsToRead > Dinf.channels.nRecordChannels
+	error('%s: mismatch in nChannelsToRead (%d) and nRecordChannels (%d)', ...
+				mfilename, nChannelsToRead, Dinf.channels.nRecordChannels);
+end
+% make sure requested channel was recorded
+for c = 1:nChannelsToRead
+	if ~any(Channels(c) == Dinf.channels.RecordChannelList)
+		error('%s: Channel %d not in RecordChannelList!', mfilename, Channels(c));
+	end
+end
+% build channel index
+if Dinf.channels.nRecordChannels == 1
+	% only one channel!
+	channelIndx = 1;
+	if Channels ~= Dinf.channels.RecordChannelList
+		warning('%s: requested channel %d not found in RecordChannelList', ...
+						mfilename, Channels);
+		fprintf('Using only available channel %d\n', ...
+						Dinf.channels.RecordChannelList);
+		channelIndx = 1;
+	end
+elseif Dinf.channels.nRecordChannels == 16
+	channelIndx = Channels;
+else
+	channelIndx = zeros(nChannelsToRead);
+	for c = 1:nChannelsToRead
+		channelIndx(c) = find(Channels(c) == Dinf.channels.RecordChannelList);
+	end
+end
 %------------------------------------------------------------------------
 % process data
 %------------------------------------------------------------------------
-
 % initialize cD to a store sweeps for each channel
-cD = cell(length(Channels), Dinf.nread);
+cD = cell(nChannelsToRead, Dinf.nread);
 % initialize startI and endI to store start and end sample bins
-startI = cell(length(Channels), 1);
-endI = cell(length(Channels), 1);
+startI = cell(nChannelsToRead, 1);
+endI = cell(nChannelsToRead, 1);
 % samples in each sweep
-sweepLen = zeros(length(Channels), Dinf.nread);
-
+sweepLen = zeros(nChannelsToRead, Dinf.nread);
 % loop through channels
-for c = 1:length(Channels)
-	channel = Channels(c);
+for c = 1:nChannelsToRead
+	channel = channelIndx(c);
 	% initialize startI and endI to store stop/start locations
 	tmpStartI = zeros(1, Dinf.nread);
 	tmpEndI = zeros(1, Dinf.nread);
@@ -163,7 +193,7 @@ end
 
 if DEBUG
 	% loop through channels
-	for c = 1:length(Channels)
+	for c = 1:nChannelsToRead
 		% loop through each sweep
 		for s = 1:Dinf.nread
 			% replace start and end value of each sweep with known value
