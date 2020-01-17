@@ -349,11 +349,8 @@ NexinfoFileName = [	fData(1).F.animal '_' ...
 
 % create nexInfo struct to hold sweep/file bin and time data
 nexInfo.NexFileName = NexFileName;
-nexInfo.fData = fData;
 % need to remove cSweeps from nexInfo copy of fData to save memory
-for f = 1:nFiles
-	nexInfo.fData(f) = rmfield(nexInfo.fData(f), 'cSweeps');
-end
+nexInfo.fData = rmfield(fData, 'cSweeps');
 nexInfo.nFiles = nFiles;
 nexInfo.Fs = Fs;
 nexInfo.sweepStartBin = sweepStartBin;
