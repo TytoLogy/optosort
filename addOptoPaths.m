@@ -20,4 +20,6 @@
 % TO DO: customize for each user's setup?
 %------------------------------------------------------------------------
 
+fprintf('Adding path to opto functions:\n');
+fprintf('\t~/Work/Code/Matlab/dev/TytoLogy/Experiments/Opto\n');
 addpath('~/Work/Code/Matlab/dev/TytoLogy/Experiments/Opto');

@@ -66,3 +66,11 @@ load(nexInfoFile)
 % Column 2: unit #
 % Column 3: timestamp (in seconds)
 % Column 4-... : waveform
+%
+% 22 Jan 2019
+% if waveforms are clipped, look at pp 109 and 118 in offline sorter manual
+% to fix gain
+% 
+% other issue: transients on first 1-4 samples of each waveform.... ????
+% just noise????
+
