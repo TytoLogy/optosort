@@ -29,11 +29,21 @@
 % string used to separate text 
 sepstr = '----------------------------------------------------';
 
+% data locations
+sortedPath = '~/Work/Data/TestData/MT_IC';
+rawPath = '~/Work/Data/TestData/MT_IC';
+nexPath = '~/Work/Data/TestData/MT_IC';
+
 % sorted data file
-sortedFile = '1372_20191126_03_01_1500_FREQ_TUNING_plx.mat';
+% sortedFile = '1323_20190722_03_02_632_MERGE.mat';
+sortedFile = '1382_20191212_02_02_3200.mat';
 
 % nexinfo file
-nexInfoFile = '1372_20191126_03_01_1500_nexinfo.mat';
+% nexInfoFile = '1323_20190722_03_02_632_MERGE_nexinfo.mat';
+nexInfoFile = '1382_20191212_02_02_3200_MERGE_nexinfo.mat';
+
+% nex file
+nexFile = '1382_20191212_02_02_3200_MERGE.mat';
 
 %------------------------------------------------------------------------
 % Setup
@@ -44,13 +54,34 @@ fprintf('%s\n', sepstr);
 
 
 %------------------------------------------------------------------------
-% load data
+%% load data
 %------------------------------------------------------------------------
-% plexon sorted data
 
 % nexinfo
-load(nexInfoFile)
+load(fullfile(nexPath, nexInfoFile), 'nexInfo');
 
+% plexon sorted data
+plxvars = who('-file', fullfile(sortedPath, sortedFile));
+if isempty(plxvars)
+	error('No variables in plexon output file %s', ...
+					fullfile(sortedPath, sortedFile));
+else
+	fprintf('\n%s\n', sepstr);
+	fprintf('Found %d channels in %s\n', length(plxvars), ...
+							fullfile(sortedPath, sortedFile))
+	fprintf('\n%s\n', sepstr);
+	for n = 1:length(plxvars)
+		fprintf('%s\n', plxvars{n});
+	end
+	fprintf('%s\n', sepstr);
+end	
+load(fullfile(sortedPath, sortedFile))
+
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+% Plexon-exported sorted data:
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 % Column 1: unit number (where 0 is unsorted)
 % Column 2: timestamp where spike crosses threshold (in seconds)
 % Columns 3-34 (assuming waveform window of 1311us / 32 samples):
@@ -73,4 +104,5 @@ load(nexInfoFile)
 % 
 % other issue: transients on first 1-4 samples of each waveform.... ????
 % just noise????
+%------------------------------------------------------------------------
 

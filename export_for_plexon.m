@@ -177,6 +177,9 @@ fData = repmat(	struct(		'DataPath', '', ...
 for f = 1:nFiles
 	% save parse file info
 	fData(f).F = F(f);
+	% save data path and file... these are redundant!
+	fData(f).DataPath = F(f).path;
+	fData(f).DataFile = F(f).file;
 	% get data for each file and channel and convert to row vector format
 	% algorithm:
 	%		(1) put each sweep for this channel in a {1, # sweeps} cell array
