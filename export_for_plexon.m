@@ -396,6 +396,7 @@ nexInfo.startTimes = startTimes;
 nexInfo.endTimes = endTimes;
 nexInfo.fileStartTime = fileStartTime;
 nexInfo.fileEndTime = fileEndTime;
+nexInfo.Channels = Channels;
 
 % save to matfile
 sendmsg(sprintf('Writing _nexinfo.mat file %s:', ...

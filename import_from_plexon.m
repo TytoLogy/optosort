@@ -104,5 +104,8 @@ load(fullfile(sortedPath, sortedFile))
 % 
 % other issue: transients on first 1-4 samples of each waveform.... ????
 % just noise????
+%
+% 24 Jan 19: cols 4-6 are weights of 3 principal components used in PCA 
+%	spike sorting
 %------------------------------------------------------------------------
 
