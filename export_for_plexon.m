@@ -124,6 +124,24 @@ if nargin == 1
 	% define path to data file and data file for testing
 	F = defineSampleData(tmp.DataPath, tmp.DataFile, tmp.TestFile);
 	clear tmp
+	
+	% checks for output path and file
+	if isfield(F, 'OutputPath')
+		if ~isempty(F.OutputPath)
+			% if not empty, make sure path exists
+			if ~exist(F.OutputPath, 'dir')
+				error('%s: output directory %s not found', mfilename, F.OutputPath);
+			end
+		end
+	else
+		% create empty field
+		F.OutputPath = '';
+	end
+	if ~isfield(F, 'OutputFile')
+		% if no OutputFile field, create empty field
+		F.OutputFile = '';
+	end
+	
 else
 	% define path to data file and data file for testing
 	[F, Channels] = defineSampleData();
@@ -291,27 +309,34 @@ endTimes = (endBins - 1) ./ Fs;
 %------------------------------------------------------------------------
 sendmsg('Adding continuous and event data to nex struct:');
 
-% create output .nex file name - adjust depending on # of files
+% If not provided, create output .nex file name - adjust depending on # of files
 %	assume data from first file is consistent with others!!!!!!!!!
-if nFiles > 1
-	% append MERGE to filename
-	NexFileName = [	fData(1).F.animal '_' ...
-							fData(1).F.datecode '_' ...
-							fData(1).F.unit '_' ...
-							fData(1).F.penetration '_' ...
-							fData(1).F.depth '_' ...
-							'MERGE.nex'];
+if isempty(F.OutputFile)
+	if nFiles > 1
+		% append MERGE to filename
+		NexFileName = [	fData(1).F.animal '_' ...
+								fData(1).F.datecode '_' ...
+								fData(1).F.unit '_' ...
+								fData(1).F.penetration '_' ...
+								fData(1).F.depth '_' ...
+								'MERGE.nex'];
+	else
+		NexFileName = [	fData(1).F.animal '_' ...
+								fData(1).F.datecode '_' ...
+								fData(1).F.unit '_' ...
+								fData(1).F.penetration '_' ...
+								fData(1).F.depth '_' ...
+								fData(1).F.other ...
+								'.nex'];
+	end
+	% save output file name
+	F.OutputFile = NexFileName;
 else
-	NexFileName = [	fData(1).F.animal '_' ...
-							fData(1).F.datecode '_' ...
-							fData(1).F.unit '_' ...
-							fData(1).F.penetration '_' ...
-							fData(1).F.depth '_' ...
-							fData(1).F.other ...
-							'.nex'];
+	NexFileName = F.OutputFile;
 end
+fprintf('Exporting data to %s\n', fullfile(F.OutputPath, NexFileName));
 
-fprintf('Exporting data to %s\n', NexFileName);
+
 % start new nex file data struct
 nD = nexCreateFileData(Fs);
 
@@ -346,9 +371,9 @@ nD = nexAddEvent(nD, force_col(endTimes), 'endsweep');
 nD = nexAddEvent(nD, force_col(fileStartTime), 'filestart');
 nD = nexAddEvent(nD, force_col(fileEndTime), 'fileend');
 
-sendmsg(sprintf('Writing nex file %s:', NexFileName));
+sendmsg(sprintf('Writing nex file %s:', fullfile(F.OutputPath, NexFileName)));
 % write to nexfile
-writeNexFile(nD, NexFileName);
+writeNexFile(nD, fullfile(F.OutputPath, NexFileName));
 
 %------------------------------------------------------------------------
 % write useful information to _nexinfo.mat file
@@ -374,8 +399,9 @@ nexInfo.fileStartTime = fileStartTime;
 nexInfo.fileEndTime = fileEndTime;
 
 % save to matfile
-sendmsg(sprintf('Writing _nexinfo.mat file %s:', NexinfoFileName));
-save(NexinfoFileName, 'nexInfo', '-MAT');
+sendmsg(sprintf('Writing _nexinfo.mat file %s:', ...
+											fullfile(F.OutputPath, NexinfoFileName)));
+save(fullfile(F.OutputPath, NexinfoFileName), 'nexInfo', '-MAT');
 
 %------------------------------------------------------------------------
 % output
@@ -411,7 +437,7 @@ function varargout = defineSampleData(varargin)
 	
 	% check inputs 
 	if nargin == 0
-		% do something to get data files from user
+		% do something to get data files from user !!!!
 		DataPath = {};
 		DataFile = {};
 		TestFile = {};

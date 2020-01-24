@@ -59,13 +59,16 @@ end
 % IC data from probe, NO WAV test
 % F.DataPath = ['/Volumes/Wenstrup Laboratory/By User/SJS/Data' ...
 % 							'/SpikeSort/IC-probe/1372'];
-% F.DataFile = {'1372_20191126_03_01_1500_FREQ_TUNING.dat'; ...
-% 				'1372_20191126_03_01_1500_BBN.dat'; ...
-% 				'1372_20191126_03_01_1500_FRA.dat'; };
-% F.TestFile = {'1372_20191126_03_01_1500_FREQ_TUNING_testdata.mat'; ...
-% 				'1372_20191126_03_01_1500_BBN_testdata.mat'; ...
-% 				'1372_20191126_03_01_1500_FRA_testdata.mat'; };
-% F.Channels = [11 9 14];
+F.DataPath = '~/Work/Data/TestData/MT-IC-R-data';
+F.DataFile = {'1372_20191126_03_01_1500_FREQ_TUNING.dat'; ...
+				'1372_20191126_03_01_1500_BBN.dat'; ...
+				'1372_20191126_03_01_1500_FRA.dat'; };
+F.TestFile = {'1372_20191126_03_01_1500_FREQ_TUNING_testdata.mat'; ...
+				'1372_20191126_03_01_1500_BBN_testdata.mat'; ...
+				'1372_20191126_03_01_1500_FRA_testdata.mat'; };
+F.Channels = [11 9 14];
+F.OutputPath = F.DataPath;
+F.OutputFile = '1372_20191126_03_01_1500_test.nex';
 %---------------------------------------
 
 %---------------------------------------
@@ -115,7 +118,7 @@ BPfilt.ramp = 1;
 F.BPfilt = BPfilt;
 
 %------------------------------------------------------------------------
-% run!
+%% run!
 %------------------------------------------------------------------------
 nD = export_for_plexon(F);
 
