@@ -123,25 +123,29 @@ if nargin == 1
 	end
 	% define path to data file and data file for testing
 	F = defineSampleData(tmp.DataPath, tmp.DataFile, tmp.TestFile);
-	clear tmp
 	
 	% checks for output path and file
-	if isfield(F, 'OutputPath')
-		if ~isempty(F.OutputPath)
+	if isfield(tmp, 'OutputPath')
+		if ~isempty(tmp.OutputPath)
 			% if not empty, make sure path exists
-			if ~exist(F.OutputPath, 'dir')
-				error('%s: output directory %s not found', mfilename, F.OutputPath);
+			if ~exist(tmp.OutputPath, 'dir')
+				error('%s: output directory %s not found', mfilename, tmp.OutputPath);
 			end
 		end
+		NexFilePath = tmp.OutputPath;
 	else
 		% create empty field
-		F.OutputPath = '';
-	end
-	if ~isfield(F, 'OutputFile')
-		% if no OutputFile field, create empty field
-		F.OutputFile = '';
+		NexFilePath = '';
 	end
 	
+	if isfield(tmp, 'OutputFile')
+		NexFileName = tmp.OutputFile;
+	else
+		% if no OutputFile field, create empty field
+		NexFileName = '';
+	end
+	
+	clear tmp
 else
 	% define path to data file and data file for testing
 	[F, Channels] = defineSampleData();
@@ -311,7 +315,7 @@ sendmsg('Adding continuous and event data to nex struct:');
 
 % If not provided, create output .nex file name - adjust depending on # of files
 %	assume data from first file is consistent with others!!!!!!!!!
-if isempty(F.OutputFile)
+if isempty(NexFileName)
 	if nFiles > 1
 		% append MERGE to filename
 		NexFileName = [	fData(1).F.animal '_' ...
@@ -329,13 +333,8 @@ if isempty(F.OutputFile)
 								fData(1).F.other ...
 								'.nex'];
 	end
-	% save output file name
-	F.OutputFile = NexFileName;
-else
-	NexFileName = F.OutputFile;
 end
-fprintf('Exporting data to %s\n', fullfile(F.OutputPath, NexFileName));
-
+fprintf('Exporting data to %s\n', fullfile(NexFilePath, NexFileName));
 
 % start new nex file data struct
 nD = nexCreateFileData(Fs);
@@ -371,9 +370,9 @@ nD = nexAddEvent(nD, force_col(endTimes), 'endsweep');
 nD = nexAddEvent(nD, force_col(fileStartTime), 'filestart');
 nD = nexAddEvent(nD, force_col(fileEndTime), 'fileend');
 
-sendmsg(sprintf('Writing nex file %s:', fullfile(F.OutputPath, NexFileName)));
+sendmsg(sprintf('Writing nex file %s:', fullfile(NexFilePath, NexFileName)));
 % write to nexfile
-writeNexFile(nD, fullfile(F.OutputPath, NexFileName));
+writeNexFile(nD, fullfile(NexFilePath, NexFileName));
 
 %------------------------------------------------------------------------
 % write useful information to _nexinfo.mat file
@@ -400,8 +399,8 @@ nexInfo.fileEndTime = fileEndTime;
 
 % save to matfile
 sendmsg(sprintf('Writing _nexinfo.mat file %s:', ...
-											fullfile(F.OutputPath, NexinfoFileName)));
-save(fullfile(F.OutputPath, NexinfoFileName), 'nexInfo', '-MAT');
+											fullfile(NexFilePath, NexinfoFileName)));
+save(fullfile(NexFilePath, NexinfoFileName), 'nexInfo', '-MAT');
 
 %------------------------------------------------------------------------
 % output
@@ -488,8 +487,13 @@ function checkstatus = check_sweeps(sweepbins)
 %						are consistent (equal)
 %------------------------------------------------------------------------
 	tmp = cell2mat(sweepbins);
-
-	if sum((sum(tmp - tmp(1, :)))) ~= 0
+	[nr, ~] = size(tmp);
+	tmp2 = 0;
+	for r = 1:nr
+		tmp2 = tmp2 + sum(tmp(r, :) - tmp(1, :));
+	end
+	
+	if tmp2 ~= 0
 		checkstatus = true;
 	else
 		checkstatus = false;
