@@ -22,10 +22,6 @@
 
 clear all
 
-if ~exist('readOptoData', 'file')
-	addOptoPaths
-end
-
 %------------------------------------------------------------------------
 % PATHS TO DATA FILES
 %------------------------------------------------------------------------
@@ -34,7 +30,7 @@ end
 % exportOpts.DataPath = {'~/Work/Data/TestData/MT_IC';
 % 				'~/Work/Data/TestData/MT_IC'; ...
 % 				'~/Work/Data/TestData/MT_IC'; };
-% or single path
+% or single path:
 % exportOpts.DataPath = '~/Work/Data/TestData/MT_IC';
 % exportOpts.DataPath = '/Volumes/Wenstrup Laboratory/By User/SJS/Data/SpikeSort';
 % exportOpts.DataPath = '/Volumes/SJS_XFER/Work/MT-IC-R-data';
@@ -59,14 +55,16 @@ end
 % IC data from probe, NO WAV test
 % exportOpts.DataPath = ['/Volumes/Wenstrup Laboratory/By User/SJS/Data' ...
 % 							'/SpikeSort/IC-probe/1372'];
-exportOpts.DataPath = '~/Work/Data/TestData/MT-IC-R-data';
-exportOpts.DataFile = {'1372_20191126_03_01_1500_FREQ_TUNING.dat'; ...
-				'1372_20191126_03_01_1500_BBN.dat'; ...
-				'1372_20191126_03_01_1500_FRA.dat'; };
-exportOpts.TestFile = {'1372_20191126_03_01_1500_FREQ_TUNING_testdata.mat'; ...
-				'1372_20191126_03_01_1500_BBN_testdata.mat'; ...
-				'1372_20191126_03_01_1500_FRA_testdata.mat'; };
+exportOpts.DataPath = '~/Work/Data/TestData/MT';
+exportOpts.DataFile = {	'1372_20191126_03_01_1500_FREQ_TUNING.dat'; ...
+								'1372_20191126_03_01_1500_BBN.dat'; ...
+								'1372_20191126_03_01_1500_FRA.dat'; };
+exportOpts.TestFile = {	'1372_20191126_03_01_1500_FREQ_TUNING_testdata.mat'; ...
+								'1372_20191126_03_01_1500_BBN_testdata.mat'; ...
+								'1372_20191126_03_01_1500_FRA_testdata.mat'; };
 exportOpts.Channels = [11 9 14];
+% you can specify an output path and nex file name, or just leave blank
+% and export_plexon_data will create one in current directory
 exportOpts.OutputPath = exportOpts.DataPath;
 exportOpts.OutputFile = '1372_20191126_03_01_1500_test.nex';
 %---------------------------------------
@@ -107,18 +105,16 @@ exportOpts.OutputFile = '1372_20191126_03_01_1500_test.nex';
 % filter parameters for raw neural data
 %------------------------------------------------------------------------
 % [highpass lowpass] cutoff frequencies in Hz
-BPfilt.Fc = [300 4000];
+exportOpts.BPfilt.Fc = [300 4000];
 % order of filter. note that the filtfilt() function in MATLAB is used,
-% so the effective order is doubled. 
-BPfilt.forder = 5;
+% so the effective order is doubled. typically use 5
+exportOpts.BPfilt.forder = 5;
 % ramp time (ms) to apply to each sweep in order to cutdown on onset/offset
 % transients from filtering
-BPfilt.ramp = 1;
-% assign filter spec to F struct
-exportOpts.BPfilt = BPfilt;
+exportOpts.BPfilt.ramp = 1;
 
 %------------------------------------------------------------------------
-%% run!
+% run!
 %------------------------------------------------------------------------
 nD = export_for_plexon(exportOpts);
 

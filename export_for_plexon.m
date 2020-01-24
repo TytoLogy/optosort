@@ -79,7 +79,7 @@ end
 % check for path to readOptoData
 if ~exist('readOptoData', 'file')
 	fprintf('¡¡¡¡¡readOptoData function not found!!!!!!!\n');
-	fprintf('Please add to path');
+	fprintf('Please add to MATLAB path\n');
 	error('%s: readOptoData (in Opto project folder) not found', mfilename);
 end
 
