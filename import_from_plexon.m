@@ -30,9 +30,9 @@
 sepstr = '----------------------------------------------------';
 
 % data locations
-sortedPath = '~/Work/Data/TestData/MT_IC';
-rawPath = '~/Work/Data/TestData/MT_IC';
-nexPath = '~/Work/Data/TestData/MT_IC';
+sortedPath = '~/Work/Data/TestData/MT';
+rawPath = '~/Work/Data/TestData/MT';
+nexPath = '~/Work/Data/TestData/MT';
 
 % sorted data file
 % sortedFile = '1323_20190722_03_02_632_MERGE.mat';
