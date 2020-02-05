@@ -74,8 +74,13 @@ else
 		fprintf('%s\n', plxvars{n});
 	end
 	fprintf('%s\n', sepstr);
-end	
-load(fullfile(sortedPath, sortedFile))
+end
+
+% for now, just load the first channel data - need to figure out a way to
+% deal with multiple channels
+tmp = load(fullfile(sortedPath, sortedFile), '-MAT', plxvars{1});
+spikesAll = tmp.(plxvars{1});
+clear tmp;
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -109,3 +114,17 @@ load(fullfile(sortedPath, sortedFile))
 %	spike sorting
 %------------------------------------------------------------------------
 
+
+%% break up spiketimes by data file
+% use file Start/End time to do this
+
+spikesByFile = cell(nexInfo.nFiles, 1);
+
+for f = 1:nexInfo.nFiles
+	
+	% could use between() function, but usieng something explicit here for
+	% clarity
+	valid_ts = (spikesAll(:, 3) >= nexInfo.fileStartTime(f)) & ...
+					(spikesAll(:, 3) <= nexInfo.fileEndTime(f));
+	spikesByFile{f} = spikesAll(valid_ts, :);
+end
