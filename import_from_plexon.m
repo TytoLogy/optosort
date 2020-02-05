@@ -128,3 +128,5 @@ for f = 1:nexInfo.nFiles
 					(spikesAll(:, 3) <= nexInfo.fileEndTime(f));
 	spikesByFile{f} = spikesAll(valid_ts, :);
 end
+
+% next step: assign spike times to appropriate sweeps/stimuli
