@@ -111,9 +111,71 @@ clear tmp;
 % just noise????
 %
 % 24 Jan 19: cols 4-6 are weights of 3 principal components used in PCA 
-%	spike sorting
+%	spike sorting. so:
+%		Column 1: channel (?)
+%		Column 2: unit #
+%		Column 3: timestamp (in seconds)
+%		Column 4: PCA1 weight
+%		Column 5: PCA2 weight
+%		Column 6: PCA3 weight
+%		Column 7-end : waveform
 %------------------------------------------------------------------------
+%{
+nexInfo:
+	NexFileName: '1382_20191212_02_02_3200_test.nex'
+	fData: [1×3 struct]
+	nFiles: 3
+	Fs: 4.8828e+04
+	sweepStartBin: {[1×140 double]  [1×160 double]  [1×180 double]}
+	sweepEndBin: {[1×140 double]  [1×160 double]  [1×180 double]}
+	fileStartBin: [1 1708981 3662101]
+	fileEndBin: [1708980 3662100 5859360]
+	startTimes: [1×480 double]
+	endTimes: [1×480 double]
+	fileStartTime: [0 34.9999 74.9998]
+	fileEndTime: [34.9999 74.9998 119.9997]
+	Channels: [4 5 11 14]
 
+
+nexInfo.fData
+	DataPath: '~/Work/Data/TestData/MT'
+	DataFile: '1382_20191212_02_02_3200_FREQ_TUNING.dat'
+	startSweepBin: {# channels × 1 cell}
+	endSweepBin: {# channels × 1 cell}
+	sweepLen: {# channels × 1 cell}
+	fileStartBin: 1
+	fileEndBin: 1708980
+	Dinf: [1×1 struct] =
+	F: [1×1 struct]
+
+nexInfo.fData.F
+	base: '1382_20191212_02_02_3200_FREQ_TUNING'
+	animal: '1382'
+	datecode: '20191212'
+	unit: '02'
+	penetration: '02'
+	depth: '3200'
+	other: 'FREQ_TUNING'
+	path: '~/Work/Data/TestData/MT'
+	file: '1382_20191212_02_02_3200_FREQ_TUNING.dat'
+	testfile: '1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'
+%}
+
+% Define some handy values for indexing into spikesAll and similar arrays
+%		Column 1: channel (?)
+%		Column 2: unit #
+%		Column 3: timestamp (in seconds)
+%		Column 4: PCA1 weight
+%		Column 5: PCA2 weight
+%		Column 6: PCA3 weight
+%		Column 7-end : waveform
+% 
+[~, nc] = size(spikesAll);
+CHAN_COL = 1;
+UNIT_COL = 2;
+TS_COL = 3;
+PCA_COL = 4:6;
+WAV_COL = 7:nc;
 
 %% break up spiketimes by data file
 % use file Start/End time to do this
@@ -121,12 +183,29 @@ clear tmp;
 spikesByFile = cell(nexInfo.nFiles, 1);
 
 for f = 1:nexInfo.nFiles
-	
-	% could use between() function, but usieng something explicit here for
+	% could use between() function, but using something explicit here for
 	% clarity
-	valid_ts = (spikesAll(:, 3) >= nexInfo.fileStartTime(f)) & ...
-					(spikesAll(:, 3) <= nexInfo.fileEndTime(f));
+	valid_ts = (spikesAll(:, TS_COL) >= nexInfo.fileStartTime(f)) & ...
+					(spikesAll(:, TS_COL) <= nexInfo.fileEndTime(f));
 	spikesByFile{f} = spikesAll(valid_ts, :);
 end
 
 % next step: assign spike times to appropriate sweeps/stimuli
+for f = 1:nexInfo.nFiles
+
+	% shift spike times to correspond to start of each data file
+	% make a local copy...
+	tmpS = spikesByFile{f}(:, TS_COL);
+	% ...and subtract fileStartTime in seconds from all time stamps
+	tmpS = tmpS - nexInfo.fileStartTime(f);
+	% put back into spikes ByFile
+	spikesByFile{f}(:, TS_COL) = tmpS;
+end
+
+%% Now, create spikes for each stimulus presentation
+
+f = 1;
+
+spikesByStim = cell(nexInfo.nFiles, 1);
+
+

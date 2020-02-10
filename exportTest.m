@@ -22,6 +22,11 @@
 
 clear all
 
+if ~exist('readOptoData', 'file')
+	addpath('~/Work/Code/Matlab/dev/TytoLogy/Experiments/Opto');
+end
+	
+
 %------------------------------------------------------------------------
 % PATHS TO DATA FILES
 %------------------------------------------------------------------------
@@ -55,18 +60,18 @@ clear all
 % IC data from probe, NO WAV test
 % exportOpts.DataPath = ['/Volumes/Wenstrup Laboratory/By User/SJS/Data' ...
 % 							'/SpikeSort/IC-probe/1372'];
-exportOpts.DataPath = '~/Work/Data/TestData/MT';
-exportOpts.DataFile = {	'1372_20191126_03_01_1500_FREQ_TUNING.dat'; ...
-								'1372_20191126_03_01_1500_BBN.dat'; ...
-								'1372_20191126_03_01_1500_FRA.dat'; };
-exportOpts.TestFile = {	'1372_20191126_03_01_1500_FREQ_TUNING_testdata.mat'; ...
-								'1372_20191126_03_01_1500_BBN_testdata.mat'; ...
-								'1372_20191126_03_01_1500_FRA_testdata.mat'; };
-exportOpts.Channels = [11 9 14];
+% exportOpts.DataPath = '~/Work/Data/TestData/MT';
+% exportOpts.DataFile = {	'1372_20191126_03_01_1500_FREQ_TUNING.dat'; ...
+% 								'1372_20191126_03_01_1500_BBN.dat'; ...
+% 								'1372_20191126_03_01_1500_FRA.dat'; };
+% exportOpts.TestFile = {	'1372_20191126_03_01_1500_FREQ_TUNING_testdata.mat'; ...
+% 								'1372_20191126_03_01_1500_BBN_testdata.mat'; ...
+% 								'1372_20191126_03_01_1500_FRA_testdata.mat'; };
+% exportOpts.Channels = [11 9 14];
 % you can specify an output path and nex file name, or just leave blank
 % and export_plexon_data will create one in current directory
-exportOpts.OutputPath = exportOpts.DataPath;
-exportOpts.OutputFile = '1372_20191126_03_01_1500_test.nex';
+% exportOpts.OutputPath = exportOpts.DataPath;
+% exportOpts.OutputFile = '1372_20191126_03_01_1500_test.nex';
 %---------------------------------------
 
 %---------------------------------------
@@ -74,14 +79,18 @@ exportOpts.OutputFile = '1372_20191126_03_01_1500_test.nex';
 % 1382_20191212_02_02_3200_WAV.dat
 % 1382_20191212_02_02_3200_WAV_PSTH.fig
 % 1382_20191212_02_02_3200_WAV_wavinfo.mat
-% exportOpts.DataPath = '/Volumes/Wenstrup Laboratory/By User/SJS/Data/SpikeSort/MG';
-% exportOpts.DataFile = {	'1382_20191212_02_02_3200_FREQ_TUNING.dat'; ...
-% 					'1382_20191212_02_02_3200_BBN.dat'; ...
-% 					'1382_20191212_02_02_3200_FRA.dat';	};
-% exportOpts.TestFile = {	'1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'; ...
-% 					'1382_20191212_02_02_3200_BBN_testdata.mat'; ...
-% 					'1382_20191212_02_02_3200_FRA_testdata.mat'; };
-% exportOpts.Channels = [4, 5, 11, 14];
+exportOpts.DataPath = '~/Work/Data/TestData/MT';
+exportOpts.DataFile = {	'1382_20191212_02_02_3200_FREQ_TUNING.dat'; ...
+					'1382_20191212_02_02_3200_BBN.dat'; ...
+					'1382_20191212_02_02_3200_FRA.dat';	};
+exportOpts.TestFile = {	'1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'; ...
+					'1382_20191212_02_02_3200_BBN_testdata.mat'; ...
+					'1382_20191212_02_02_3200_FRA_testdata.mat'; };
+exportOpts.Channels = [4, 5, 11, 14];
+% you can specify an output path and nex file name, or just leave blank
+% and export_plexon_data will create one in current directory
+exportOpts.OutputPath = exportOpts.DataPath;
+exportOpts.OutputFile = '1382_20191212_02_02_3200_test.nex';
 %---------------------------------------
 
 %---------------------------------------
