@@ -13,7 +13,5 @@ classdef SpikeData
 			obj.Info = varargin{1};
 			obj.Spikes = varargin{2};
 		end
-		
 	end
 end
-			

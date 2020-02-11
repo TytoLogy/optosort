@@ -219,7 +219,7 @@ spikesOrig{end}(:, TS_COL), spikesByStim{end}{end}(:, TS_COL)
 
 spikesByStim{end}{3}(:, TS_COL)
 %% need to adjust spike times to start of each sweep
-
+%{
 for f = 1:nexInfo.nFiles
 	% shift spike times to correspond to start of each data file
 	
@@ -236,3 +236,14 @@ for f = 1:nexInfo.nFiles
 end
 %}
 
+%% convert spikes to table
+
+Channel = spikesAll(:, CHAN_COL);
+Unit = spikesAll(:, UNIT_COL);
+TS = spikesAll(:, TS_COL);
+PCAmat = spikesAll(:, PCA_COL);
+WAVmat = spikesAll(:, WAV_COL);
+PCA = num2cell(PCAmat, 2);
+WAV = num2cell(WAVmat, 2);
+
+T = table(Channel, Unit, TS, PCA, WAV)
