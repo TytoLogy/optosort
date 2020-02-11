@@ -56,7 +56,19 @@ function varargout = assign_spikes_to_sweeps(allSpikes, ...
 % TO DO:
 %--------------------------------------------------------------------------
 
-% process options
+%--------------------------------------------------------------------------
+% some definitions
+%--------------------------------------------------------------------------
+[~, nc] = size(allSpikes);
+CHAN_COL = 1; %#ok<NASGU>
+UNIT_COL = 2; %#ok<NASGU>
+TS_COL = 3;
+PCA_COL = 4:6; %#ok<NASGU>
+WAV_COL = 7:nc; %#ok<NASGU>
+
+%--------------------------------------------------------------------------
+% process options and inputs
+%--------------------------------------------------------------------------
 if isempty(varargin)
 	ALIGN = 'original';
 else
@@ -92,18 +104,24 @@ switch ALIGN
 		% adjust timestamp value by each sweep start time
 		alignval = sweepStartTimes;
 end
-		
+
+%--------------------------------------------------------------------------
+% process data
+%--------------------------------------------------------------------------
+
 % allocate cell to store spike info for each sweep
 spikesBySweep = cell(nsweeps, 1);
+% local copy of ts
+ts = allSpikes(:, TS_COL);
 
 % loop through sweeps
 for s = 1:nsweeps
 	% find the valid time stampes (between sweepStartTimes and
 	% sweepEndTimes)
 	valid_ts = (ts >= sweepStartTimes(s)) & (ts < sweepEndTimes(s));
-	% apply offset correction
-	valid_ts = valid_ts - alignval(s);
 	spikesBySweep{s} = allSpikes(valid_ts, :);
+	% apply offset correction
+	spikesBySweep{s}(:, TS_COL) = spikesBySweep{s}(:, TS_COL) - alignval(s);
 end
 
 % assign outputs
