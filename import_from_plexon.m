@@ -56,7 +56,9 @@ fprintf('%s\n', sepstr);
 %------------------------------------------------------------------------
 %% load data
 %------------------------------------------------------------------------
-
+fprintf('\n%s\n', sepstr);
+fprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexPath, nexInfoFile));
+fprintf('%s\n', sepstr);
 % nexinfo
 load(fullfile(nexPath, nexInfoFile), 'nexInfo');
 
@@ -69,9 +71,8 @@ else
 	fprintf('\n%s\n', sepstr);
 	fprintf('Found %d channels in %s\n', length(plxvars), ...
 							fullfile(sortedPath, sortedFile))
-	fprintf('\n%s\n', sepstr);
 	for n = 1:length(plxvars)
-		fprintf('%s\n', plxvars{n});
+		fprintf('\t%s\n', plxvars{n});
 	end
 	fprintf('%s\n', sepstr);
 end
@@ -221,7 +222,11 @@ for f = 1:nexInfo.nFiles
 		valid_ts = (tmpTS >= sweepStartTime(s)) & (tmpTS < sweepEndTime(s));
 		spikesByStim{f}{s} = spikesByFile{f}(valid_ts, :);
 	end
-
+	tmp = assign_spikes_to_sweeps(spikesByFile{f}(:, TS_COL), ...
+												spikesByFile{f}, ...
+												nexInfo.sweepStartBin{f}, ...
+												nexInfo.sweepEndBin{f}, ...
+												nexInfo.Fs);
 end
 
 %% need to adjust spike times to start of each file
