@@ -209,31 +209,23 @@ end
 spikesByStim = cell(nexInfo.nFiles, 1);
 % loop through files
 for f = 1:nexInfo.nFiles
-	% get # of sweeps for this file
-	nsweeps = length(nexInfo.sweepStartBin{f});
-	% allocate cell to store spike info for each sweep
-	spikesByStim{f} = cell(nsweeps, 1);
-	% get timestamps for this file
-	tmpTS = spikesByFile{f}(:, TS_COL);
-	% get start and end times for the sweeps
-	sweepStartTime = (nexInfo.sweepStartBin{f} - 1) * (1/nexInfo.Fs);
-	sweepEndTime = (nexInfo.sweepEndBin{f} - 1) * (1/nexInfo.Fs);
-	for s = 1:nsweeps
-		valid_ts = (tmpTS >= sweepStartTime(s)) & (tmpTS < sweepEndTime(s));
-		spikesByStim{f}{s} = spikesByFile{f}(valid_ts, :);
-	end
-	tmp = assign_spikes_to_sweeps(spikesByFile{f}(:, TS_COL), ...
+	spikesByStim{f} = assign_spikes_to_sweeps(spikesByFile{f}(:, TS_COL), ...
 												spikesByFile{f}, ...
 												nexInfo.sweepStartBin{f}, ...
 												nexInfo.sweepEndBin{f}, ...
-												nexInfo.Fs);
+												nexInfo.Fs, ...
+												'original');
 end
 
-%% need to adjust spike times to start of each file
-%{
-for f = 1:nexInfo.nFiles
+%% need to adjust spike times to start of each sweep
 
+for f = 1:nexInfo.nFiles
 	% shift spike times to correspond to start of each data file
+	
+	% get offset to apply to timestamps (in seconds)
+	ts_offset = nexInfo.fileStartTime(f);
+	
+	for 
 	% make a local copy...
 	tmpS = spikesByFile{f}(:, TS_COL);
 	% ...and subtract fileStartTime in seconds from all time stamps
