@@ -44,11 +44,25 @@ classdef SpikeData
 		end
 		
 		function obj = addPlexonInfo(obj, plxInfo)
+			if ~isstruct(plxInfo)
+				error('need struct as input');
+			end
+			
+			% initialize info object
+			obj.Info = plxInfo;
 
 		end
 		
 		function obj = listChannels(obj)
 			
+		end
+		
+		function tbl = get.Spikes(obj)
+			tbl = obj.Spikes;
+		end
+		
+		function val = listUnits(obj)
+			val = unique(obj.Spikes.Unit);
 		end
 	end
 end
