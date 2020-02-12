@@ -1,11 +1,11 @@
-% function varargout = import_from_plexon(varargin)
+% function varargout = import_from_plexon_nonObj(varargin)
 %------------------------------------------------------------------------
 % import_from_plexon.m
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
 % working script for importing sorted data from plexon
-% uses objects
+% 
 %------------------------------------------------------------------------
 % See also: 
 %------------------------------------------------------------------------
@@ -14,8 +14,8 @@
 %  Sharad J. Shanbhag
 %	sshanbhag@neomed.edu
 %------------------------------------------------------------------------
-% Created: 12 February, 2020 (SJS)
-%	- adapted from import_from_plexon_nonObj
+% Created: 8 January, 2020 (SJS)
+%
 % Revisions:
 %------------------------------------------------------------------------
 % TO DO:
@@ -85,7 +85,7 @@ clear tmp;
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
-%% Plexon-exported sorted data:
+% Plexon-exported sorted data:
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 % Column 1: unit number (where 0 is unsorted)
@@ -171,10 +171,12 @@ nexInfo.fData.F
 %		Column 6: PCA3 weight
 %		Column 7-end : waveform
 % 
-
-% create object, add spikes
-S = SpikeData();
-S = S.addPlexonSpikes(spikesAll)
+[~, nc] = size(spikesAll);
+CHAN_COL = 1;
+UNIT_COL = 2;
+TS_COL = 3;
+PCA_COL = 4:6;
+WAV_COL = 7:nc;
 
 %% break up spiketimes by data file
 % use file Start/End time to do this
