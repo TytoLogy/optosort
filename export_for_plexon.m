@@ -254,7 +254,8 @@ nexInfo.sweepStartBin = cell(1, nFiles);
 nexInfo.sweepEndBin = cell(1, nFiles);
 % each file's sampling rate for neural data
 tmpFs = zeros(nFiles, 1);
-% cell array to hold sweep data
+% cell array to hold sweep data - this will be converted to a single
+% "vector" of values per channel that will be added to the .nex file
 cSweeps = cell(nFiles, 1);
 % struct to hold everything for each file
 fData = repmat(	struct(		'startSweepBin', {}, ...
@@ -265,7 +266,6 @@ fData = repmat(	struct(		'startSweepBin', {}, ...
 										'Dinf', [] ...
 								), ...
 						1, nFiles);
-
 
 %------------------------------------------------------------------------
 % Read data
@@ -366,18 +366,6 @@ else
 	nexInfo.Fs = Fs;
 end
 
-% % convert file start/end bins to times
-% fileStartTime = (fileStartBin - 1) ./ Fs;
-% fileEndTime = (fileEndBin - 1) ./ Fs;
-
-% % convert sweep bin cells to vectors... 
-% startBinVector = [sweepStartBin{:}];
-% endBinVector = [sweepEndBin{:}];
-% % ... and then to times... these will be written to the nex
-% % file as event timestamps
-% startTimes = (startBinVector - 1) ./ Fs;
-% endTimes = (endBinVector - 1) ./ Fs;
-
 %------------------------------------------------------------------------
 % convert (concatenate) cSweeps to vector for each channel, 
 % add to nex struct, create event times, add to nex struct, write to 
@@ -387,8 +375,6 @@ end
 % data struct.
 %------------------------------------------------------------------------
 sendmsg('Adding continuous and event data to nex struct:');
-
-
 fprintf('Exporting data to %s\n', fullfile(NexFilePath, NexFileName));
 
 % start new nex file data struct
@@ -436,39 +422,9 @@ writeNexFile(nD, fullfile(NexFilePath, NexFileName));
 % create output _nexinfo.mat file name - base is same as .nex file
 [~, nibase] = fileparts(NexFileName);
 NexinfoFileName = [nibase '_nexinfo.mat'];
-
-%{
-%%%% pre OOP
-% create nexInfo struct to hold sweep/file bin and time data
-nexInfo.NexFileName = NexFileName;
-% need to remove cSweeps from nexInfo copy of fData to save memory
-nexInfo.fData = rmfield(fData, 'cSweeps');
-nexInfo.nFiles = nFiles;
-nexInfo.Fs = Fs;
-nexInfo.sweepStartBin = sweepStartBin;
-nexInfo.sweepEndBin = sweepEndBin;
-nexInfo.fileStartBin = fileStartBin;
-nexInfo.fileEndBin = fileEndBin;
-nexInfo.startTimes = startTimes;
-nexInfo.endTimes = endTimes;
-nexInfo.fileStartTime = fileStartTime;
-nexInfo.fileEndTime = fileEndTime;
-nexInfo.Channels = Channels;
-%}
-
-% create nexInfo object (SpikeInfo) to hold sweep/file bin and time data
-% nexInfo = SpikeInfo();
-% nexInfo.FileName = NexFileName;
-% need to remove cSweeps from nexInfo copy of fData to save memory
+% assign fData to nexInfo.FileData
 nexInfo.FileData = fData;
-% nexInfo.Fs = Fs;
-% nexInfo.sweepStartBin = sweepStartBin;
-% nexInfo.sweepEndBin = sweepEndBin;
-% nexInfo.fileStartBin = fileStartBin;
-% nexInfo.fileEndBin = fileEndBin;
-% nexInfo.startBinVector = startBinVector;
-% nexInfo.endBinVector = endBinVector;
-
+% store filter info
 nexInfo.dataFilter = BPfilt;
 % save to matfile
 sendmsg(sprintf('Writing _nexinfo.mat file %s:', ...
