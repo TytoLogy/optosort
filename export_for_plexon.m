@@ -237,14 +237,21 @@ if isempty(NexFileName)
 end
 
 %------------------------------------------------------------------------
+% create nexInfo object (SpikeInfo) to hold sweep/file bin and time data
+%------------------------------------------------------------------------
+nexInfo = SpikeInfo();
+nexInfo.FileName = NexFileName;
+nexInfo.ADchannel = Channels;
+
+%------------------------------------------------------------------------
 % pre-allocate some things
 %------------------------------------------------------------------------
 % bins for start and end of each file's data
-fileStartBin = zeros(1, nFiles);
-fileEndBin = zeros(1, nFiles);
+nexInfo.fileStartBin = zeros(1, nFiles);
+nexInfo.fileEndBin = zeros(1, nFiles);
 % bins for all sweep starts and ends
-sweepStartBin = cell(1, nFiles);
-sweepEndBin = cell(1, nFiles);
+nexInfo.sweepStartBin = cell(1, nFiles);
+nexInfo.sweepEndBin = cell(1, nFiles);
 % each file's sampling rate for neural data
 tmpFs = zeros(nFiles, 1);
 % cell array to hold sweep data
@@ -258,6 +265,7 @@ fData = repmat(	struct(		'startSweepBin', {}, ...
 										'Dinf', [] ...
 								), ...
 						1, nFiles);
+
 
 %------------------------------------------------------------------------
 % Read data
@@ -316,20 +324,17 @@ for f = 1:nFiles
 	% store file information struct
 	fData(f).Dinf = Dinf;
 	% to avoid any issues, should make sure sample rates are consistent
-	% need in implement a check somehow.  this code doesn't work:
-	% if any(Dinf.indev.Fs ~= [fData(:).Dinf.indev.Fs])
-	%	error('Sample Rate Mismatch found!');
-	% end
+	% to do this, store list of sample rates and check once out of this loop
 	tmpFs(f) = fData(f).Dinf.indev.Fs;
 	
 	% calculate overall start and end bins for each file's data
 	if f == 1
-		fileStartBin(f) = fData(f).fileStartBin;
-		fileEndBin(f) = fData(f).fileEndBin;
+		nexInfo.fileStartBin(f) = fData(f).fileStartBin;
+		nexInfo.fileEndBin(f) = fData(f).fileEndBin;
 	else
 		% add 1 to prior end bin for start
-		fileStartBin(f) = fileEndBin(f-1) + 1;
-		fileEndBin(f) = fileStartBin(f) + fData(f).fileEndBin - 1;
+		nexInfo.fileStartBin(f) = nexInfo.fileEndBin(f-1) + 1;
+		nexInfo.fileEndBin(f) = nexInfo.fileStartBin(f) + fData(f).fileEndBin - 1;
 	end
 end
 
@@ -338,12 +343,14 @@ sendmsg('Building start and end sweep indices:');
 for f = 1:nFiles
 	% calculate start and end sweep bins for each file's data
 	if f == 1
-		sweepStartBin{f} = fData(f).startSweepBin{1};
-		sweepEndBin{f} = fData(f).endSweepBin{1};
+		nexInfo.sweepStartBin{f} = fData(f).startSweepBin{1};
+		nexInfo.sweepEndBin{f} = fData(f).endSweepBin{1};
 	else
 		% add previous file's final endSweepBin value as offset
-		sweepStartBin{f} = fData(f).startSweepBin{1} + sweepEndBin{f-1}(end);
-		sweepEndBin{f} = fData(f).endSweepBin{1} + sweepEndBin{f-1}(end);
+		nexInfo.sweepStartBin{f} = fData(f).startSweepBin{1} + ...
+												nexInfo.sweepEndBin{f-1}(end);
+		nexInfo.sweepEndBin{f} = fData(f).endSweepBin{1} + ...
+												nexInfo.sweepEndBin{f-1}(end);
 	end
 end
 
@@ -356,19 +363,20 @@ if ~all(tmpFs(1) == tmpFs)
 else
 	% store overall sample rate
 	Fs = tmpFs(1);
+	nexInfo.Fs = Fs;
 end
 
-% convert file start/end bins to times
-fileStartTime = (fileStartBin - 1) ./ Fs;
-fileEndTime = (fileEndBin - 1) ./ Fs;
+% % convert file start/end bins to times
+% fileStartTime = (fileStartBin - 1) ./ Fs;
+% fileEndTime = (fileEndBin - 1) ./ Fs;
 
-% convert sweep bin cells to vectors... 
-startBinVector = [sweepStartBin{:}];
-endBinVector = [sweepEndBin{:}];
-% ... and then to times... these will be written to the nex
-% file as event timestamps
-startTimes = (startBinVector - 1) ./ Fs;
-endTimes = (endBinVector - 1) ./ Fs;
+% % convert sweep bin cells to vectors... 
+% startBinVector = [sweepStartBin{:}];
+% endBinVector = [sweepEndBin{:}];
+% % ... and then to times... these will be written to the nex
+% % file as event timestamps
+% startTimes = (startBinVector - 1) ./ Fs;
+% endTimes = (endBinVector - 1) ./ Fs;
 
 %------------------------------------------------------------------------
 % convert (concatenate) cSweeps to vector for each channel, 
@@ -392,7 +400,7 @@ for c = 1:nChannels
 	% 	[# channels, (# sweeps) * (# samples per sweep)
 	cVector = cell(1, nFiles);
 	for f = 1:nFiles
-		cVector{1, f} = fData(f).cSweeps(c, :);
+		cVector{1, f} = cSweeps{f}(c, :);
 	end
 	% concatenate cell array, convert to vector, add to nex struct
 	% steps:
@@ -400,7 +408,7 @@ for c = 1:nChannels
 	%	tmpVector = cell2mat(tmp);
 	%  add to nex struct:
 	%	[nexFile] = nexAddContinuous( nexFile, startTime, adFreq, values, name)
-	nD = nexAddContinuous(nD, fileStartTime(1), Fs, ...
+	nD = nexAddContinuous(nD, nexInfo.fileStartTime(1), Fs, ...
 									cell2mat([cVector{:}]), ...
 									sprintf('spikechan_%d', Channels(c)));
 	% clear cVector to save memory
@@ -410,12 +418,12 @@ end
 % add start sweep time stamps as event - assume consistent across channels!
 %  [nexFile] = nexAddEvent( nexFile, timestamps, name )
 % events must be in column format...?
-nD = nexAddEvent(nD, force_col(startTimes), 'startsweep');
+nD = nexAddEvent(nD, force_col(nexInfo.startTimeVector), 'startsweep');
 % add end sweep time stamps as event - assume consistent across channels!
-nD = nexAddEvent(nD, force_col(endTimes), 'endsweep');
+nD = nexAddEvent(nD, force_col(nexInfo.endTimeVector), 'endsweep');
 % add file times
-nD = nexAddEvent(nD, force_col(fileStartTime), 'filestart');
-nD = nexAddEvent(nD, force_col(fileEndTime), 'fileend');
+nD = nexAddEvent(nD, force_col(nexInfo.fileStartTime), 'filestart');
+nD = nexAddEvent(nD, force_col(nexInfo.fileEndTime), 'fileend');
 
 sendmsg(sprintf('Writing nex file %s:', fullfile(NexFilePath, NexFileName)));
 % write to nexfile
@@ -449,19 +457,19 @@ nexInfo.Channels = Channels;
 %}
 
 % create nexInfo object (SpikeInfo) to hold sweep/file bin and time data
-nexInfo = SpikeInfo();
-nexInfo.FileName = NexFileName;
+% nexInfo = SpikeInfo();
+% nexInfo.FileName = NexFileName;
 % need to remove cSweeps from nexInfo copy of fData to save memory
-nexInfo.FileData = rmfield(fData, 'cSweeps');
-nexInfo.Fs = Fs;
-nexInfo.sweepStartBin = sweepStartBin;
-nexInfo.sweepEndBin = sweepEndBin;
-nexInfo.fileStartBin = fileStartBin;
-nexInfo.fileEndBin = fileEndBin;
-nexInfo.startBinVector = startBinVector;
-nexInfo.endBinVector = endBinVector;
-nexInfo.ADchannel = Channels;
+nexInfo.FileData = fData;
+% nexInfo.Fs = Fs;
+% nexInfo.sweepStartBin = sweepStartBin;
+% nexInfo.sweepEndBin = sweepEndBin;
+% nexInfo.fileStartBin = fileStartBin;
+% nexInfo.fileEndBin = fileEndBin;
+% nexInfo.startBinVector = startBinVector;
+% nexInfo.endBinVector = endBinVector;
 
+nexInfo.dataFilter = BPfilt;
 % save to matfile
 sendmsg(sprintf('Writing _nexinfo.mat file %s:', ...
 											fullfile(NexFilePath, NexinfoFileName)));

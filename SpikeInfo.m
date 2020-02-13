@@ -86,7 +86,7 @@ classdef SpikeInfo
 		% # of files merged into nex file
 		%-------------------------------------------------
 		function val = get.nFiles(obj)
-			val = length(obj.DataFiles);
+			val = length(obj.FileData);
 		end
 		%-------------------------------------------------
 		% fileStart, end Time computed from bins
@@ -96,6 +96,14 @@ classdef SpikeInfo
 		end
 		function val = get.fileEndTime(obj)
 			val = (1/obj.Fs) * (obj.fileEndBin - 1);
+		end
+		
+		% convert sweep bin cells to vectors... 
+		function val = get.startBinVector(obj)
+			val = [obj.sweepStartBin{:}];
+		end
+		function val = get.endBinVector(obj)
+			val = [obj.sweepEndBin{:}];
 		end
 		%-------------------------------------------------
 		% sweep Start, end Time computed from bins
