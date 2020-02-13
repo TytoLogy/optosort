@@ -16,6 +16,9 @@ classdef OptoFileName
 	end
 	
 	methods
+		%-------------------------------------------------
+		% Constructor
+		%-------------------------------------------------
 		function obj = OptoFileName(varargin)
 			if isempty(varargin)
 				return
@@ -31,6 +34,18 @@ classdef OptoFileName
 			obj.penetration = f.penetration;
 			obj.depth = f.depth;
 			obj.other = f.other;
+		end
+		
+		%-------------------------------------------------
+		% return base name without "other" (test name), e.g.
+		%	1372_20191126_03_01_1500
+		%-------------------------------------------------
+		function val = fileWithoutOther(obj)
+			val = [	obj.animal '_' ...
+								obj.datecode '_' ...
+								obj.unit '_' ...
+								obj.penetration '_' ...
+								obj.depth ];
 		end
 	end
 end

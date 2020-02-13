@@ -234,9 +234,7 @@ sweepEndBin = cell(1, nFiles);
 % each file's sampling rate for neural data
 tmpFs = zeros(nFiles, 1);
 % struct to hold everything for each file
-fData = repmat(	struct(		'DataPath', '', ...
-										'DataFile', '', ...
-										'cSweeps', {}, ...
+fData = repmat(	struct(		'cSweeps', {}, ...
 										'startSweepBin', {}, ...
 										'endSweepBin', {}, ...
 										'sweepLen', [], ...
@@ -351,12 +349,12 @@ fileStartTime = (fileStartBin - 1) ./ Fs;
 fileEndTime = (fileEndBin - 1) ./ Fs;
 
 % convert sweep bin cells to vectors... 
-startBins = [sweepStartBin{:}];
-endBins = [sweepEndBin{:}];
+startBinVector = [sweepStartBin{:}];
+endBinVector = [sweepEndBin{:}];
 % ... and then to times... these will be written to the nex
 % file as event timestamps
-startTimes = (startBins - 1) ./ Fs;
-endTimes = (endBins - 1) ./ Fs;
+startTimes = (startBinVector - 1) ./ Fs;
+endTimes = (endBinVector - 1) ./ Fs;
 
 %------------------------------------------------------------------------
 % convert (concatenate) cSweeps to vector for each channel, 
@@ -373,20 +371,10 @@ sendmsg('Adding continuous and event data to nex struct:');
 if isempty(NexFileName)
 	if nFiles > 1
 		% append MERGE to filename
-		NexFileName = [	fData(1).F.animal '_' ...
-								fData(1).F.datecode '_' ...
-								fData(1).F.unit '_' ...
-								fData(1).F.penetration '_' ...
-								fData(1).F.depth '_' ...
+		NexFileName = [	fData(1).F.fileWithoutOther '_' ...
 								'MERGE.nex'];
 	else
-		NexFileName = [	fData(1).F.animal '_' ...
-								fData(1).F.datecode '_' ...
-								fData(1).F.unit '_' ...
-								fData(1).F.penetration '_' ...
-								fData(1).F.depth '_' ...
-								fData(1).F.other ...
-								'.nex'];
+		NexFileName = [	fData(1).F.base '.nex'];
 	end
 end
 fprintf('Exporting data to %s\n', fullfile(NexFilePath, NexFileName));
@@ -430,13 +418,15 @@ sendmsg(sprintf('Writing nex file %s:', fullfile(NexFilePath, NexFileName)));
 writeNexFile(nD, fullfile(NexFilePath, NexFileName));
 
 %------------------------------------------------------------------------
-% write useful information to _nexinfo.mat file
+% write useful information to _nexinfo.mat file 
 %------------------------------------------------------------------------
 
 % create output _nexinfo.mat file name - base is same as .nex file
 [~, nibase] = fileparts(NexFileName);
 NexinfoFileName = [nibase '_nexinfo.mat'];
 
+%{
+%%%% pre OOP
 % create nexInfo struct to hold sweep/file bin and time data
 nexInfo.NexFileName = NexFileName;
 % need to remove cSweeps from nexInfo copy of fData to save memory
@@ -452,6 +442,21 @@ nexInfo.endTimes = endTimes;
 nexInfo.fileStartTime = fileStartTime;
 nexInfo.fileEndTime = fileEndTime;
 nexInfo.Channels = Channels;
+%}
+
+% create nexInfo object (SpikeInfo) to hold sweep/file bin and time data
+nexInfo = SpikeInfo();
+nexInfo.FileName = NexFileName;
+% need to remove cSweeps from nexInfo copy of fData to save memory
+nexInfo.FileData = rmfield(fData, 'cSweeps');
+nexInfo.Fs = Fs;
+nexInfo.sweepStartBin = sweepStartBin;
+nexInfo.sweepEndBin = sweepEndBin;
+nexInfo.fileStartBin = fileStartBin;
+nexInfo.fileEndBin = fileEndBin;
+nexInfo.startBinVector = startBinVector;
+nexInfo.endBinVector = endBinVector;
+nexInfo.ADchannel = Channels;
 
 % save to matfile
 sendmsg(sprintf('Writing _nexinfo.mat file %s:', ...
@@ -505,24 +510,6 @@ function varargout = defineSampleData(varargin)
 	else
 		error('%s->defineSampleData: invalid inputs', mfilename)
 	end
-
-	%{ 
-	%%%%%% OLD pre obj
-	% loop through # of data files
-	for f = 1:length(DataFile)
-		tmpF = parse_opto_filename(DataFile{f});
-		if length(DataPath) == 1
-			% only 1 element in DataPath so assume all data files are on this
-			% path
-			tmpF.path = DataPath{1};
-		else
-			tmpF.path = DataPath{f};
-		end
-		tmpF.file = DataFile{f}; 
-		tmpF.testfile = TestFile{f}; 
-		F(f) = tmpF; %#ok<AGROW>
-	end
-	%}
 
 	% loop through # of data files, create file objects
 	for f = 1:length(DataFile)
