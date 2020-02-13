@@ -1,6 +1,6 @@
 function varargout = export_for_plexon(varargin)
 %------------------------------------------------------------------------
-% [nD, nexInfo] = export_for_plexon(exportInfo)
+% [nD, nexInfo] = export_for_plexon(DataFileStruct)
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
@@ -16,62 +16,8 @@ function varargout = export_for_plexon(varargin)
 %	With no inputs provided, a dialog will open to specify a file with a 
 %	list of .dat files to process (not yet implemented!!!!)
 %
-% exportInfo	data file and options struct
-%	see exportTest.m for examples
-%
-%----------------------
-% 	Fields:
-%----------------------
-% 	exportInfo.DataPath: 
-% 	 Path(s) to data files
-% 		can specify individual file paths in a cell array...
-% 			exportInfo.DataPath = {'~/Work/Data/TestData/MT_IC';
-% 							'~/Work/Data/TestData/MT_IC'; ...
-% 							'~/Work/Data/TestData/MT_IC'; };
-% 		or single path that applies to all files specified:
-% 			exportInfo.DataPath = '~/Work/Data/TestData/MT_IC';
-% 			exportInfo.DataPath = 
-% 								'/Volumes/Wenstrup Laboratory/By User/SJS/Data/SpikeSort';
-% 
-% 	exportInfo.DataFile:
-% 	 list (cell array) of data files to export (and merge)
-% 		exportInfo.DataFile = {'1372_20191126_03_01_1500_FREQ_TUNING.dat'; ...
-% 						'1372_20191126_03_01_1500_BBN.dat'; ...
-% 						'1372_20191126_03_01_1500_FRA.dat'; ...
-% 						'1372_20191126_03_01_1500_WAV.dat'; };
-% 
-% 	exportInfo.TestFile:
-% 	 list (cell array) of test data files corresponding to DataFiles;
-%		exportInfo.TestFile = {'1372_20191126_03_01_1500_FREQ_TUNING_testdata.mat'; ...
-% 										'1372_20191126_03_01_1500_BBN_testdata.mat'; ...
-% 										'1372_20191126_03_01_1500_FRA_testdata.mat'; ...
-% 										''; };
-% 
-%	exportInfo.OutputPath, exportInfo.OutputFile
-% 	 you can specify an output path and nex file name, or just leave blank
-% 	 and export_plexon_data will create one in current directory
-% 		exportInfo.OutputPath = exportOpts.DataPath;
-% 		exportInfo.OutputFile = '1372_20191126_03_01_1500_test.nex';
-% 
-%	exportInfo.Channels:
-% 	 neural A/D channels to export from data file(s). 
-% 	 note that channels must be consistent across all the data files to be
-% 	 merged in the exported file!
-% 	 If blank, all channels present in file will be included
-% 		exportInfo.Channels = [11 9 14];
-% 
-% 	exportInfo.BPfilt:
-% 	 specifies filter for processing output data.
-% 	 if blank/unspecified, no filter will be applied to data
-% 		[highpass lowpass] cutoff frequencies in Hz:
-% 		 exportOpts.BPfilt.Fc = [300 4000];
-% 		order of filter. note that the filtfilt() function in MATLAB is used,
-% 		so the effective order is doubled. typically use 5:
-% 		 exportOpts.BPfilt.forder = 5;
-% 		ramp time (ms) to apply to each sweep in order to cutdown on onset/offset
-% 		transients from filtering:
-% 		 exportOpts.BPfilt.ramp = 1;
-% 
+% DataFileStruct	<file with list of data files.m>
+%	see exportTest.m for example
 %
 % Output Arguments:
 % 	nD		NeuroExplorer nex data struct written to output file
@@ -98,7 +44,6 @@ function varargout = export_for_plexon(varargin)
 %
 % Revisions:
 %	15 Jan 2020 (SJS): added documentation, writing info to .mat file
-%	12 Feb 2020 (SJS): revising for object oriented storage
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -110,8 +55,9 @@ sepstr = '----------------------------------------------------';
 NEX_UTIL_PATH = ['~/Work/Code/Matlab/stable/Toolbox/NeuroExplorer' ...
 					'/HowToReadAndWriteNexAndNex5FilesInMatlab'];
 % filter info
-defaultFilter = [];
-
+defaultFilter.Fc = [300 4000];
+defaultFilter.forder = 5;
+defaultFilter.ramp = 1;
 %------------------------------------------------------------------------
 % Setup
 %------------------------------------------------------------------------
@@ -223,8 +169,11 @@ fprintf('Animal: %s\n', F(1).animal);
 nChannels = length(Channels);
 
 %------------------------------------------------------------------------
-% pre-allocate some things
+% Read data
 %------------------------------------------------------------------------
+sendmsg('Reading data');
+
+% allocate some things
 % bins for start and end of each file's data
 fileStartBin = zeros(1, nFiles);
 fileEndBin = zeros(1, nFiles);
@@ -246,17 +195,13 @@ fData = repmat(	struct(		'DataPath', '', ...
 								), ...
 						1, nFiles);
 
-%------------------------------------------------------------------------
-% Read data
-%------------------------------------------------------------------------
-sendmsg('Reading data');
-
-
 % loop through files
 for f = 1:nFiles
-	% save file info object for current data file
+	% save parse file info
 	fData(f).F = F(f);
-	
+	% save data path and file... these are redundant!
+	fData(f).DataPath = F(f).path;
+	fData(f).DataFile = F(f).file;
 	% get data for each file and channel and convert to row vector format
 	% algorithm:
 	%		(1) put each sweep for this channel in a {1, # sweeps} cell array
@@ -264,20 +209,21 @@ for f = 1:nFiles
 	%		(2) make a note of the length of each sweep to use for
 	%				markers/timestamps
 	%		(3) after cSweeps is built, convert to a row vector using cell2mat
-
+	% 
+	% read in data
 	% use readOptoData to read in raw data. 
 	[D, Dinf] = readOptoData(fullfile(F(f).path, F(f).file));
 	% Fix test info
 	Dinf = correctTestType(Dinf);
-
+% 	% store file info
+% 	fData(f).DataPath = DataPath;
+% 	fData(f).DataFile = DataFile{f};
 	% build filter for neural data
-	if ~isempty(BPfilt)
-		BPfilt.Fs = Dinf.indev.Fs;
-		BPfilt.Fnyq = Dinf.indev.Fs / 2;
-		BPfilt.cutoff = BPfilt.Fc / BPfilt.Fnyq;
-		[BPfilt.b, BPfilt.a] = butter(BPfilt.forder, BPfilt.cutoff, 'bandpass');
-	end
-	
+	BPfilt.Fs = Dinf.indev.Fs;
+	BPfilt.Fnyq = Dinf.indev.Fs / 2;
+	BPfilt.cutoff = BPfilt.Fc / BPfilt.Fnyq;
+	[BPfilt.b, BPfilt.a] = butter(BPfilt.forder, BPfilt.cutoff, 'bandpass');
+
 	% check to make sure consistent # of sweeps (aka trials)
 	if Dinf.nread ~= length(D)
 		error('%s: mismatch in Dinf.nread (%d) and length(D) (%d)', ...
@@ -292,7 +238,7 @@ for f = 1:nFiles
 	% check the start and end sweep bin data for consistency
 	if check_sweeps(fData(f).startSweepBin)
 		warning(['File %s: Inconsistent startSweepBin' ...
-							'values across channels!!!!'], fData(f).F.file);
+							'values across channels!!!!'], fData(f).DataFile);
 	end
 	if check_sweeps(fData(f).endSweepBin)
 		warning('Inconsistent endSweepBin values across channels!!!!');
@@ -350,11 +296,10 @@ end
 fileStartTime = (fileStartBin - 1) ./ Fs;
 fileEndTime = (fileEndBin - 1) ./ Fs;
 
-% convert sweep bin cells to vectors... 
+% convert sweep bin cells to vectors...
 startBins = [sweepStartBin{:}];
 endBins = [sweepEndBin{:}];
-% ... and then to times... these will be written to the nex
-% file as event timestamps
+% ... and then to times
 startTimes = (startBins - 1) ./ Fs;
 endTimes = (endBins - 1) ./ Fs;
 
@@ -506,8 +451,6 @@ function varargout = defineSampleData(varargin)
 		error('%s->defineSampleData: invalid inputs', mfilename)
 	end
 
-	%{ 
-	%%%%%% OLD pre obj
 	% loop through # of data files
 	for f = 1:length(DataFile)
 		tmpF = parse_opto_filename(DataFile{f});
@@ -522,21 +465,6 @@ function varargout = defineSampleData(varargin)
 		tmpF.testfile = TestFile{f}; 
 		F(f) = tmpF; %#ok<AGROW>
 	end
-	%}
-
-	% loop through # of data files, create file objects
-	for f = 1:length(DataFile)
-		if length(DataPath) == 1
-			% only 1 element in DataPath so assume all data files are on this
-			% path
-			F(f) = OptoFileName(fullfile(DataPath{1}, DataFile{f})); %#ok<AGROW>
-		else
-			F(f) = OptoFileName(fullfile(DataPath{f}, DataFile{f})); %#ok<AGROW>
-		end
-		F(f).testfile = TestFile{f};  %#ok<AGROW>
-	end	
-	
-	% assign outputs
 	varargout{1} = F;
 	if nargout == 2
 		varargout{2} = Channels;

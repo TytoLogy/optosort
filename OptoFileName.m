@@ -5,7 +5,7 @@ classdef OptoFileName
 	properties
 		file
 		path
-		testdata_file
+		testfile
 		base
 		animal
 		datecode
