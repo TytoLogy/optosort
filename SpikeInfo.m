@@ -25,6 +25,7 @@ classdef SpikeInfo
 		startBinVector
 		endBinVector
 		ADchannel
+		dataFilter
 	end	% END properties (main)
 	properties (Dependent)
 		fileStartTime

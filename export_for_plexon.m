@@ -223,6 +223,20 @@ fprintf('Animal: %s\n', F(1).animal);
 nChannels = length(Channels);
 
 %------------------------------------------------------------------------
+% If not provided, create output .nex file name - adjust depending on # of files
+%	assume data from first file is consistent with others!!!!!!!!!
+%------------------------------------------------------------------------
+if isempty(NexFileName)
+	if nFiles > 1
+		% append MERGE to filename
+		NexFileName = [	F(1).fileWithoutOther '_' ...
+								'MERGE.nex'];
+	else
+		NexFileName = [	F(1).base '.nex'];
+	end
+end
+
+%------------------------------------------------------------------------
 % pre-allocate some things
 %------------------------------------------------------------------------
 % bins for start and end of each file's data
@@ -233,9 +247,10 @@ sweepStartBin = cell(1, nFiles);
 sweepEndBin = cell(1, nFiles);
 % each file's sampling rate for neural data
 tmpFs = zeros(nFiles, 1);
+% cell array to hold sweep data
+cSweeps = cell(nFiles, 1);
 % struct to hold everything for each file
-fData = repmat(	struct(		'cSweeps', {}, ...
-										'startSweepBin', {}, ...
+fData = repmat(	struct(		'startSweepBin', {}, ...
 										'endSweepBin', {}, ...
 										'sweepLen', [], ...
 										'fileStartBin', [], ...
@@ -248,7 +263,6 @@ fData = repmat(	struct(		'cSweeps', {}, ...
 % Read data
 %------------------------------------------------------------------------
 sendmsg('Reading data');
-
 
 % loop through files
 for f = 1:nFiles
@@ -284,7 +298,7 @@ for f = 1:nFiles
 	
 	% build into sweeps by channel format
 	fprintf('Test type: %s\n', Dinf.test.Type);
-	[fData(f).cSweeps, ...
+	[cSweeps{f}, ...
 		fData(f).startSweepBin, fData(f).endSweepBin, fData(f).sweepLen] = ...
 					buildChannelData(Channels, BPfilt, D, Dinf);
 	% check the start and end sweep bin data for consistency
@@ -366,17 +380,7 @@ endTimes = (endBinVector - 1) ./ Fs;
 %------------------------------------------------------------------------
 sendmsg('Adding continuous and event data to nex struct:');
 
-% If not provided, create output .nex file name - adjust depending on # of files
-%	assume data from first file is consistent with others!!!!!!!!!
-if isempty(NexFileName)
-	if nFiles > 1
-		% append MERGE to filename
-		NexFileName = [	fData(1).F.fileWithoutOther '_' ...
-								'MERGE.nex'];
-	else
-		NexFileName = [	fData(1).F.base '.nex'];
-	end
-end
+
 fprintf('Exporting data to %s\n', fullfile(NexFilePath, NexFileName));
 
 % start new nex file data struct
