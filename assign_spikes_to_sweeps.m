@@ -1,5 +1,6 @@
 function varargout = assign_spikes_to_sweeps(allSpikes, ...
-													sweepStartBins, sweepEndBins, Fs, ...
+													sweepStartBins, sweepEndBins, ...
+													unit, Fs, ...
 													varargin)
 %------------------------------------------------------------------------
 % 
@@ -27,6 +28,9 @@ function varargout = assign_spikes_to_sweeps(allSpikes, ...
 % 			 .
 % 			 .
 % 			 sweepStartBins(n)  sweepEndBins(n) ]
+%
+%	unit
+%		unit ID to return.  if empty, all units will be returned.
 % 	Fs	sample rate for spike data (samples/second)
 %	
 %	Optional:
@@ -51,7 +55,8 @@ function varargout = assign_spikes_to_sweeps(allSpikes, ...
 %           - pulled code out from import_from_plexon.m
 %				- removed ts as input
 % Revisions:
-%
+%	14 Feb 2020 (SJS): added channel
+%	deprecated - subsumed algorithm into SpikeData object methods
 %------------------------------------------------------------------------
 % TO DO:
 %--------------------------------------------------------------------------
@@ -61,7 +66,7 @@ function varargout = assign_spikes_to_sweeps(allSpikes, ...
 %--------------------------------------------------------------------------
 [~, nc] = size(allSpikes);
 CHAN_COL = 1; %#ok<NASGU>
-UNIT_COL = 2; %#ok<NASGU>
+UNIT_COL = 2; 
 TS_COL = 3;
 PCA_COL = 4:6; %#ok<NASGU>
 WAV_COL = 7:nc; %#ok<NASGU>
@@ -76,7 +81,7 @@ else
 		error('%s: unknown align option %s', varargin{1})
 	else
 		ALIGN = lower(varargin{1});
-	end;
+	end
 end
 
 % get # of sweeps
@@ -111,6 +116,10 @@ end
 
 % allocate cell to store spike info for each sweep
 spikesBySweep = cell(nsweeps, 1);
+% isolate unit
+if ~isempty(unit)
+	allSpikes = allSpikes(allSpikes(:, UNIT_COL) == unit, :);
+end
 % local copy of ts
 ts = allSpikes(:, TS_COL);
 

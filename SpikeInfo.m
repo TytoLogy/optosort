@@ -92,6 +92,11 @@ classdef SpikeInfo
 				clear tmpStruct
 			end
 		end
+		
+		function val = nChannels(obj)
+			val = length(obj.ADchannel);
+		end
+		
 		%-------------------------------------------------
 		%-------------------------------------------------
 		% access for dependent properties

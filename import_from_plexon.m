@@ -185,51 +185,70 @@ TS_COL = 3;
 PCA_COL = 4:6;
 WAV_COL = 7:nc;
 
-spikesByFile = cell(S.Info.nFiles, 1);
+sbf = cell(S.Info.nFiles, 1);
 
 for f = 1:S.Info.nFiles
 	% could use between() function, but using something explicit here for
 	% clarity
 	valid_ts = (spikesAll(:, TS_COL) >= S.Info.fileStartTime(f)) & ...
 					(spikesAll(:, TS_COL) <= S.Info.fileEndTime(f));
-	spikesByFile{f} = spikesAll(valid_ts, :);
+	sbf{f} = spikesAll(valid_ts, :);
 end
 
-% try with object
-sf = cell(S.Info.nFiles, 1);
-
+%% try with object
+spikesByFile = cell(S.Info.nFiles, 1);
 for f = 1:S.Info.nFiles
-	sf{f} = S.spikesForFile(f);
+	spikesByFile{f} = S.spikesForFile(f);
 end
-
-
-%{
-for f = 1:nexInfo.nFiles
-
-	% shift spike times to correspond to start of each data file
-	% make a local copy...
-	tmpS = spikesByFile{f}(:, TS_COL);
-	% ...and subtract fileStartTime in seconds from all time stamps
-	tmpS = tmpS - nexInfo.fileStartTime(f);
-	% put back into spikes ByFile
-	spikesByFile{f}(:, TS_COL) = tmpS;
-end
-%}
 
 %% N next step: assign spike times to appropriate sweeps/stimuli
+
+% ORIG
 % store spikes for each file in spikes ByStim
-spikesByStim = cell(nexInfo.nFiles, 1);
+sbs = cell(S.Info.nFiles, 1);
 % loop through files
-for f = 1:nexInfo.nFiles
-	spikesByStim{f} = assign_spikes_to_sweeps(spikesByFile{f}, ...
-												nexInfo.sweepStartBin{f}, ...
-												nexInfo.sweepEndBin{f}, ...
-												nexInfo.Fs, ...
+for f = 1:S.Info.nFiles
+	sbs{f} = assign_spikes_to_sweeps(spikesByFile{f}, ...
+												S.Info.sweepStartBin{f}, ...
+												S.Info.sweepEndBin{f}, ...
+												1, ...
+												S.Info.Fs, ...
 												'sweep');
 end
-spikesOrig{end}(:, TS_COL), spikesByStim{end}{end}(:, TS_COL)
 
-spikesByStim{end}{3}(:, TS_COL)
+%% OBJ - by unit
+unitID = S.listUnits;
+nunits = S.nUnits;
+% store spikes for each file in spikes ByStim, all units
+spikesBySweepAndUnit = cell(S.Info.nFiles, nunits);
+% loop through files
+for f = 1:S.Info.nFiles
+	% loop through units
+	for u = 1:nunits
+		spikesBySweepAndUnit{f, u} = S.spikesForAnalysis(f, unitID(u), 'sweep');
+	end
+end
+
+%% OBJ - don't separate by unit - can do posthoc
+% store spikes for each file in spikes ByStim, all units
+spikesBySweep = cell(S.Info.nFiles, 1);
+% loop through files
+for f = 1:S.Info.nFiles
+		spikesBySweep{f} = S.spikesForAnalysis(f, 'sweep');
+end
+
+%%
+% convert to timestamps
+tsBySweep = cell(S.Info.nFiles, nunits);
+
+% loop through files
+for f = 1:S.Info.nFiles
+	% loop through units
+	for u = 1:nunits
+		% extract timestamp data from each table, store in 
+		spikesBySweep{f, u} = S.spikesForAnalysis(f, unitID(u), 'sweep');
+	end
+end
 %% need to adjust spike times to start of each sweep
 %{
 for f = 1:nexInfo.nFiles
