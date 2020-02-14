@@ -50,13 +50,16 @@ classdef SpikeInfo
 				return
 			end
 			if length(varargin) == 2
-				if strcmpi(varargin{2}, 'nexInfo')
-					obj = obj.initFromNexInfo(varargin{1});
+				if strcmpi(varargin{1}, 'struct')
+					% this might be deprecated/removed in future
+					obj = obj.initFromNexInfoStruct(varargin{2});
+				elseif strcmpi(varargin{1}, 'file')
+					obj = obj.initFromNexInfoFile(varargin{2});
 				else
 					error('Unknown input type %s', varargin{1});
 				end
 			else
-				error('need both input struct and ID string');
+				error('need both input mode and input value');
 			end
 		end
 
@@ -69,7 +72,7 @@ classdef SpikeInfo
 		%-------------------------------------------------
 		% initialize from NexInfo struct... remove????
 		%-------------------------------------------------
-		function obj = initFromNexInfo(obj, nexInfo)
+		function obj = initFromNexInfoStruct(obj, nexInfo)
 			obj.FileName = nexInfo.NexFileName;
 			obj.Fs = nexInfo.Fs;
 			obj.sweepStartBin = nexInfo.sweepStartBin;
@@ -80,7 +83,14 @@ classdef SpikeInfo
 		
 		function obj = initFromNexInfoFile(obj, nexInfoFileName)
 % 			obj = load(nexInfoFileName, 'nexInfo');
-			obj = load(nexInfoFileName);
+%			obj = load(nexInfoFileName);
+			if ~exist(nexInfoFileName, 'file')
+				error('nexinfo file %s not found', nexInfoFileName);
+			else
+				tmpStruct = load(nexInfoFileName, 'nexInfo');
+				obj = tmpStruct.nexInfo;
+				clear tmpStruct
+			end
 		end
 		%-------------------------------------------------
 		%-------------------------------------------------

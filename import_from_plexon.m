@@ -166,17 +166,15 @@ fprintf('\n%s\n', sepstr);
 fprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexPath, nexInfoFile));
 fprintf('%s\n', sepstr);
 % nexinfo
-S.Info = load(fullfile(nexPath, nexInfoFile), 'nexInfo');
-
+S.Info = SpikeInfo('file', fullfile(nexPath, nexInfoFile));
 
 % add spikes
 % for now, just load the first channel data - need to figure out a way to
 % deal with multiple channels (array of SpikeData objects?)
 tmp = load(fullfile(sortedPath, sortedFile), '-MAT', plxvars{1});
-S = S.addPlexonSpikes(tmp.(plxvars{1}));
+smat = tmp.(plxvars{1});
+S = S.addPlexonSpikes(tmp.(plxvars{1}), plxvars{1});
 clear tmp;
-
-
 
 %% break up spiketimes by data file
 % use file Start/End time to do this
