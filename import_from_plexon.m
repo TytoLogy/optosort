@@ -172,22 +172,36 @@ S.Info = SpikeInfo('file', fullfile(nexPath, nexInfoFile));
 % for now, just load the first channel data - need to figure out a way to
 % deal with multiple channels (array of SpikeData objects?)
 tmp = load(fullfile(sortedPath, sortedFile), '-MAT', plxvars{1});
-smat = tmp.(plxvars{1});
+spikesAll = tmp.(plxvars{1});
 S = S.addPlexonSpikes(tmp.(plxvars{1}), plxvars{1});
 clear tmp;
 
 %% break up spiketimes by data file
 % use file Start/End time to do this
+[~, nc] = size(spikesAll);
+CHAN_COL = 1;
+UNIT_COL = 2;
+TS_COL = 3;
+PCA_COL = 4:6;
+WAV_COL = 7:nc;
 
-spikesByFile = cell(nexInfo.nFiles, 1);
+spikesByFile = cell(S.Info.nFiles, 1);
 
-for f = 1:nexInfo.nFiles
+for f = 1:S.Info.nFiles
 	% could use between() function, but using something explicit here for
 	% clarity
-	valid_ts = (spikesAll(:, TS_COL) >= nexInfo.fileStartTime(f)) & ...
-					(spikesAll(:, TS_COL) <= nexInfo.fileEndTime(f));
+	valid_ts = (spikesAll(:, TS_COL) >= S.Info.fileStartTime(f)) & ...
+					(spikesAll(:, TS_COL) <= S.Info.fileEndTime(f));
 	spikesByFile{f} = spikesAll(valid_ts, :);
 end
+
+% try with object
+sf = cell(S.Info.nFiles, 1);
+
+for f = 1:S.Info.nFiles
+	sf{f} = S.spikesForFile(f);
+end
+
 
 %{
 for f = 1:nexInfo.nFiles

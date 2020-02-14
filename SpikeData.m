@@ -40,12 +40,6 @@ classdef SpikeData
 			% define variable names
 			vNames = {'Channel', 'Unit', 'TS', 'PCA', 'Wave'};
 			vUnits = {'', '', 'seconds', '', 'mV'};
-% 			obj.Spikes = table(	plxSpikes(:, CHAN_COL), ...
-% 										plxSpikes(:, UNIT_COL), ...
-% 										plxSpikes(:, TS_COL), ...
-% 										num2cell(plxSpikes(:, PCA_COL), 2), ...
-% 										num2cell(plxSpikes(:, WAV_COL), 2), ...
-% 										'VariableNames', vNames );
 			obj.Spikes = table(	plxSpikes(:, CHAN_COL), ...
 										plxSpikes(:, UNIT_COL), ...
 										plxSpikes(:, TS_COL), ...
@@ -59,6 +53,9 @@ classdef SpikeData
 			end
 		end
 		
+		%-------------------------------------------------------
+		% assign plexon information obj (SpikeInfo obj) 
+		%-------------------------------------------------------
 		function obj = addPlexonInfo(obj, plxInfo)
 			if ~isstruct(plxInfo)
 				error('need struct as input');
@@ -67,8 +64,10 @@ classdef SpikeData
 			obj.Info = plxInfo;
 		end
 		
+		%-------------------------------------------------------
+		% return a list of unique channels in the Spikes Table
+		%-------------------------------------------------------
 		function val = listChannels(obj)
-			% return a list of unique channels in the Spikes Table
 			% two ways to do this:
 			%	val = unique(obj.Spikes{:, 'Channel'});
 			% or
@@ -76,14 +75,21 @@ classdef SpikeData
 			val = unique(obj.Spikes.Channel);
 		end
 		
+		%-------------------------------------------------------
+		% return vector of unique unit numbers
+		%-------------------------------------------------------
 		function val = listUnits(obj)
 			val = unique(obj.Spikes.Unit);
 		end
+		
 		
 		function tbl = get.Spikes(obj)
 			tbl = obj.Spikes;
 		end
 		
+		%-------------------------------------------------------
+		% get table of spikes for a specific unit
+		%-------------------------------------------------------
 		function tbl = spikesForUnit(obj, unit_num)
 			% check unit_num
 			if ~any(unit_num == obj.listUnits)
@@ -95,6 +101,9 @@ classdef SpikeData
 			end
 		end
 		
+		%-------------------------------------------------------
+		% get spikes for a specific file
+		%-------------------------------------------------------
 		function tbl = spikesForFile(obj, fIndx)
 			if ~between(fIndx, 1, obj.Info.nFiles)
 				error('requested file %d out of range [1 %d]', ...
