@@ -1,6 +1,7 @@
 classdef SpikeInfo
 	properties
-		% FileName		nex file name
+		% FileName		nex file name (include path)
+		% InfoFileName	nexinfo filename (incluedes path)
 		% FileData		struct array of information for each file
 		%array of OptoFileName objects holding .dat file info
 		% Fs				samples/sec for data
@@ -16,6 +17,7 @@ classdef SpikeInfo
 		% endBinVector	[total # sweeps, 1] sample for end of each sweep
 		% ADchannel		list of AD channels exported within .nex file
 		FileName
+		InfoFileName
 		FileData
 		Fs
 		sweepStartBin = {};
@@ -76,6 +78,10 @@ classdef SpikeInfo
 			obj.fileEndBin = nexInfo.fileEndBin;
 		end
 		
+		function obj = initFromNexInfoFile(obj, nexInfoFileName)
+% 			obj = load(nexInfoFileName, 'nexInfo');
+			obj = load(nexInfoFileName);
+		end
 		%-------------------------------------------------
 		%-------------------------------------------------
 		% access for dependent properties

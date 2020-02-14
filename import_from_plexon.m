@@ -43,7 +43,7 @@ sortedFile = '1382_20191212_02_02_3200.mat';
 nexInfoFile = '1382_20191212_02_02_3200_MERGE_nexinfo.mat';
 
 % nex file
-nexFile = '1382_20191212_02_02_3200_MERGE.mat';
+nexFile = '1382_20191212_02_02_3200_MERGE.nex';
 
 %------------------------------------------------------------------------
 % Setup
@@ -51,37 +51,6 @@ nexFile = '1382_20191212_02_02_3200_MERGE.mat';
 fprintf('\n%s\n', sepstr);
 fprintf('import_from_plexon running...\n');
 fprintf('%s\n', sepstr);
-
-
-%------------------------------------------------------------------------
-%% load data
-%------------------------------------------------------------------------
-fprintf('\n%s\n', sepstr);
-fprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexPath, nexInfoFile));
-fprintf('%s\n', sepstr);
-% nexinfo
-load(fullfile(nexPath, nexInfoFile), 'nexInfo');
-
-% plexon sorted data
-plxvars = who('-file', fullfile(sortedPath, sortedFile));
-if isempty(plxvars)
-	error('No variables in plexon output file %s', ...
-					fullfile(sortedPath, sortedFile));
-else
-	fprintf('\n%s\n', sepstr);
-	fprintf('Found %d channels in %s\n', length(plxvars), ...
-							fullfile(sortedPath, sortedFile))
-	for n = 1:length(plxvars)
-		fprintf('\t%s\n', plxvars{n});
-	end
-	fprintf('%s\n', sepstr);
-end
-
-% for now, just load the first channel data - need to figure out a way to
-% deal with multiple channels
-tmp = load(fullfile(sortedPath, sortedFile), '-MAT', plxvars{1});
-spikesAll = tmp.(plxvars{1});
-clear tmp;
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -172,9 +141,42 @@ nexInfo.fData.F
 %		Column 7-end : waveform
 % 
 
-% create object, add spikes
+%------------------------------------------------------------------------
+%% load data
+%------------------------------------------------------------------------
+
+% plexon sorted data
+plxvars = who('-file', fullfile(sortedPath, sortedFile));
+if isempty(plxvars)
+	error('No variables in plexon output file %s', ...
+					fullfile(sortedPath, sortedFile));
+else
+	fprintf('\n%s\n', sepstr);
+	fprintf('Found %d channels in %s\n', length(plxvars), ...
+							fullfile(sortedPath, sortedFile))
+	for n = 1:length(plxvars)
+		fprintf('\t%s\n', plxvars{n});
+	end
+	fprintf('%s\n', sepstr);
+end
+
+% create SpikeData object
 S = SpikeData();
-S = S.addPlexonSpikes(spikesAll)
+fprintf('\n%s\n', sepstr);
+fprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexPath, nexInfoFile));
+fprintf('%s\n', sepstr);
+% nexinfo
+S.Info = load(fullfile(nexPath, nexInfoFile), 'nexInfo');
+
+
+% add spikes
+% for now, just load the first channel data - need to figure out a way to
+% deal with multiple channels (array of SpikeData objects?)
+tmp = load(fullfile(sortedPath, sortedFile), '-MAT', plxvars{1});
+S = S.addPlexonSpikes(tmp.(plxvars{1}));
+clear tmp;
+
+
 
 %% break up spiketimes by data file
 % use file Start/End time to do this

@@ -240,7 +240,12 @@ end
 % create nexInfo object (SpikeInfo) to hold sweep/file bin and time data
 %------------------------------------------------------------------------
 nexInfo = SpikeInfo();
-nexInfo.FileName = NexFileName;
+nexInfo.FileName = fullfile(NexFilePath, NexFileName);
+% create output _nexinfo.mat file name - base is same as .nex file
+[~, nibase] = fileparts(nexInfo.FileName);
+nexInfo.InfoFileName = fullfile(NexFilePath, [nibase '_nexinfo.mat']);
+clear nibase
+% store channel information
 nexInfo.ADchannel = Channels;
 
 %------------------------------------------------------------------------
@@ -375,7 +380,7 @@ end
 % data struct.
 %------------------------------------------------------------------------
 sendmsg('Adding continuous and event data to nex struct:');
-fprintf('Exporting data to %s\n', fullfile(NexFilePath, NexFileName));
+fprintf('Exporting data to %s\n', nexInfo.FileName);
 
 % start new nex file data struct
 nD = nexCreateFileData(Fs);
@@ -411,25 +416,21 @@ nD = nexAddEvent(nD, force_col(nexInfo.endTimeVector), 'endsweep');
 nD = nexAddEvent(nD, force_col(nexInfo.fileStartTime), 'filestart');
 nD = nexAddEvent(nD, force_col(nexInfo.fileEndTime), 'fileend');
 
-sendmsg(sprintf('Writing nex file %s:', fullfile(NexFilePath, NexFileName)));
+sendmsg(sprintf('Writing nex file %s:', nexInfo.FileName));
 % write to nexfile
-writeNexFile(nD, fullfile(NexFilePath, NexFileName));
+writeNexFile(nD, nexInfo.FileName);
 
 %------------------------------------------------------------------------
 % write useful information to _nexinfo.mat file 
 %------------------------------------------------------------------------
-
-% create output _nexinfo.mat file name - base is same as .nex file
-[~, nibase] = fileparts(NexFileName);
-NexinfoFileName = [nibase '_nexinfo.mat'];
 % assign fData to nexInfo.FileData
 nexInfo.FileData = fData;
 % store filter info
 nexInfo.dataFilter = BPfilt;
 % save to matfile
 sendmsg(sprintf('Writing _nexinfo.mat file %s:', ...
-											fullfile(NexFilePath, NexinfoFileName)));
-save(fullfile(NexFilePath, NexinfoFileName), 'nexInfo', '-MAT');
+											nexInfo.InfoFileName));
+save(nexInfo.InfoFileName, 'nexInfo', '-MAT');
 
 %------------------------------------------------------------------------
 % output

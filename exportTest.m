@@ -129,10 +129,10 @@ exportOpts.TestFile = {	'1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'; ...
 					'1382_20191212_02_02_3200_BBN_testdata.mat'; ...
 					'1382_20191212_02_02_3200_FRA_testdata.mat'; };
 exportOpts.Channels = [4, 5, 11, 14];
-% exportOpts.OutputPath = exportOpts.DataPath;
-% exportOpts.OutputFile = '1382_20191212_02_02_3200_test.nex';
-exportOpts.OutputPath = pwd;
-exportOpts.OutputFile = 'test.nex';
+exportOpts.OutputPath = exportOpts.DataPath;
+exportOpts.OutputFile = '1382_20191212_02_02_3200_MERGE.nex';
+% exportOpts.OutputPath = pwd;
+% exportOpts.OutputFile = 'test.nex';
 %---------------------------------------
 
 
