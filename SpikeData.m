@@ -284,5 +284,43 @@ classdef SpikeData
 			arr = table2array(obj.Spikes);
 		end
 		
+		
+		function H = plotUnitWaveforms(obj, unitList)
+			% check units
+			nU = length(unitList);
+			if nU == 0
+				unitList = obj.listUnits;
+				nU = obj.nUnits;
+			else
+				for u = 1:nU
+					if ~any(unitList(u) == obj.listUnits)
+						error('unit %d not found', unitList(u));
+					end
+				end
+			end
+			
+			% loop through units
+			for u = 1:nU
+				% create figure
+				H(u) = figure;
+				
+				% get spike waveforms for this unit
+				W = obj.Spikes{obj.Spikes.Unit == unitList(u), 'Wave'};
+				if ~isempty(W)
+					[nSpikes, nBins] = size(W);
+					ms = (1000/obj.Info.Fs) * (0:(nBins - 1));
+					plot(ms, W', 'k');
+				end
+				[~, fstr] = fileparts(obj.Info.FileName);
+				tstr = sprintf('File: %s   Unit: %d', [fstr '.mat'], unitList(u));
+				title(tstr, 'Interpreter', 'none');
+				xlabel('ms');
+				grid on
+			end
+			
+		end
+		
+		
+		
 	end
 end

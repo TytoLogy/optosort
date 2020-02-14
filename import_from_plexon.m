@@ -249,6 +249,14 @@ for f = 1:S.Info.nFiles
 		spikesBySweep{f, u} = S.spikesForAnalysis(f, unitID(u), 'sweep');
 	end
 end
+
+
+
+%% plot waveforms
+
+S.plotUnitWaveforms(S.listUnits);
+
+
 %% need to adjust spike times to start of each sweep
 %{
 for f = 1:nexInfo.nFiles
