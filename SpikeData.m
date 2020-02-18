@@ -160,17 +160,22 @@ classdef SpikeData
 			elseif nsweeps == 0
 				error('no sweeps!');	
 			end
-			% alignment issues
+			% alignment issues (reference timestamps to start of datafile,
+			% start of sweep, or leave as is  - referenced to start of merged
+			% file used for spike sorting)
 			switch ALIGN
 				case 'original'
 					% don't modify time stamp values
 					alignval = zeros(nsweeps, 1);
 				case 'file'
-					% adjust timestamp value by first sweep start time
+					% adjust timestamp value by first sweep start time for each
+					% file in the overall merged file used for sorting
 					alignval = obj.Info.sweepStartTime{fileNum}(1) ...
 										* ones(nsweeps, 1);
 				case 'sweep'
-					% adjust timestamp value by each sweep start time
+					% adjust timestamp value by each sweep start time - this is
+					% most useful when doing things like analysis and plots of
+					% data 
 					alignval = obj.Info.sweepStartTime{fileNum};
 			end
 			
@@ -284,7 +289,9 @@ classdef SpikeData
 			arr = table2array(obj.Spikes);
 		end
 		
-		
+		%-------------------------------------------------------
+		% Plot sorted waveforms for each identified unit
+		%-------------------------------------------------------
 		function H = plotUnitWaveforms(obj, unitList)
 			% check units
 			nU = length(unitList);
@@ -299,15 +306,16 @@ classdef SpikeData
 				end
 			end
 			
+			% allocate gobjects array to hold figure handles
+			H = gobjects(nU, 1);
 			% loop through units
 			for u = 1:nU
-				% create figure
+				% create figure and store handle in H array
 				H(u) = figure;
-				
 				% get spike waveforms for this unit
 				W = obj.Spikes{obj.Spikes.Unit == unitList(u), 'Wave'};
 				if ~isempty(W)
-					[nSpikes, nBins] = size(W);
+					[~, nBins] = size(W);
 					ms = (1000/obj.Info.Fs) * (0:(nBins - 1));
 					plot(ms, W', 'k');
 				end
@@ -316,6 +324,7 @@ classdef SpikeData
 				title(tstr, 'Interpreter', 'none');
 				xlabel('ms');
 				grid on
+				H(u).Name = fstr;
 			end
 			
 		end

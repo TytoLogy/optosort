@@ -225,7 +225,8 @@ spikesBySweepAndUnit = cell(S.Info.nFiles, nunits);
 for f = 1:S.Info.nFiles
 	% loop through units
 	for u = 1:nunits
-		spikesBySweepAndUnit{f, u} = S.spikesForAnalysis(f, unitID(u), 'sweep');
+		% get spikes (as a table) for each file (rows) and unit (columns)
+		spikesBySweepAndUnit{f, u} = S.spikesForAnalysisByUnit(f, unitID(u), 'sweep');
 	end
 end
 
