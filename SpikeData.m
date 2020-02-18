@@ -234,10 +234,12 @@ classdef SpikeData
 			%--------------------------------------
 			% get valid rows for unit
 			unit_rows = (obj.Spikes.Unit == unitNum);
-			% get valid rows for file
+			% get valid rows for file - this is done by finding the spike
+			% times that occurred between the specified file's start and end
+			% times
 			file_rows = (obj.Spikes.TS >= obj.Info.fileStartTime(fileNum)) & ...
 									(obj.Spikes.TS <= obj.Info.fileEndTime(fileNum));
-			% get reduced table
+			% get reduced Spikes table for specified unit and data file
 			vS = obj.Spikes( (unit_rows & file_rows), :);
 			
 			% number of sweeps for this file
@@ -269,14 +271,13 @@ classdef SpikeData
 
 			% loop through sweeps
 			for s = 1:nsweeps
-				% find the valid time stampes (between sweepStartTimes and
-				% sweepEndTimes)
-% 				valid_rows = (vS(:, 'TS') >= obj.Info.sweepStartTime{fileNum}(s)) ...
-% 								& (vS(:, 'TS') < obj.Info.sweepEndTime{fileNum}(s));
+				% find the valid time stamps (between sweepStartTimes and
+				% sweepEndTimes), store the row indices...
 				valid_rows = (vS.TS >= obj.Info.sweepStartTime{fileNum}(s)) ...
 								& (vS.TS < obj.Info.sweepEndTime{fileNum}(s));
+				% get Spikes that match
 				spikesBySweep{s} = vS(valid_rows, :);
-				% apply offset correction
+				% apply offset correction to timestamps (TS variable)
 				spikesBySweep{s}{:, 'TS'} = spikesBySweep{s}{:, 'TS'} - alignval(s);
 			end
 		end
@@ -310,6 +311,7 @@ classdef SpikeData
 			H = gobjects(nU, 1);
 			% loop through units
 			for u = 1:nU
+				fprintf('Plotting unit %d waveforms\n', unitList(u));
 				% create figure and store handle in H array
 				H(u) = figure;
 				% get spike waveforms for this unit
@@ -324,7 +326,7 @@ classdef SpikeData
 				title(tstr, 'Interpreter', 'none');
 				xlabel('ms');
 				grid on
-				H(u).Name = fstr;
+				H(u).Name = sprintf('%s_unit%d', fstr, unitList(u));
 			end
 			
 		end

@@ -238,18 +238,20 @@ for f = 1:S.Info.nFiles
 		spikesBySweep{f} = S.spikesForAnalysis(f, 'sweep');
 end
 
-%%
+%% extract timestamps for use in analysis, raster plots, etc., separated by unit
 % convert to timestamps
-tsBySweep = cell(S.Info.nFiles, nunits);
+spikesForAnalysis = cell(S.Info.nFiles, nunits);
 
 % loop through files
 for f = 1:S.Info.nFiles
 	% loop through units
 	for u = 1:nunits
 		% extract timestamp data from each table, store in 
-		spikesBySweep{f, u} = S.spikesForAnalysis(f, unitID(u), 'sweep');
+		spikesForAnalysis{f, u} = S.spikesForAnalysisByUnit(f, unitID(u), 'sweep');
 	end
 end
+
+extractTimeStamps
 
 
 
@@ -277,13 +279,13 @@ end
 %}
 
 %% convert spikes to table
-
-Channel = spikesAll(:, CHAN_COL);
-Unit = spikesAll(:, UNIT_COL);
-TS = spikesAll(:, TS_COL);
-PCAmat = spikesAll(:, PCA_COL);
-WAVmat = spikesAll(:, WAV_COL);
-PCA = num2cell(PCAmat, 2);
-WAV = num2cell(WAVmat, 2);
-
-T = table(Channel, Unit, TS, PCA, WAV)
+% 
+% Channel = spikesAll(:, CHAN_COL);
+% Unit = spikesAll(:, UNIT_COL);
+% TS = spikesAll(:, TS_COL);
+% PCAmat = spikesAll(:, PCA_COL);
+% WAVmat = spikesAll(:, WAV_COL);
+% PCA = num2cell(PCAmat, 2);
+% WAV = num2cell(WAVmat, 2);
+% 
+% T = table(Channel, Unit, TS, PCA, WAV)
