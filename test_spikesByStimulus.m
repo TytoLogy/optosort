@@ -1,0 +1,55 @@
+% get spikes by stimulus
+% script to work out sorting spikes by stimulus
+
+%------------------------------------------------------------------------
+%  Sharad Shanbhag
+%   sshanbhag@neomed.edu
+%------------------------------------------------------------------------
+% Created: 19 February, 2020 (SJS)
+%
+% Revisions:
+%------------------------------------------------------------------------
+% TO DO:
+%--------------------------------------------------------------------------
+
+%{
+how to do this...
+
+one way:
+	separate spikes by file (in other words, by test type - freq resp, rate
+	level, wav stim etc)
+	then, within each group, match up stimulus type from stimcache with the
+	appropriate spikes for each "sweep"
+
+other way:
+	no need to separate by file, 
+	merge the stimcache arrays to generate a master merged list of stimulus
+	by sweep
+	then, sort the spikes into spikes by sweep (for each channel)
+	can then search through stimcache to get appropriate indices for desired
+	stimuli. 
+	or separate spikes by stimulus... but this will disrupt sweep-based
+	analysis....
+
+	idea: could create a table form of stimcache to ease searching/retrieval
+	of stimulus types?
+
+%}
+
+% S object file
+Sfile = '~/Work/Data/TestData/MT/1382_20191212_02_02_3200_Sobj.mat';
+
+% load data
+load(Sfile)
+
+%% get stimcache data
+
+% these are located in the S.Info.FileData(1).Dinf.test.stimcache
+stimcache = cell(S.Info.nFiles, 1);
+for f = 1:S.Info.nFiles
+	stimcache{f} = S.Info.FileData(f).Dinf.test.stimcache;
+	% convert elements to char
+	stimcache{f}.stimtype = char(stimcache{f}.stimtype);
+	stimcache{f}.curvetype = char(stimcache{f}.curvetype);
+	stimcache{f}.vname = char(stimcache{f}.vname);
+end
