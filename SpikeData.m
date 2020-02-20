@@ -119,7 +119,8 @@ classdef SpikeData
 		end
 
 		%-------------------------------------------------------
-		% get table of spikes for a specific file, unit and by sweep
+		% get table of spikes for a specific file aligned to file start,
+		% sweep, or as-is (original)
 		%-------------------------------------------------------
 		function spikesBySweep = spikesForAnalysis(obj, fileNum, varargin)
 			%--------------------------------------

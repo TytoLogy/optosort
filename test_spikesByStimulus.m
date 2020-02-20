@@ -57,6 +57,14 @@ for f = 1:S.Info.nFiles
 	stimcache{f} = S.Info.getStimulusCacheByFile(f);
 end
 
+%% Get Spikes for this file
+f = 1;
 
+% get spikes by sweep. this will return a cell array of tables with size
+% {nSweeps, 1}. Spike times in the table will be aligned to sweep onset
+fS = S.spikesForAnalysis(f, 'sweep');
+% get spikes in orginal form (aligned to start of merged file)
+fS_orig = S.spikesForAnalysis(f);
 
+unitList = S.listUnits
 
