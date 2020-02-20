@@ -34,6 +34,13 @@ other way:
 	idea: could create a table form of stimcache to ease searching/retrieval
 	of stimulus types?
 
+problem: each test has different parameters: e.g., freq-tuning varies
+freq, freq-level varies level, FRA both freq and level, WAV stimulus and
+level.... how to have a common basis for this to put into uniform table?
+also... OPTO!!!????!!
+
+maybe best to separate by file, keep spiketimes referenced as in MERGED
+file and then have separate processing stages depending on test type...
 %}
 
 % S object file
@@ -47,9 +54,9 @@ load(Sfile)
 % these are located in the S.Info.FileData(1).Dinf.test.stimcache
 stimcache = cell(S.Info.nFiles, 1);
 for f = 1:S.Info.nFiles
-	stimcache{f} = S.Info.FileData(f).Dinf.test.stimcache;
-	% convert elements to char
-	stimcache{f}.stimtype = char(stimcache{f}.stimtype);
-	stimcache{f}.curvetype = char(stimcache{f}.curvetype);
-	stimcache{f}.vname = char(stimcache{f}.vname);
+	stimcache{f} = S.Info.getStimulusCacheByFile(f);
 end
+
+
+
+
