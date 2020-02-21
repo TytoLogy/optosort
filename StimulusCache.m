@@ -56,7 +56,7 @@ classdef StimulusCache
 			if isempty(varargin)
 				return
 			end
-			if isstruct(varargin{1})				
+			if isstruct(varargin{1})
 				obj = initObjectFromStruct(obj, varargin{1});
 			else
 				error('Unknown input type %s', varargin{1});
@@ -84,15 +84,7 @@ classdef StimulusCache
 			end
 			% assign properties from struct
 			for p = 1:length(proplist)
-				% check if property name is one of the charfields
-				ccheck = strcmpi(proplist{p}, charfields);
-				if any(ccheck)
-					% if so, convert to char
-					obj.(proplist{p}) = char(cacheStruct.(proplist{p}));
-				else
-					% otherwise, simple assignment
-					obj.(proplist{p}) = cacheStruct.(proplist{p});
-				end
+				obj.(proplist{p}) = cacheStruct.(proplist{p});
 			end
 		end
 		%-------------------------------------------------
