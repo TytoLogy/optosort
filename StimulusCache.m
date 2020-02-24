@@ -42,8 +42,17 @@ classdef StimulusCache
 			vname
 			vrange
 			stimvar =  {}
+			testtype
+			testname
 	end	% END properties (main)
 	properties (Dependent)
+	end	% END properties(Dependent)
+	properties (Constant, Access = 'protected')
+		coreProperties = {'stimtype', 'curvetype', 'freezeStim', 'nreps', ...
+							'saveStim', 'ntrials', 'nstims', 'repnum', ...
+							'trialnum', 'splval', 'rmsval', 'atten', ...
+							'FREQ', 'LEVEL', 'opto', 'radvary', ...
+							'trialRandomSequence', 'vname', 'vrange', 'stimvar'};
 	end	% END properties(Dependent)
 	
 	methods
@@ -57,18 +66,22 @@ classdef StimulusCache
 				return
 			end
 			if isstruct(varargin{1})
-				obj = initObjectFromStruct(obj, varargin{1});
+				if length(varargin) == 1
+					obj = initObject(obj, varargin{1});
+				elseif length(varargin) == 3
+					obj = initObject(obj, varargin{1}, varargin{2}, varargin{3});
+				else
+					error('incorrect number of input arguments');
+				end
 			else
 				error('Unknown input type %s', varargin{1});
 			end
 		end
 
 		
-		function obj = initObjectFromStruct(obj, cacheStruct)
-			% get list of properties
-			proplist = properties(obj);
+		function obj = initObject(obj, cacheStruct, varargin)
 			% check
-			if ~all(isfield(cacheStruct, proplist))
+			if ~all(isfield(cacheStruct, obj.coreProperties))
 				error('field/property mismatch');
 			end
 			% check to see if character fields are stored as chars or need to
@@ -83,8 +96,19 @@ classdef StimulusCache
 				end
 			end
 			% assign properties from struct
-			for p = 1:length(proplist)
-				obj.(proplist{p}) = cacheStruct.(proplist{p});
+			for p = 1:length(obj.coreProperties)
+				obj.(obj.coreProperties{p}) = cacheStruct.(obj.coreProperties{p});
+			end
+			if ~isempty(varargin)
+				if length(varargin) == 2
+					obj.testtype = varargin{1};
+					obj.testname = varargin{2};
+				else
+					error('incorrect input args');
+				end
+			else
+				obj.testtype = '';
+				obj.testname = '';
 			end
 		end
 		%-------------------------------------------------

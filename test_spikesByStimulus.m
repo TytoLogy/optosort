@@ -73,4 +73,21 @@ fprintf('Units in %s:\n', Sfile);
 fprintf('\t%d', unitList);
 fprintf('\n');
 
-%% 
+%% stimcache object
+
+for f = 2
+	Dinf = S.Info.FileData(f).Dinf;
+	
+	switch upper(Dinf.test.Type)
+		case 'FREQ'
+			% frequency tuning curve
+				SC{f} = FREQcache(S.Info.getStimulusCacheByFile(f), ...
+										Dinf.test.Type, Dinf.test.Name);
+		case 'LEVEL'
+				SC{f} = LEVELcache(S.Info.getStimulusCacheByFile(f), ...
+										Dinf.test.Type, Dinf.test.Name);
+		otherwise
+			error('unsupported test type %s', Dinf.test.Type);
+	end
+
+end

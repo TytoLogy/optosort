@@ -1,4 +1,4 @@
-classdef FREQcache < StimulusCache
+classdef LEVELcache < StimulusCache
 	properties
 
 		
@@ -12,7 +12,7 @@ classdef FREQcache < StimulusCache
 		% Constructor
 		%-------------------------------------------------
 		%-------------------------------------------------
-		function obj = FREQcache(varargin)
+		function obj = LEVELcache(varargin)
 			if isempty(varargin)
 				return
 			end
@@ -34,18 +34,18 @@ classdef FREQcache < StimulusCache
 		% returns stimulus Indices and list of stim variables
 		%-------------------------------------------------
 		%-------------------------------------------------
-		function [stimindex, freqlist] = getStimulusIndices(obj)
-			% for FREQ test, find indices of stimuli with same frequency
-			fprintf('\t%s test, finding indices\n', obj.testtype);
-			% list of frequencies, and # of freqs tested
-			freqlist = cell2mat(obj.FREQ);
-			nfreqs = length(obj.vrange);
+		function [stimindex, levellist] = getStimulusIndices(obj)
+			% for LEVEL test, find indices of stimuli with same level (dB SPL)
+			fprintf('\t%s test, finding indices\n', obj.Type);
+			% list of levels, and # of levels tested
+			levellist = obj.LEVEL;
+			nlevels = length(obj.vrange);
 			% locate where trials for each frequency are located in the
 			% stimulus cache list - this will be used to pull out trials of
 			% same frequency
-			stimindex = cell(nfreqs, 1);
-			for f = 1:nfreqs
-				stimindex{f} = find(obj.vrange(f) == freqlist);
+			stimindex = cell(nlevels, 1);
+			for l = 1:nlevels
+				stimindex{l} = find(obj.vrange(l) == levellist);
 			end
 		end
 	end	% END methods
