@@ -68,6 +68,10 @@ classdef CurveInfo
 		%-------------------------------------------------
 
 		function varargout = getStimulusIndices(obj)
+		%-------------------------------------------------
+		% returns stimindex{} and stimvar{} lists
+		%-------------------------------------------------
+		
 			% make sure Dinf is initialized
 			if isempty(obj.Dinf)
 				error('Dinf not defined/is empty')
