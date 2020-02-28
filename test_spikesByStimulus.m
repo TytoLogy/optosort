@@ -79,16 +79,10 @@ for f = 1:S.Info.nFiles
 	Dinf = S.Info.FileData(f).Dinf;
 	
 	CI{f} = CurveInfo(Dinf);
-% 	switch upper(Dinf.test.Type)
-% 		case 'FREQ'
-% 			% frequency tuning curve
-% 				SC{f} = FREQcache(S.Info.getStimulusCacheByFile(f), ...
-% 										Dinf.test.Type, Dinf.test.Name);
-% 		case 'LEVEL'
-% 				SC{f} = LEVELcache(S.Info.getStimulusCacheByFile(f), ...
-% 										Dinf.test.Type, Dinf.test.Name);
-% 		otherwise
-% 			error('unsupported test type %s', Dinf.test.Type);
-% 	end
-
 end
+
+%% sweep data by stimulus
+
+f = 1;
+[stimIndex, stimVar] = CI{f}.getStimulusIndices;
+fS{stimIndex{1}}
