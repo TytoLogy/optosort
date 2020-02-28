@@ -34,6 +34,8 @@ classdef CurveInfo
 		testname
 		freqs_bysweep
 		levels_bysweep
+		varied_parameter
+		varied_values
 	end	% END properties(Dependent)
 
 	
@@ -85,14 +87,13 @@ classdef CurveInfo
 					fprintf('\t%s test, finding indices\n', obj.testtype);
 					% list of frequencies, and # of freqs tested
 					freqlist = cell2mat(obj.freqs_bysweep);
-					nfreqs = length(obj.Dinf.test.stimcache.vrange);
+					nfreqs = length(obj.varied_values);
 					% locate where trials for each frequency are located in the
 					% stimulus cache list - this will be used to pull out trials of
 					% same frequency
 					stimindex = cell(nfreqs, 1);
 					for f = 1:nfreqs
-						stimindex{f} = find(obj.Dinf.test.stimcache.vrange(f) ...
-																					== freqlist);
+						stimindex{f} = find(obj.varied_values(f) == freqlist);
 					end
 					% assign outputs
 					varargout{1} = stimindex;
@@ -103,14 +104,13 @@ classdef CurveInfo
 					fprintf('\t%s test, finding indices\n', obj.testtype);
 					% list of levels, and # of levels tested
 					levellist = obj.levels_bysweep;
-					nlevels = length(obj.Dinf.test.stimcache.vrange);
+					nlevels = length(obj.varied_values);
 					% locate where trials for each frequency are located in the
 					% stimulus cache list - this will be used to pull out trials of
 					% same frequency
 					stimindex = cell(nlevels, 1);
 					for l = 1:nlevels
-						stimindex{l} = find(obj.Dinf.test.stimcache.vrange(l) ...
-																					== levellist);
+						stimindex{l} = find(obj.varied_values(l) == levellist);
 					end
 					% assign outputs
 					varargout{1} = stimindex;
@@ -234,7 +234,16 @@ classdef CurveInfo
 		function val = get.levels_bysweep(obj)
 			val = obj.Dinf.test.stimcache.LEVEL;
 		end
-		
+		% returns test.stimcache.vname, char string identifying
+		% variable(s) for curve (similar to test.Name
+		function val = get.varied_parameter(obj)
+			val = char(obj.Dinf.test.stimcache.vname);
+		end
+		% returns test.stimcache.vrange, values of varied parameter
+		function val = get.varied_values(obj)
+			val = obj.Dinf.test.stimcache.vrange;
+		end
+
 	end	% END methods
 	
 end	% END classdef
