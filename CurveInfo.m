@@ -32,6 +32,8 @@ classdef CurveInfo
 	properties (Dependent)
 		testtype
 		testname
+		freqs_bysweep
+		levels_bysweep
 	end	% END properties(Dependent)
 
 	
@@ -78,11 +80,11 @@ classdef CurveInfo
 			end
 			
 			% for FREQ test, find indices of stimuli with same frequency
-			switch upper(obj.Dinf.test.Type)
+			switch upper(obj.testtype)
 				case 'FREQ'
-					fprintf('\t%s test, finding indices\n', obj.Dinf.test.Type);
+					fprintf('\t%s test, finding indices\n', obj.testtype);
 					% list of frequencies, and # of freqs tested
-					freqlist = cell2mat(obj.Dinf.test.stimcache.FREQ);
+					freqlist = cell2mat(obj.freqs_bysweep);
 					nfreqs = length(obj.Dinf.test.stimcache.vrange);
 					% locate where trials for each frequency are located in the
 					% stimulus cache list - this will be used to pull out trials of
@@ -98,9 +100,9 @@ classdef CurveInfo
 
 			% for LEVEL test, find indices of stimuli with same level (dB SPL)
 				case 'LEVEL'
-					fprintf('\t%s test, finding indices\n', obj.Dinf.test.Type);
+					fprintf('\t%s test, finding indices\n', obj.testtype);
 					% list of levels, and # of levels tested
-					levellist = obj.Dinf.test.stimcache.LEVEL;
+					levellist = obj.levels_bysweep;
 					nlevels = length(obj.Dinf.test.stimcache.vrange);
 					% locate where trials for each frequency are located in the
 					% stimulus cache list - this will be used to pull out trials of
@@ -118,7 +120,7 @@ classdef CurveInfo
 			% freq and same level (dB SPL)
 				case 'FREQ+LEVEL'
 					fprintf('\t%s test, finding freq and level indices\n', ...
-																			obj.Dinf.test.Type);
+																			obj.testtype);
 
 					% if necessary, convert cells to matrices
 					testcell = {'splval', 'rmsval', 'atten', 'FREQ', 'LEVEL'};
@@ -129,10 +131,10 @@ classdef CurveInfo
 						end
 					end
 					% list of stimulus freqs, # of freqs tested
-					freqlist = unique(obj.Dinf.test.stimcache.FREQ, 'sorted');
+					freqlist = unique(obj.freqs_bysweep, 'sorted');
 					nfreqs = length(freqlist);
 					% list of stimulus levels, # of levels tested
-					levellist = unique(obj.Dinf.test.stimcache.LEVEL, 'sorted');
+					levellist = unique(obj.levels_bysweep, 'sorted');
 					nlevels = length(levellist);
 					%{
 						Raw data are in a vector of length nstims, in order of
@@ -160,8 +162,8 @@ classdef CurveInfo
 							currentF = freqlist(f);
 							currentL = levellist(l);
 							stimindex{l, f} = ...
-								find( (obj.Dinf.test.stimcache.FREQ == currentF) & ...
-										(obj.Dinf.test.stimcache.LEVEL == currentL) );
+								find( (obj.freqs_bysweep == currentF) & ...
+										(obj.levels_bysweep == currentL) );
 						end
 					end
 					% assign outputs
@@ -171,11 +173,11 @@ classdef CurveInfo
 
 			% for OPTO test...
 				 case 'OPTO'
-					fprintf('\t%s test, finding indices\n', obj.Dinf.test.Type);
+					fprintf('\t%s test, finding indices\n', obj.testtype);
 
 			% for WavFile, need to find indices with same filename.
 				case 'WAVFILE'
-					fprintf('\t%s test, finding indices\n', obj.Dinf.test.Type);
+					fprintf('\t%s test, finding indices\n', obj.testtype);
 					% get list of stimuli (wav file names)
 					nwavs = length(obj.Dinf.stimList);
 					wavlist = cell(nwavs, 1);
@@ -212,14 +214,26 @@ classdef CurveInfo
 		%-------------------------------------------------
 		%-------------------------------------------------
 		
+		% returns test.Type
 		function val = get.testtype(obj)
 			val = obj.Dinf.test.Type;
 		end
-		
+		% returns test.Name
 		function val = get.testname(obj)
 			val = obj.Dinf.test.Name;
 		end
-		
+		% returns test.stimcache.FREQS, which is a list of frequencies (or
+		% freq ranges for BBN) used for each stimulus sweep
+		%	this is a cell array {nsweeps, 1}
+		function val = get.freqs_bysweep(obj)
+			val = obj.Dinf.test.stimcache.FREQ;
+		end
+		% returns test.stimcache.LEVELS, which is a list of db SPL 
+		% stimulus levels used for each stimulus sweep
+		%	this is a numerical array [nsweeps, 1]
+		function val = get.levels_bysweep(obj)
+			val = obj.Dinf.test.stimcache.LEVEL;
+		end
 		
 	end	% END methods
 	
