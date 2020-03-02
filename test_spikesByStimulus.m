@@ -85,4 +85,23 @@ end
 
 f = 1;
 [stimIndex, stimVar] = CI{f}.getStimulusIndices;
-fS{stimIndex{1}}
+fprintf('Found spike data for units: ')
+fprintf('%d  ', S.listUnits);
+fprintf('\n\n');
+
+allUnits = S.listUnits;
+validUnits = allUnits(allUnits > 0);
+spikesByStim = fS{stimIndex{1}};
+curveInfo = CI{f};
+
+% curvedata by test type
+u = 1;
+unit = validUnits(u);
+switch CI{f}.testtype
+	case 'FREQ'
+		
+		
+	otherwise
+		error('%s: curve %s not implemented', mfilename, CI{f}.testtype)
+end
+

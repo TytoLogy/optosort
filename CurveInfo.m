@@ -36,6 +36,7 @@ classdef CurveInfo
 		levels_bysweep
 		varied_parameter
 		varied_values
+		analysis_window
 	end	% END properties(Dependent)
 
 	
@@ -208,6 +209,76 @@ classdef CurveInfo
 	
 		end	% END getStimulusIndices method
 		
+		
+		
+		function titleString = getCurveTitleString(obj)
+		% returns title string for curve type
+		
+			[~, fname, fext] = fileparts(obj.Dinf.filename);
+			fname = [fname '.' fext];
+			switch obj.testtype
+				case 'FREQ'
+					% list of frequencies, and # of freqs tested
+					varlist = obj.varied_values;
+					nvars = length(varlist);
+					titleString = cell(nvars, 1);
+					for v = 1:nvars
+						if v == 1
+							titleString{v} = {fname, ...
+													sprintf('Frequency = %.0f kHz', ...
+																			0.001*varlist(v))};
+						else
+							titleString{v} = sprintf('Frequency = %.0f kHz', ...
+													0.001*varlist(v));
+						end
+					end
+				case 'LEVEL'
+					% list of levels, and # of levels tested
+					varlist = obj.varied_values;
+					nvars = length(varlist);
+					titleString = cell(nvars, 1);
+					for v = 1:nvars
+						if v == 1
+							titleString{v} = {fname, sprintf('Level = %d dB SPL', ...
+																					varlist(v))};
+						else
+							titleString{v} = sprintf('Level = %d dB SPL', varlist(v));
+						end
+					end
+				case 'FREQ+LEVEL'
+					% list of freq, levels
+					varlist = cell(2, 1);
+					% # of freqs in nvars(1), # of levels in nvars(2)
+					nvars = zeros(2, 1);
+					for v = 1:2
+						varlist{v} = unique(obj.varied_values(v, :), 'sorted');
+						nvars(v) = length(varlist{v});
+					end
+					titleString = fname;
+
+				case 'OPTO'
+					% not yet implemented
+					
+				case 'WAVFILE'
+					% get list of stimuli (wav file names)
+					varlist = obj.Dinf.test.wavlist;
+					nvars = length(varlist);
+					titleString = cell(nvars, 1);
+					for v = 1:nvars
+						if v == 1 
+							titleString{v} = {fname, sprintf('wav name: %s', varlist{v})};
+						else
+							titleString{v} = sprintf('wav name: %s', varlist{v});
+						end
+					end
+				otherwise
+					error('%s: unsupported test type %s', mfilename, obj.testtype);
+			end
+		
+			
+		end
+		
+		
 		%-------------------------------------------------
 		%-------------------------------------------------
 		% access for dependent properties
@@ -243,7 +314,10 @@ classdef CurveInfo
 		function val = get.varied_values(obj)
 			val = obj.Dinf.test.stimcache.vrange;
 		end
-
+		% returns analysis_window : audio Delay to Delay+Duration interval
+		function val = get.analysis_window(obj)
+			val = [obj.Dinf.audio.Delay (obj.Dinf.audio.Delay + obj.Dinf.audio.Duration)];
+		end
 	end	% END methods
 	
 end	% END classdef
