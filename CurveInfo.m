@@ -32,6 +32,7 @@ classdef CurveInfo
 	properties
 		%{
 			Dinf		Data information struct from opto .dat files
+			F		opto file object
 			startSweepBin		sample for start of each sweep 
 			endSweepBin		sample for end of each sweep
 			sweepLen			length (# of samples) for each sweep
@@ -39,6 +40,7 @@ classdef CurveInfo
 			fileEndBin		sample for end of file in merged data file
 		%}
 		Dinf
+		F
 		startSweepBin = {}
 		endSweepBin = {}
 		sweepLen
@@ -77,10 +79,6 @@ classdef CurveInfo
 					obj.Dinf.test.stimcache.curvetype = ...
 												char(obj.Dinf.test.stimcache.curvetype);
 				end
-% 			elseif isnumeric(varargin{1})
-% 				% handles case where varargin is numeric i.e. an array is being
-% 				% built
-% 				return
 			else
 				error('Unknown input type %s', varargin{1});
 			end

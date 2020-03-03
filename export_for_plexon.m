@@ -273,7 +273,7 @@ cSweeps = cell(nFiles, 1);
 % 						1, nFiles);
 					
 % class array to hold everything for each file
-fData = CurveInfo
+cInfo(nFiles, 1) = CurveInfo;
 
 %------------------------------------------------------------------------
 % Read data
@@ -283,7 +283,7 @@ sendmsg('Reading data');
 % loop through files
 for f = 1:nFiles
 	% save file info object for current data file
-	fData(f).F = F(f);
+	cInfo(f).F = F(f);
 	
 	% get data for each file and channel and convert to row vector format
 	% algorithm:
@@ -294,55 +294,55 @@ for f = 1:nFiles
 	%		(3) after cSweeps is built, convert to a row vector using cell2mat
 
 	% use readOptoData to read in raw data. 
-	[D, Dinf] = readOptoData(fullfile(F(f).path, F(f).file));
+	[D, tmpDinf] = readOptoData(fullfile(F(f).path, F(f).file));
 	% Fix test info
-	Dinf = correctTestType(Dinf);
+	cInfo(f).Dinf = correctTestType(tmpDinf);
 
 	% build filter for neural data
 	if ~isempty(BPfilt)
-		BPfilt.Fs = Dinf.indev.Fs;
-		BPfilt.Fnyq = Dinf.indev.Fs / 2;
+		BPfilt.Fs = cInfo(f).Dinf.indev.Fs;
+		BPfilt.Fnyq = cInfo(f).Dinf.indev.Fs / 2;
 		BPfilt.cutoff = BPfilt.Fc / BPfilt.Fnyq;
 		[BPfilt.b, BPfilt.a] = butter(BPfilt.forder, BPfilt.cutoff, 'bandpass');
 	end
 	
 	% check to make sure consistent # of sweeps (aka trials)
-	if Dinf.nread ~= length(D)
+	if cInfo(f).Dinf.nread ~= length(D)
 		error('%s: mismatch in Dinf.nread (%d) and length(D) (%d)', ...
-					mfilename, Dinf.nread, length(D));
+					mfilename, cInfo(f).Dinf.nread, length(D));
 	end
 	
 	% build into sweeps by channel format
-	fprintf('Test type: %s\n', Dinf.test.Type);
+	fprintf('Test type: %s\n', cInfo(f).testtype);
 	[cSweeps{f}, ...
-		fData(f).startSweepBin, fData(f).endSweepBin, fData(f).sweepLen] = ...
-					buildChannelData(Channels, BPfilt, D, Dinf);
+		cInfo(f).startSweepBin, cInfo(f).endSweepBin, cInfo(f).sweepLen] = ...
+					buildChannelData(Channels, BPfilt, D, cInfo(f).Dinf);
 	% check the start and end sweep bin data for consistency
-	if check_sweeps(fData(f).startSweepBin)
+	if check_sweeps(cInfo(f).startSweepBin)
 		warning(['File %s: Inconsistent startSweepBin' ...
-							'values across channels!!!!'], fData(f).F.file);
+							'values across channels!!!!'], cInfo(f).F.file);
 	end
-	if check_sweeps(fData(f).endSweepBin)
+	if check_sweeps(cInfo(f).endSweepBin)
 		warning('Inconsistent endSweepBin values across channels!!!!');
 	end
 	% store sample for start of this file (should be 1); use channel 1 value
-	fData(f).fileStartBin = fData(f).startSweepBin{1}(1);
+	cInfo(f).fileStartBin = cInfo(f).startSweepBin{1}(1);
 	% store sample for end of this file
-	fData(f).fileEndBin = fData(f).endSweepBin{1}(end);
-	% store file information struct
-	fData(f).Dinf = Dinf;
+	cInfo(f).fileEndBin = cInfo(f).endSweepBin{1}(end);
+% 	% store file information struct
+% 	fData(f).Dinf = Dinf;
 	% to avoid any issues, should make sure sample rates are consistent
 	% to do this, store list of sample rates and check once out of this loop
-	tmpFs(f) = fData(f).Dinf.indev.Fs;
+	tmpFs(f) = cInfo(f).Dinf.indev.Fs;
 	
 	% calculate overall start and end bins for each file's data
 	if f == 1
-		nexInfo.fileStartBin(f) = fData(f).fileStartBin;
-		nexInfo.fileEndBin(f) = fData(f).fileEndBin;
+		nexInfo.fileStartBin(f) = cInfo(f).fileStartBin;
+		nexInfo.fileEndBin(f) = cInfo(f).fileEndBin;
 	else
 		% add 1 to prior end bin for start
 		nexInfo.fileStartBin(f) = nexInfo.fileEndBin(f-1) + 1;
-		nexInfo.fileEndBin(f) = nexInfo.fileStartBin(f) + fData(f).fileEndBin - 1;
+		nexInfo.fileEndBin(f) = nexInfo.fileStartBin(f) + cInfo(f).fileEndBin - 1;
 	end
 end
 
@@ -351,13 +351,13 @@ sendmsg('Building start and end sweep indices:');
 for f = 1:nFiles
 	% calculate start and end sweep bins for each file's data
 	if f == 1
-		nexInfo.sweepStartBin{f} = fData(f).startSweepBin{1};
-		nexInfo.sweepEndBin{f} = fData(f).endSweepBin{1};
+		nexInfo.sweepStartBin{f} = cInfo(f).startSweepBin{1};
+		nexInfo.sweepEndBin{f} = cInfo(f).endSweepBin{1};
 	else
 		% add previous file's final endSweepBin value as offset
-		nexInfo.sweepStartBin{f} = fData(f).startSweepBin{1} + ...
+		nexInfo.sweepStartBin{f} = cInfo(f).startSweepBin{1} + ...
 												nexInfo.sweepEndBin{f-1}(end);
-		nexInfo.sweepEndBin{f} = fData(f).endSweepBin{1} + ...
+		nexInfo.sweepEndBin{f} = cInfo(f).endSweepBin{1} + ...
 												nexInfo.sweepEndBin{f-1}(end);
 	end
 end
@@ -426,8 +426,8 @@ writeNexFile(nD, nexInfo.FileName);
 %------------------------------------------------------------------------
 % write useful information to _nexinfo.mat file 
 %------------------------------------------------------------------------
-% assign fData to nexInfo.FileData
-nexInfo.FileData = fData;
+% assign cInfo to nexInfo.FileData
+nexInfo.FileData = cInfo;
 % store filter info
 nexInfo.dataFilter = BPfilt;
 % save to matfile

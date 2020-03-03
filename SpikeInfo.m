@@ -2,8 +2,8 @@ classdef SpikeInfo
 	properties
 		% FileName		nex file name (include path)
 		% InfoFileName	nexinfo filename (incluedes path)
-		% FileData		struct array of information for each file
-		%array of OptoFileName objects holding .dat file info
+		% (deleted) FileData		struct array of information for each file
+		% curveInfo		array of OptoFileName objects holding .dat file info
 		% Fs				samples/sec for data
 		% sweepStartBin	{nfiles, 1} holding arrays of sample for start of
 		%						each data recording sweep
@@ -18,7 +18,8 @@ classdef SpikeInfo
 		% ADchannel		list of AD channels exported within .nex file
 		FileName
 		InfoFileName
-		FileData
+% 		FileData
+		curveInfo
 		Fs
 		sweepStartBin = {};
 		sweepEndBin = {};
@@ -135,7 +136,7 @@ classdef SpikeInfo
 		% # of files merged into nex file
 		%-------------------------------------------------
 		function val = get.nFiles(obj)
-			val = length(obj.FileData);
+			val = length(obj.curveInfo);
 		end
 		%-------------------------------------------------
 		% fileStart, end Time computed from bins
