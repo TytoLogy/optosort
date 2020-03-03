@@ -23,3 +23,21 @@ for f = 1:S.Info.nFiles
 	fprintf('\tTest Type: %s\n', S.Info.FileData(f).testtype);
 	
 end
+
+%%
+
+% data locations
+sortedPath = '~/Work/Data/TestData/MT';
+rawPath = '~/Work/Data/TestData/MT';
+nexPath = '~/Work/Data/TestData/MT';
+
+% sorted data file
+% sortedFile = '1323_20190722_03_02_632_MERGE.mat';
+sortedFile = '1382_20191212_02_02_3200.mat';
+
+% nexinfo file
+% nexInfoFile = '1323_20190722_03_02_632_MERGE_nexinfo.mat';
+nexInfoFile = '1382_20191212_02_02_3200_MERGE_nexinfo.mat';
+
+% nex file
+nexFile = '1382_20191212_02_02_3200_MERGE.nex';

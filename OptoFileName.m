@@ -76,6 +76,10 @@ function F = parseOptoFileName(filename)
 	F.base = fname;
 	% locate underscores
 	usc = find(fname == '_');
+	if isempty(usc)
+		st = dbstack;
+		error('%s: Improper Opto File Name form %s', mfilename, st.name);
+	end
 	% last underscore index
 	endusc = usc - 1;
 	% first underscore index
@@ -88,13 +92,20 @@ function F = parseOptoFileName(filename)
 	F.unit = fname(startusc(2):endusc(3));
 	% penetration number
 	F.penetration = fname(startusc(3):endusc(4));
-	% recording depth
-	F.depth = fname(startusc(4):endusc(5));
-	% this should be test name
-	if startusc(4) == startusc(end)
-		F.other = fname(startusc(end):end);
+	% need to check if we're at final underscor
+	if length(usc) == 4
+		% only thing left is rec depth and then . and extension
+		F.depth = fname(startusc(4):end);
+		% no other
+		F.other = '';
 	else
-		F.other = fname(startusc(5):end);
+		% recording depth
+		F.depth = fname(startusc(4):endusc(5));
+		% this should be test name
+		if startusc(4) == startusc(end)
+			F.other = fname(startusc(end):end);
+		else
+			F.other = fname(startusc(5):end);
+		end
 	end
-
 end

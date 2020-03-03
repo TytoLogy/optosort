@@ -66,13 +66,6 @@ fS = S.spikesForAnalysis(f, 'sweep');
 % get spikes in orginal form (aligned to start of merged file)
 fS_orig = S.spikesForAnalysis(f);
 
-%% get list of units
-unitList = S.listUnits;
-
-fprintf('Units in %s:\n', Sfile);
-fprintf('\t%d', unitList);
-fprintf('\n');
-
 %% stimcache object
 
 for f = 1:S.Info.nFiles
