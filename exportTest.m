@@ -131,6 +131,7 @@ exportOpts.TestFile = {	'1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'; ...
 exportOpts.Channels = [4, 5, 11, 14];
 exportOpts.OutputPath = exportOpts.DataPath;
 exportOpts.OutputFile = '1382_20191212_02_02_3200_MERGE.nex';
+% exportOpts.OutputFile = '1382_20191212_02_02_3200_CURVEOBJ.nex';
 % exportOpts.OutputPath = pwd;
 % exportOpts.OutputFile = 'test.nex';
 %---------------------------------------
