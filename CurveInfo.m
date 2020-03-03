@@ -19,6 +19,9 @@ classdef CurveInfo
 % Created: 24 February, 2020 (SJS)
 %	- adapted from import_from_plexon_nonObj
 % Revisions:
+%	3 Mar 2020 (SJS): adding elements from fData struct in the 
+%		export_for_plexon.m function to avoid future duplications and
+%		streamline curve/test information handling
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -27,7 +30,20 @@ classdef CurveInfo
 	% class properties
 	%-------------------------------------------------
 	properties
+		%{
+			Dinf		Data information struct from opto .dat files
+			startSweepBin		sample for start of each sweep 
+			endSweepBin		sample for end of each sweep
+			sweepLen			length (# of samples) for each sweep
+			fileStartBin	sample for start of file in merged file
+			fileEndBin		sample for end of file in merged data file
+		%}
 		Dinf
+		startSweepBin = {}
+		endSweepBin = {}
+		sweepLen
+		fileStartBin
+		fileEndBin
 	end	% END properties (main)
 	properties (Dependent)
 		testtype
@@ -61,6 +77,10 @@ classdef CurveInfo
 					obj.Dinf.test.stimcache.curvetype = ...
 												char(obj.Dinf.test.stimcache.curvetype);
 				end
+% 			elseif isnumeric(varargin{1})
+% 				% handles case where varargin is numeric i.e. an array is being
+% 				% built
+% 				return
 			else
 				error('Unknown input type %s', varargin{1});
 			end
