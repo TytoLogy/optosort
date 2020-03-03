@@ -17,7 +17,7 @@ function varargout = load_plexon_data(varargin)
 %	- adapted from import_from_plexon
 % Revisions:
 %------------------------------------------------------------------------
-% TO DO:
+% TO DO: DOESNT HANDLE MULTIPLE CHANNELS
 %------------------------------------------------------------------------
 % Initial things to define
 %------------------------------------------------------------------------
@@ -39,31 +39,43 @@ if nargin == 0
 	[sortedPath, sortedFile] = uigetfile('*.mat', ...
 														'Select Plexon output .mat file');
 	% if user cancelled, exit gracefully
-	if isempty(sortedPath) || isempty(sortedFile)
+	if sortedPath == 0
 		fprintf('%s: cancelled\n', mfilename);
 		varargout{1} = [];
 		return
 	end
 elseif nargin == 1
+	% user provided sorted data file only
 	[sortedPath, tmpFile, tmpExt] = fileparts(varargin{1});
 	sortedFile = [tmpFile, tmpExt];
+	% build nexinfo file name from sortedFile
+	nexInfoPath = sortedPath;
+	nexInfoFile = buildNexInfoFromPlexonMat(sortedFile);	
+	% check
+	if ~exist(fullfile(sortedPath, nexInfoFile), 'file')
+		warning('Could not locate nexinfo file %s', nexInfoFile);
+		[nexInfoPath, nexInfoFile] = uigetfile( ...
+											fullfile(nexInfoPath, '*_nexinfo.mat'), ...
+											'Select nexinfo output .mat file');
+		% if user cancelled, exit gracefully
+		if nexInfoPath == 0
+			fprintf('%s: cancelled\n', mfilename);
+			varargout{1} = [];
+			return
+		end
+	end
+	
+elseif nargin == 2
+	% user provided sorted and nexinfo file
+	[sortedPath, tmpFile, tmpExt] = fileparts(varargin{1});
+	sortedFile = [tmpFile, tmpExt];
+	[nexInfoPath, tmpFile, tmpExt] = fileparts(varargin{2});
+	nexInfoFile = [tmpFile, tmpExt];
+	
 else
 	error('%s: huh????', mfilename);
 end
 
-% build nexinfo file name from sortedFile
-nexInfoFile = buildNexInfoFromPlexonMat(sortedFile);
-	
-	
-
-
-
-%------------------------------------------------------------------------
-% Setup
-%------------------------------------------------------------------------
-fprintf('\n%s\n', sepstr);
-fprintf('%s running...\n', mfilename);
-fprintf('%s\n', sepstr);
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -176,16 +188,15 @@ end
 % create SpikeData object
 S = SpikeData();
 fprintf('\n%s\n', sepstr);
-fprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexPath, nexInfoFile));
+fprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexInfoPath, nexInfoFile));
 fprintf('%s\n', sepstr);
 % nexinfo
-S.Info = SpikeInfo('file', fullfile(nexPath, nexInfoFile));
+S.Info = SpikeInfo('file', fullfile(nexInfoPath, nexInfoFile));
 
 % add spikes
 % for now, just load the first channel data - need to figure out a way to
 % deal with multiple channels (array of SpikeData objects?)
 tmp = load(fullfile(sortedPath, sortedFile), '-MAT', plxvars{1});
-spikesAll = tmp.(plxvars{1});
 S = S.addPlexonSpikes(tmp.(plxvars{1}), plxvars{1});
 clear tmp;
 
@@ -193,11 +204,10 @@ varargout{1} = S;
 
 end
 
-function nexfilename = buildNexInfoFromPlexonMat(plexfilename)
+function nexinfofilename = buildNexInfoFromPlexonMat(plexfilename)
 % from plexfilename, build nexfilename
 
 	% first, init opto file obj
 	F = OptoFileName(plexfilename);
-	
-
+	nexinfofilename = [F.fileWithoutOther '_nexinfo.mat'];
 end
