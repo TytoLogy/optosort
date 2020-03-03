@@ -176,6 +176,15 @@ spikesAll = tmp.(plxvars{1});
 S = S.addPlexonSpikes(tmp.(plxvars{1}), plxvars{1});
 clear tmp;
 
+% save Sobject in file
+% get base from one of the file objects in S.Info
+sfile = [S.Info.FileData(1).F.fileWithoutOther '_Sobj.mat'];
+fprintf('\n%s\n', sepstr);
+fprintf('writing Sobj to file\n\t%s\n', fullfile(nexPath, sfile));
+fprintf('%s\n', sepstr);
+save(fullfile(nexPath, sfile), '-MAT', 'S');
+
+
 %% break up spiketimes by data file
 % use file Start/End time to do this
 [~, nc] = size(spikesAll);
