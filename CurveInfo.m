@@ -33,9 +33,9 @@ classdef CurveInfo
 		%{
 			Dinf		Data information struct from opto .dat files
 			F		opto file object
-			startSweepBin		sample for start of each sweep 
-			endSweepBin		sample for end of each sweep
-			sweepLen			length (# of samples) for each sweep
+			startSweepBin	sample for start of each sweep (for each channel)
+			endSweepBin		sample for end of each sweep (for each channel)
+			sweepLen			length (# of samples) for each sweep (for each channel)
 			fileStartBin	sample for start of file in merged file
 			fileEndBin		sample for end of file in merged data file
 		%}
