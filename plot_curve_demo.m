@@ -2,30 +2,6 @@
 
 %% load data
 
-% S object file
-Sfile = '~/Work/Data/TestData/MT/1382_20191212_02_02_3200_Sobj.mat';
-
-% load data
-load(Sfile)
-
-%% test things
-
-% need to select a unit
-allUnits = S.listUnits;
-fprintf('Found spike data for units: ')
-fprintf('%d  ', S.listUnits);
-fprintf('\n\n');
-
-%% Show how to list files and curve types
-
-for f = 1:S.Info.nFiles
-	fprintf('File %d:\n', f);
-	fprintf('\tTest Type: %s\n', S.Info.FileData(f).testtype);
-	
-end
-
-%%
-
 % data locations
 sortedPath = '~/Work/Data/TestData/MT';
 rawPath = '~/Work/Data/TestData/MT';
@@ -42,5 +18,28 @@ nexInfoFile = '1382_20191212_02_02_3200_MERGE_nexinfo.mat';
 % nex file
 nexFile = '1382_20191212_02_02_3200_MERGE.nex';
 
+% load the data - returned as a SpikeData object
 S = load_plexon_data(fullfile(sortedPath, sortedFile), ...
-							fullfile(sortedPath, nexInfoFile))
+							fullfile(sortedPath, nexInfoFile));
+						
+%% test things
+
+% show unit id numbers
+fprintf('Found spike data for units: ')
+fprintf('%d  ', S.listUnits);
+fprintf('\n\n');
+
+% Show how to list files and curve types
+% loop through the number of files merged into file to be sorted
+for f = 1:S.Info.nFiles
+	% for each file number, display the test type 
+	fprintf('File %d:\n', f);
+	fprintf('\tTest Type: %s\n', S.Info.FileData(f).testtype);
+end
+
+%% plot freq-tuning curves for non-zero units
+
+
+
+
+

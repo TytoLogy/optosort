@@ -65,11 +65,8 @@ nexInfoFile = '1382_20191212_02_02_3200_MERGE_nexinfo.mat';
 % nex file
 nexFile = '1382_20191212_02_02_3200_MERGE.nex';
 
-% S object file
-Sfile = '~/Work/Data/TestData/MT/1382_20191212_02_02_3200_Sobj.mat';
-
-% load data
-load(Sfile)
+S = load_plexon_data(fullfile(sortedPath, sortedFile), ...
+							fullfile(sortedPath, nexInfoFile));
 
 %% get stimcache data
 
