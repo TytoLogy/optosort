@@ -77,7 +77,7 @@ function varargout = export_for_plexon(varargin)
 % 	nD		NeuroExplorer nex data struct written to output file
 %	nexInfo	struct with information about data written to .nex file:
 % 		NexFileName			name of _nexinfo.mat file
-% 		fData					struct array with info about data files
+% 		fData					array of CurveInfo objects with info about data files
 % 		sweepStartBin		sample index for sweep start
 % 		sweepEndBin			sample index for sweep end
 % 		fileStartBin		sample index for data start for each data file
@@ -99,6 +99,7 @@ function varargout = export_for_plexon(varargin)
 % Revisions:
 %	15 Jan 2020 (SJS): added documentation, writing info to .mat file
 %	12 Feb 2020 (SJS): revising for object oriented storage
+%	3 Mar 2020 (SJS): converted fData to CurveInfo array
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
