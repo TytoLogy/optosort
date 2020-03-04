@@ -12,16 +12,18 @@ function varargout = threshold_opto_data(D, Dinf, tracesByStim, varargin)
 %									is no filter applied
 %   HPFREQ 					high pass filter cutoff frequency for neural data (Hz)
 %   LPFREQ					low pass filter cutoff frequency for neural data (Hz)
+%	 FORDER					filter order (typically 5 or lower)
 %   THRESHOLD				RMS spike threshold (# RMS, default: 3)
+%	 SPIKE_WINDOW			[pre_ts post_ts] window for grabbing spike
+%								waveform snippets, in milliseconds
 %	 SHOW_DEFAULTS			show default values for options
 % 
 % 	Outputs:
 % 
-% 		D			raw data, cell
-% 		Dinf		data information struct
-% 		S			spike data, struct
-% 		T			data traces, sorted by stimulus, cell
-% 		P			plot options, struct
+% 		spiketimes
+% 		snippets
+% 		CurveInfo		curve information object
+% 		ThresholdInfo	thresholding information
 %------------------------------------------------------------------------
 % See Also: opto, plotFRA, plotRLF, plotFTC
 %------------------------------------------------------------------------
@@ -50,7 +52,7 @@ Forder = 5;
 % RMS spike threshold
 Threshold = 3;
 % Spike Window [preDetectTime postDetectTime] (ms)
-SpikeWindow
+SpikeWindow = [1 2];
 
 %---------------------------------------------------------------------
 % Parse inputs
@@ -71,7 +73,7 @@ if nvararg > 0
 				LPFreq = varargin{argIndx + 1};
 				argIndx = argIndx + 2;
 			case 'FORDER'
-				Forder = = varargin{argIndx + 1};
+				Forder = varargin{argIndx + 1};
 				argIndx = argIndx + 2;
 			case 'THRESHOLD'
 				tmp = varargin{argIndx + 1};
@@ -92,6 +94,15 @@ if nvararg > 0
 					error('%s: invalid threshold value: %s', mfilename, tmp)
 				end
 				argIndx = argIndx + 2;
+			case 'SPIKE_WINDOW'
+				tmp = varargin{argIndx + 1};
+				if ~isnumeric(tmp)
+					error('%s: spike window must be 2 element number vector', ...
+									mfilename);
+				end
+				SpikeWindow = tmp;
+				argIndx = argIndx + 2;
+
 
 			case 'SHOW_DEFAULTS'
 				% display default values for settings & options
@@ -101,8 +112,7 @@ if nvararg > 0
 				fprintf('\tLPFREQ: %d\n', LPFreq);
 				fprintf('\tFORDER: %d\n', Forder);
 				fprintf('\tTHRESHOLD: %d\n', Threshold);
-				fprintf('\tCHANNEL: %d\n', channelNumber);
-				fprintf('\tBINSIZE: %d\n', binSize);
+				fprintf('\tSPIKE_WINDOW: %d\n', SpikeWindow);
 				return
 			otherwise
 				error('%s: unknown input arg %s', mfilename, varargin{argIndx});
@@ -192,23 +202,26 @@ if FilterData
 	BPfilt.cutoff = BPfilt.Fc / BPfilt.Fnyq;
 	BPfilt.forder = Forder;
 	[BPfilt.b, BPfilt.a] = butter(BPfilt.forder, BPfilt.cutoff, 'bandpass');
+	sep_print('Filtering data...');
+	[nr, nc] = size(tracesByStim);
+	for r = 1:nr
+		for c = 1:nc
+			for n = 1:cInfo.nreps
+					tracesByStim{r, c}(:, n) = filtfilt(BPfilt.b, BPfilt.a, ...
+																tracesByStim{r, c}(:, n));
+
+			end
+		end
+	end	
 else
 	BPfilt = [];
 end
 
-sep_print('Filtering data...');
-[nr, nc] = size(tracesByStim);
-for r = 1:nr
-	for c = 1:nc
-		for 
-		
-	end
-end
+
 
 %---------------------------------------------------------------------
 % find spikes!
 %---------------------------------------------------------------------
-
 
 % different approaches to storage depending on test type
 switch upper(cInfo.testtype)
@@ -250,6 +263,8 @@ if nargout
 									'BPfilt', BPfilt, ...
 									'nvars', nvars, ...
 									'varlist', {varlist}		);
-
+	varargout{4} = tracesByStim;
 
 end
+
+% save snipindata.mat spiketimes cInfo tracesByStim 
