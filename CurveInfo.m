@@ -55,6 +55,9 @@ classdef CurveInfo
 		varied_parameter
 		varied_values
 		analysis_window
+		nreps
+		ntrials
+		nstims
 	end	% END properties(Dependent)
 
 	
@@ -70,6 +73,7 @@ classdef CurveInfo
 			end
 			if isstruct(varargin{1})
 				obj.Dinf = varargin{1};
+				obj.F = OptoFileName(obj.Dinf.filename);
 				% if necessary, convert stimtype and curvetype to strings
 				if isnumeric(obj.Dinf.test.stimcache.stimtype)
 					obj.Dinf.test.stimcache.stimtype = ...
@@ -336,6 +340,26 @@ classdef CurveInfo
 		function val = get.analysis_window(obj)
 			val = [obj.Dinf.audio.Delay (obj.Dinf.audio.Delay + obj.Dinf.audio.Duration)];
 		end
+		% returns test.stimcache.nreps: # of reps for each stimulus
+		function val = get.nreps(obj)
+			val = obj.Dinf.test.stimcache.nreps;
+		end
+		% returns test.stimcache.ntrials: # of stimulus types
+		function val = get.ntrials(obj)
+			val = obj.Dinf.test.stimcache.ntrials;
+		end
+		% returns test.stimcache.nstims: total # of stimulus presentations
+		% (usually equal to nreps * ntrials
+		function val = get.nstims(obj)
+			val = obj.Dinf.test.stimcache.nstims;
+		end		
+			
+		
+			
+		
+		
+		
+		
 	end	% END methods
 	
 end	% END classdef

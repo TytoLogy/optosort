@@ -1,10 +1,10 @@
+function sep_print(aStr)
 %------------------------------------------------------------------------
-% addOptoPaths.m
+% sep_print(aStr)
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
-% adds paths to opo related dirs
-% 
+% prints text wrapped with '----' line
 %------------------------------------------------------------------------
 % See also: 
 %------------------------------------------------------------------------
@@ -13,15 +13,18 @@
 %  Sharad J. Shanbhag
 %	sshanbhag@neomed.edu
 %------------------------------------------------------------------------
-% Created: 8 January, 2020 (SJS)
-%
+% Created: 4 March, 2020 (SJS)
 % Revisions:
 %------------------------------------------------------------------------
-% TO DO: customize for each user's setup?
+% TO DO: 
 %------------------------------------------------------------------------
 
-fprintf('Adding path to opto functions:\n');
-fprintf('\t~/Work/Code/Matlab/dev/TytoLogy/Experiments/Opto\n');
-fprintf('\t~/Work/Code/Matlab/dev/TytoLogy/Experiments/Opto\n');
-addpath('~/Work/Code/Matlab/dev/TytoLogy/Experiments/Opto');
-addpath('~/Work/Code/Matlab/dev/TytoLogy/Experiments/OptoAnalysis');
+%------------------------------------------------------------------------
+% definitions
+%------------------------------------------------------------------------
+
+% string used to separate text 
+sepstr = '----------------------------------------------------';
+
+fprintf('%s\n%s\n%s\n', sepstr, aStr, sepstr);
+
