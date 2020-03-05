@@ -217,12 +217,9 @@ else
 	BPfilt = [];
 end
 
-
-
 %---------------------------------------------------------------------
 % find spikes!
 %---------------------------------------------------------------------
-
 % different approaches to storage depending on test type
 switch upper(cInfo.testtype)
 	case 'FREQ+LEVEL'
