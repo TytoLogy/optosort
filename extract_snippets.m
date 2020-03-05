@@ -1,9 +1,46 @@
 function snippets = extract_snippets(timestamps, sweeps, snipwin, Fs)
-
+%------------------------------------------------------------------------
+% snippets = extract_snippets(timestamps, sweeps, snipwin, Fs)
+%------------------------------------------------------------------------
+% TytoLogy:Experiments:optoproc
+%--------------------------------------------------------------------------
+% given arrays of timestamps (in milliseconds) and sweeps, size of
+% snippet window (in milliseconds) and sampling rate, extract_snippets will
+% return a cell array of snippets from the sweep data
+%
 % timestamps is a nreps X 1 cell array with each row containing a list
 % (vector) of timestamps, in milliseconds
 %
-% sweeps is an [nsamples X nreps] matrix of recorded data from electrode
+% sweeps is an [nreps, nsamples] or [nsamples,  nreps]matrix of recorded
+% data from electrode
+%------------------------------------------------------------------------
+%  Input Options:
+% 		timestamps		{ntrials, 1} cell vector with each cell holding a vector
+% 							of spike timestamps (milliseconds)
+% 		sweeps			[ntrials, nsamples] matrix holding the recording traces 
+% 							from each stimulus presentation.
+% 		snipwin			[pre-timestamp time, post-timestamp time] 2 element vector
+% 							providing the length of the snippet (in milliseconds) 
+% 							before and after the timestamp
+% 		Fs					Sampling rate (samples/second) used for the sweeps data
+% 
+% 	Outputs:
+%		snippets		{ntrials} cell vector with each element holding a matrix of
+%						snippets [ntimestamps for trial, nsamples]
+%------------------------------------------------------------------------
+% See Also: opto, plotFRA, plotRLF, plotFTC
+%------------------------------------------------------------------------
+
+%------------------------------------------------------------------------
+%  Sharad Shanbhag
+%   sshanbhag@neomed.edu
+%------------------------------------------------------------------------
+% Created: 5 March 2020 (SJS)
+%
+% Revisions:
+%--------------------------------------------------------------------------
+
+
 
 %% load test data
 load snipindata.mat
