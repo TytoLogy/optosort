@@ -68,10 +68,17 @@ snippets = cell(sweeprows, 1);
 
 % loop through traces (aka sweeps)
 for r = 1:sweeprows
-	% pad the left and right of the sweep - this is to deal with the
-	% possibility of a timestamp being too close to the start or end of the
-	% actual data sweep
+	% plot sweep
+	plot(1:sweepcols, sweeps(r, :), 'c.-');
+	grid on
+	
+	% idea 1: by default, pad the left and right of the sweep
 	padsweep = [lpad sweeps(r, :) rpad];
+	% plot the padded data - need to offset the xaxis by length of lpad
+	hold on
+		plot( (1:length(padsweep))-snipbins(1), padsweep, 'k.')
+	hold off
+	axis tight
 
 	% cell array to hold snippets for this sweep prior to matrix conversion
 	tmpS = cell(length(timestamps{r}));
@@ -80,6 +87,11 @@ for r = 1:sweeprows
 	for t = 1:length(timestamps{r})
 		ts = timestamps{r}(t);
 		tsbin = ms2bin(ts, Fs);
+
+		% highlight timestamp
+		hold on
+			plot(tsbin, sweeps(r, tsbin), 'or')
+		hold off
 	
 		% get snippet start and end bins - need to account for the shift due to
 		% lpad!
@@ -95,8 +107,15 @@ for r = 1:sweeprows
 		% 	
 		% but we can simply use the original tsbin, since the padded sweep is
 		% already shifted by snipbins(1)!!!
-		tmpS{t} = padsweep(tsbin:((tsbin + snipbins(1)) + snipbins(2)));
+		snip_startbin = tsbin
+		snip_endbin = ((tsbin + snipbins(1)) + snipbins(2))
+		tmpS{t} = padsweep( snip_startbin:snip_endbin);
 
+		hold on
+			plot((snip_startbin:snip_endbin) - snipbins(1), tmpS{t}, 'g.:')
+		hold off
+		drawnow
+		pause
 	end
 	snippets{r} = cell2mat(tmpS);
 end	

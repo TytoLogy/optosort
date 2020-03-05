@@ -31,12 +31,12 @@ sep_print('threshold_opto_data...');
 
 %% load test data
 load snipindata.mat
-Fs = cInfo.Dinf.indev.Fs;
-timestamps = spiketimes{1};
-sweeps = tracesByStim{1};
 
 % snippet window: [preTS time, postTStime], milliseconds
 SnippetWindow = [1 2];
 
-
-snips = extract_snippets(timestamps, sweeps, SnippetWindow, Fs)
+snips = cell(cInfo.ntrials, 1);
+for tr = 1:cInfo.ntrials
+	snips{tr} = extract_snippets(spiketimes{tr}, tracesByStim{tr}, ...
+												SnippetWindow, cInfo.Dinf.indev.Fs);
+end
