@@ -42,12 +42,6 @@ function snippets = extract_snippets(timestamps, sweeps, snipwin, Fs)
 
 
 
-%% load test data
-load snipindata.mat
-timestamps = spiketimes{1};
-sweeps = tracesByStim{1};
-Fs = cInfo.Dinf.indev.Fs;
-
 %% check sizes of input arrays
 [tsrows, tscols] = size(timestamps);
 [sweeprows, sweepcols] = size(sweeps);
@@ -67,14 +61,13 @@ snipwin = [1 2];
 snipbin = ms2bin(snipwin, Fs)
 lpad = zeros(1, snipbin(1));
 rpad = zeros(1, snipbin(2));
-ctrbin = snipbin(1) + 1;
 
 %% test algorithm on one sweep
 
 % allocate storage for snippets
 snippets = cell(sweeprows, 1);
 % loop through traces
-for r = sweeprows
+for r = 1:sweeprows
 	% plot sweep
 	plot(1:sweepcols, sweeps(r, :), 'c.-');
 	grid on
@@ -87,6 +80,9 @@ for r = sweeprows
 	hold off
 	axis tight
 
+	% cell array to hold snippets for this sweep prior to matrix conversion
+	tmpS = cell(length(timestamps{r}));
+	
 	% loop through timestamps
 	for t = 1:length(timestamps{r})
 		ts = timestamps{r}(t);
@@ -113,12 +109,13 @@ for r = sweeprows
 		% already shifted by snipbin(1)!!!
 		snip_startbin = tsbin
 		snip_endbin = ((tsbin + snipbin(1)) + snipbin(2))
-		snip = padsweep( snip_startbin:snip_endbin);
+		tmpS{t} = padsweep( snip_startbin:snip_endbin);
 
 		hold on
-			plot((snip_startbin:snip_endbin) - snipbin(1), snip, 'g.:')
+			plot((snip_startbin:snip_endbin) - snipbin(1), tmpS{t}, 'g.:')
 		hold off
 		drawnow
 		pause
 	end
+	snippets{r} = cell2mat(tmpS);
 end	
