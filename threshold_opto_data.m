@@ -1,4 +1,4 @@
-function varargout = threshold_opto_data(D, Dinf, tracesByStim, varargin)
+function varargout = threshold_opto_data(Dinf, tracesByStim, varargin)
 %------------------------------------------------------------------------
 % [D, Dinf, S, T, P] = threshold_opto_data(see help)
 %------------------------------------------------------------------------
@@ -129,6 +129,9 @@ cInfo = CurveInfo(Dinf);
 % determine global RMS and max - used for thresholding
 %---------------------------------------------------------------------
 % first, get  # of stimuli (called ntrials by opto) as well as # of reps
+
+%{ 
+ORIG: uses test information from cInfo
 if strcmpi(cInfo.testtype, 'WavFile')
 	nstim = cInfo.Dinf.test.nCombinations;
 	nreps = cInfo.Dinf.test.Reps;
@@ -136,7 +139,22 @@ else
 	nstim = cInfo.ntrials;
 	nreps = cInfo.nreps;
 end
-% allocate matrices
+%}
+
+% testing: use size of tracesByStim to get number of stimuli
+nstim = numel(tracesByStim);
+[traceRows, traceCols] = size(tracesByStim);
+
+nreps = zeros(traceRows, traceCols);
+for r = 1:traceRows
+	for c = 1:traceCols
+		[nreps(r, c), ~] = size(tracesByStim{r, c}');
+		fprintf('tracesByStim{%d, %d} has %d reps\n', r, c, nreps(r, c));
+	end
+end
+
+
+%% allocate matrices
 netrmsvals = zeros(nstim, nreps);
 maxvals = zeros(nstim, nreps);
 % find rms, max vals for each stim
@@ -151,6 +169,9 @@ fprintf('\tMean rms: %.4f\n', mean_rms);
 % find global max value (will be used for plotting)
 global_max = max(max(maxvals));
 fprintf('\tGlobal max abs value: %.4f\n', global_max);
+
+%{
+OLD: needed to check on vars...
 
 %---------------------------------------------------------------------
 % Some test-specific things...
@@ -188,6 +209,7 @@ switch upper(cInfo.testtype)
 	otherwise
 		error('%s: unsupported test type %s', mfilename, cInfo.testtype);
 end
+%}
 
 %---------------------------------------------------------------------
 % define filter for data
@@ -220,6 +242,8 @@ end
 %---------------------------------------------------------------------
 % find spikes!
 %---------------------------------------------------------------------
+%{
+OLD~~~~
 % different approaches to storage depending on test type
 switch upper(cInfo.testtype)
 	case 'FREQ+LEVEL'
@@ -242,6 +266,8 @@ switch upper(cInfo.testtype)
 																				1, Fs, 'ms');
 		end
 end
+%}
+
 
 %---------------------------------------------------------------------
 % outputs
