@@ -77,46 +77,8 @@ fprintf('\tMean rms: %.4f\n', mean_rms);
 global_max = max(max(maxvals));
 fprintf('\tGlobal max abs value: %.4f\n', global_max);
 
-
-cInfo = CurveInfo(Dinf);
-
-
 %------------------------------------------------------------------------
 %% threshold data
 %------------------------------------------------------------------------
 sep_print('threshold_opto_data...');
-[spiketimes, cInfo, threshSettings] = threshold_opto_data(Dinf, tracesByStim);
-
-%% compare FRA
-[spiketimes, cInfo, threshSettings] = threshold_opto_data(Dinf, tracesByStim);
-[spiketimesO, ~, ~] = threshold_opto_data(Dinf, tracesByStim, 'FRAMETHOD', 'OLD');
-
-% window for spike count
-frawin = [cInfo.Dinf.audio.Delay (cInfo.Dinf.audio.Delay + cInfo.Dinf.audio.Duration)];
-
-varlist = cInfo.varlist;
-FRA = computeFRA(spiketimes, varlist{1}, varlist{2}, frawin);
-FRAo = computeFRA(spiketimesO, varlist{1}, varlist{2}, frawin);
-hFRA = plotFRA(FRA, 'dB');
-hFRAo = plotFRA(FRAo, 'dB');
- % set plot name
-set(hFRA, 'Name', 'spiketimes');
-set(hFRAo, 'Name', 'spiketimesO');
-
-%% extract spike waveform "snippets"
-
-% snippet window: [preTS time, postTStime], milliseconds
-SnippetWindow = [1 2];
-
-
-snips = cell(cInfo.ntrials, 1);
-for tr = 1:cInfo.ntrials
-	snips{tr} = extract_snippets(spiketimes{tr}, tracesByStim{tr}, ...
-												SnippetWindow, cInfo.Dinf.indev.Fs);
-end
-
-%% 
-
-figure(1);
-
-t = 
+[spikedata, cInfo, threshSettings] = threshold_opto_data(Dinf, tracesByStim);

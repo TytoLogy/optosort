@@ -1,12 +1,17 @@
 function varargout = threshold_opto_data(Dinf, tracesByStim, varargin)
 %------------------------------------------------------------------------
-% [D, Dinf, S, T, P] = threshold_opto_data(see help)
+% [spikedata, CurveInfo, ThresholdInfo, tracesByStim] = 
+% 															  threshold_opto_data(see help)
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:OptoAnalysis
 %--------------------------------------------------------------------------
 % Processes data collected by the opto program
 %
 %------------------------------------------------------------------------
+% Inputs:
+%	Dinf					opto data information struct
+%	tracesByStim	cell array of recording sweeps organized by stimulus
+%
 %  Input Options:
 %	 FILTER_DATA			if given, data will be bandpass filtered. default
 %									is no filter applied
@@ -16,15 +21,24 @@ function varargout = threshold_opto_data(Dinf, tracesByStim, varargin)
 %   THRESHOLD				RMS spike threshold (# RMS, default: 3)
 %	 SPIKE_WINDOW			[pre_ts post_ts] window for grabbing spike
 %								waveform snippets, in milliseconds
-%	 FRAMETHOD				'OLD' uses original method for FRA data
 %	 SHOW_DEFAULTS			show default values for options
 % 
 % 	Outputs:
-% 
-% 		spiketimes
-% 		snippets
-% 		CurveInfo		curve information object
-% 		ThresholdInfo	thresholding information
+% 	 spikedata		struct with fields:
+% 							spiketimes  cell array of spiketimes (in milliseconds)
+% 							snippets		cell array of spike waveform snippets
+% 	 CurveInfo		curve information object
+% 	 ThresholdInfo	thresholding information struct:
+% 						'netrmsvals'
+% 						'maxvals'
+% 						'mean_rms'
+% 						'global_max'
+% 						'Threshold'
+% 						'BPfilt'
+% 						'nvars'
+% 						'varlist'
+% 	 tracesByStim	cell array of raw traces - usually only useful if 
+% 						FILTER_DATA was requested!
 %------------------------------------------------------------------------
 % See Also: opto, plotFRA, plotRLF, plotFTC
 %------------------------------------------------------------------------
@@ -37,7 +51,6 @@ function varargout = threshold_opto_data(Dinf, tracesByStim, varargin)
 %
 % Revisions:
 %--------------------------------------------------------------------------
-
 
 
 %---------------------------------------------------------------------
@@ -54,8 +67,6 @@ Forder = 5;
 Threshold = 3;
 % Spike Window [preDetectTime postDetectTime] (ms)
 SpikeWindow = [1 2];
-
-FRAmethod = 'NEW';
 
 %---------------------------------------------------------------------
 % Parse inputs
@@ -105,23 +116,6 @@ if nvararg > 0
 				end
 				SpikeWindow = tmp;
 				argIndx = argIndx + 2;
-
-			case 'FRAMETHOD'
-				tmp = varargin{argIndx + 1};
-				if ischar(tmp)
-					if strcmpi(tmp, 'OLD')
-						fprintf('%s: using old FRA method threshold\n', mfilename);
-						FRAmethod = 'OLD';
-					elseif strcmpi(tmp, 'NEW')
-						fprintf('%s: using new FRA method threshold\n', mfilename);
-						FRAmethod = 'NEW';
-					else
-						error('%s: unknown FRAMETHOD option: %s', mfilename, tmp);
-					end
-				else
-					error('%s: invalid FRAMETHOD option: %s', mfilename, tmp)
-				end
-				argIndx = argIndx + 2;
 				
 			case 'SHOW_DEFAULTS'
 				% display default values for settings & options
@@ -150,18 +144,7 @@ cInfo = CurveInfo(Dinf);
 %---------------------------------------------------------------------
 % first, get  # of stimuli (called ntrials by opto) as well as # of reps
 
-%{ 
-ORIG: uses test information from cInfo
-if strcmpi(cInfo.testtype, 'WavFile')
-	nstim = cInfo.Dinf.test.nCombinations;
-	nreps = cInfo.Dinf.test.Reps;
-else
-	nstim = cInfo.ntrials;
-	nreps = cInfo.nreps;
-end
-%}
-
-% testing: use size of tracesByStim to get number of stimuli
+% use size of tracesByStim to get number of stimuli
 % check reps
 nstim = numel(tracesByStim);
 [trRows, trCols] = size(tracesByStim);
@@ -233,46 +216,28 @@ end
 % find spikes!
 %---------------------------------------------------------------------
 
-switch FRAmethod
-	case 'OLD'
-		% different approaches to storage depending on test type
-		switch upper(cInfo.testtype)
-			case 'FREQ+LEVEL'
-				% for FRA data, nvars has values [nfreqs nlevels];
-				spiketimes = cell(nvars(2), nvars(1));
-				for v1 = 1:nvars(1)
-					for v2 = 1:nvars(2)
-						% use rms threshold to find spikes
-						spiketimes{v2, v1} = ...
-								spikeschmitt2(tracesByStim{v2, v1}', Threshold*mean_rms, ...
-																					1, Fs, 'ms');
-					end
-				end
-			otherwise
-				% if test is not FREQ+LEVEL (FRA), nvars will be a single number
-				spiketimes = cell(nvars, 1);
-				for v = 1:nvars
-					% use rms threshold to find spikes
-					spiketimes{v} = spikeschmitt2(tracesByStim{v}', Threshold*mean_rms, ...
-																						1, Fs, 'ms');
-				end
-		end
-		
-	case 'NEW'
-		% allocate spiketimes cell to match tracesByStim
-		spiketimes = cell(trRows, trCols);
-		% detect spikes
-		for r = 1:trRows
-			for c = 1:trCols
-				% use rms threshold to find spikes
-				% need to pass the transpose of tracesByStim because, by default, the
-				% samples go down rows and trials across cols, but spikeschmitt2
-				% expects the opposite....
-				spiketimes{r, c} = spikeschmitt2(tracesByStim{r, c}', ...
-												Threshold*mean_rms, 1, Fs, 'ms');
-			end
-		end
+% allocate spiketimes cell to match tracesByStim
+spiketimes = cell(trRows, trCols);
+% allocate snippets cell to match tracesByStim
+snippets = cell(trRows, trCols);
+% detect spikes
+for r = 1:trRows
+	for c = 1:trCols
+		% use rms threshold to find spikes
+		% need to pass the transpose of tracesByStim because, by default, the
+		% samples go down rows and trials across cols, but spikeschmitt2
+		% expects the opposite....
+		spiketimes{r, c} = spikeschmitt2(tracesByStim{r, c}', ...
+										Threshold*mean_rms, 1, Fs, 'ms');
+									
+		% locate spikes and get snippets of data
+		snippets{r, c} = extract_snippets(spiketimes{r, c}, ...
+														tracesByStim{r, c}, ...
+														SpikeWindow, ...
+														Fs);
+	end
 end
+
 
 
 %---------------------------------------------------------------------
@@ -280,7 +245,7 @@ end
 %---------------------------------------------------------------------
 if nargout
 	% raw traces
-	varargout{1} = spiketimes;
+	varargout{1} = struct('spiketimes', spiketimes, 'snippets', snippets);
 	% data information
 	varargout{2} = cInfo;
 	% analysis output
