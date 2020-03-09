@@ -18,6 +18,7 @@ function varargout = threshold_opto_data(Dinf, tracesByStim, varargin)
 %   HPFREQ 					high pass filter cutoff frequency for neural data (Hz)
 %   LPFREQ					low pass filter cutoff frequency for neural data (Hz)
 %	 FORDER					filter order (typically 5 or lower)
+%	 METHOD					default is RMS, optional: absolute (ABS)
 %   THRESHOLD				RMS spike threshold (# RMS, default: 3)
 %	 SPIKE_WINDOW			[pre_ts post_ts] window for grabbing spike
 %								waveform snippets, in milliseconds
@@ -33,6 +34,7 @@ function varargout = threshold_opto_data(Dinf, tracesByStim, varargin)
 % 						'maxvals'
 % 						'mean_rms'
 % 						'global_max'
+%						ThresholdMethod
 % 						'Threshold'
 % 						'BPfilt'
 % 						'nvars'
@@ -63,6 +65,7 @@ HPFreq = 300;
 LPFreq = 4000;
 Forder = 5;
 
+ThresholdMethod = 'RMS';
 % RMS spike threshold
 Threshold = 3;
 % Spike Window [preDetectTime postDetectTime] (ms)
@@ -89,6 +92,16 @@ if nvararg > 0
 			case 'FORDER'
 				Forder = varargin{argIndx + 1};
 				argIndx = argIndx + 2;
+			case 'METHOD'
+				tmp = varargin{argIndx + 1};
+				if strcmpi(tmp, 'RMS')
+					ThresholdMethod = 'RMS';
+				elseif strcmpi(tmp, 'ABS')
+					ThresholdMethod = 'ABSOLUTE';
+				else
+					error('%s: invalid threshold method: %s', mfilename, tmp);
+				end
+				argIndx = argIndx + 2;
 			case 'THRESHOLD'
 				tmp = varargin{argIndx + 1};
 				if ischar(tmp)
@@ -99,11 +112,7 @@ if nvararg > 0
 						error('%s: unknown threshold command: %s', mfilename, tmp);
 					end
 				elseif isnumeric(tmp)
-					if tmp > 0
-						Threshold = tmp;
-					else
-						error('%s: invalid threshold value: %.4f', mfilename, tmp)
-					end
+					Threshold = tmp;
 				else
 					error('%s: invalid threshold value: %s', mfilename, tmp)
 				end
@@ -126,11 +135,17 @@ if nvararg > 0
 				fprintf('\tFORDER: %d\n', Forder);
 				fprintf('\tTHRESHOLD: %d\n', Threshold);
 				fprintf('\tSPIKE_WINDOW: %d\n', SpikeWindow);
-				fprintf('\FRAMETHOD: %d\n', FRAmethod);
 				return
 			otherwise
 				error('%s: unknown input arg %s', mfilename, varargin{argIndx});
 		end
+	end
+end
+
+% check threshold method
+if strcmpi(ThresholdMethod, 'RMS')
+	if Threshold < 0
+		error('%s: RMS threshold value must be > 0! : %.4f', mfilename, Threshold)
 	end
 end
 
@@ -164,8 +179,9 @@ else
 	nreps = reps_by_stim(1);
 end
 
-
-%% allocate matrices
+%---------------------------------------------------------------------
+% get RMS values
+%---------------------------------------------------------------------
 netrmsvals = zeros(nstim, nreps);
 maxvals = zeros(nstim, nreps);
 % find rms, max vals for each stim
@@ -181,7 +197,18 @@ fprintf('\tMean rms: %.4f\n', mean_rms);
 global_max = max(max(maxvals));
 fprintf('\tGlobal max abs value: %.4f\n', global_max);
 
+% calculate threshold - will depend on method
+switch ThresholdMethod
+	case 'RMS'
+		Threshold = Threshold*mean_rms;
+	case 'ABSOLUTE'
+		Threshold = Threshold; %#ok<ASGSL>
+end
+
+
+%---------------------------------------------------------------------
 % get varlist
+%---------------------------------------------------------------------
 [varlist, nvars] = cInfo.varlist;
 
 %---------------------------------------------------------------------
@@ -228,7 +255,7 @@ for r = 1:trRows
 		% samples go down rows and trials across cols, but spikeschmitt2
 		% expects the opposite....
 		spiketimes{r, c} = spikeschmitt2(tracesByStim{r, c}', ...
-										Threshold*mean_rms, 1, Fs, 'ms');
+										Threshold, 1, Fs, 'ms');
 									
 		% locate spikes and get snippets of data
 		snippets{r, c} = extract_snippets(spiketimes{r, c}, ...
@@ -253,6 +280,7 @@ if nargout
 									'maxvals', maxvals, ...
 									'mean_rms', mean_rms, ...
 									'global_max', global_max, ...
+									'ThresholdMethod', ThresholdMethod, ...
 									'Threshold', Threshold, ...
 									'BPfilt', BPfilt, ...
 									'nvars', nvars, ...
