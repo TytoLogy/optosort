@@ -41,42 +41,6 @@ if SAVEMAT
 		'Dinf', 'tracesByStim');
 end
 
-%% test some things from threshold_opto_data
-% check reps
-nstim = numel(tracesByStim);
-[trRows, trCols] = size(tracesByStim);
-
-reps_by_stim = zeros(trRows, trCols);
-for r = 1:trRows
-	for c = 1:trCols
-		[reps_by_stim(r, c), ~] = size(tracesByStim{r, c}');
-% 		fprintf('tracesByStim{%d, %d} has %d reps\n', r, c, reps_by_stim(r, c));
-	end
-end
-if length(unique(reshape(reps_by_stim, numel(reps_by_stim), 1))) > 1
-	warning('%s: unequal number of reps in tracesByStim', mfilename);
-	nreps = max((reshape(nreps, numel(reps_by_stim), 1)));
-	fprintf('Using max nreps for allocation: %d\n', nreps);
-else
-	nreps = reps_by_stim(1);
-end
-
-%% calculate rms parameters for thresholding
-netrmsvals = zeros(nstim, nreps);
-maxvals = zeros(nstim, nreps);
-% find rms, max vals for each stim
-for s = 1:nstim
-	netrmsvals(s, :) = rms(tracesByStim{s});
-	maxvals(s, :) = max(abs(tracesByStim{s}));
-end
-% compute overall mean rms for threshold
-fprintf('Calculating mean and max RMS for data...\n');
-mean_rms = mean(reshape(netrmsvals, numel(netrmsvals), 1));
-fprintf('\tMean rms: %.4f\n', mean_rms);
-% find global max value (will be used for plotting)
-global_max = max(max(maxvals));
-fprintf('\tGlobal max abs value: %.4f\n', global_max);
-
 %------------------------------------------------------------------------
 %% threshold data
 %------------------------------------------------------------------------
