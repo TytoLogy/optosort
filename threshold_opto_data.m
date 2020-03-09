@@ -211,6 +211,7 @@ switch upper(cInfo.testtype)
 end
 %}
 
+[varlist, nvars] = cInfo.varlist;
 %---------------------------------------------------------------------
 % define filter for data
 %---------------------------------------------------------------------
@@ -268,7 +269,28 @@ switch upper(cInfo.testtype)
 end
 %}
 
-
+% different approaches to storage depending on test type
+switch upper(cInfo.testtype)
+	case 'FREQ+LEVEL'
+		% for FRA data, nvars has values [nfreqs nlevels];
+		spiketimes = cell(nvars(2), nvars(1));
+		for v1 = 1:nvars(1)
+			for v2 = 1:nvars(2)
+				% use rms threshold to find spikes
+				spiketimes{v2, v1} = ...
+						spikeschmitt2(tracesByStim{v2, v1}', Threshold*mean_rms, ...
+																			1, Fs, 'ms');
+			end
+		end
+	otherwise
+		% if test is not FREQ+LEVEL (FRA), nvars will be a single number
+		spiketimes = cell(nvars, 1);
+		for v = 1:nvars
+			% use rms threshold to find spikes
+			spiketimes{v} = spikeschmitt2(tracesByStim{v}', Threshold*mean_rms, ...
+																				1, Fs, 'ms');
+		end
+end
 %---------------------------------------------------------------------
 % outputs
 %---------------------------------------------------------------------

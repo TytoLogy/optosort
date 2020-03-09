@@ -78,7 +78,7 @@ cInfo = CurveInfo(Dinf);
 %% threshold data
 %------------------------------------------------------------------------
 sep_print('threshold_opto_data...');
-[spiketimes, cInfo, threshSettings] = threshold_opto_data(D, Dinf, tracesByStim);
+[spiketimes, cInfo, threshSettings] = threshold_opto_data(Dinf, tracesByStim);
 
 
 %% extract spike waveform "snippets"
