@@ -335,6 +335,7 @@ classdef CurveInfo
 				otherwise
 					error('%s: unsupported test type %s', mfilename, cInfo.testtype);
 			end
+		end
 		
 		%-------------------------------------------------
 		%-------------------------------------------------

@@ -142,15 +142,23 @@ end
 %}
 
 % testing: use size of tracesByStim to get number of stimuli
+% check reps
 nstim = numel(tracesByStim);
-[traceRows, traceCols] = size(tracesByStim);
+[trRows, trCols] = size(tracesByStim);
 
-nreps = zeros(traceRows, traceCols);
-for r = 1:traceRows
-	for c = 1:traceCols
-		[nreps(r, c), ~] = size(tracesByStim{r, c}');
-		fprintf('tracesByStim{%d, %d} has %d reps\n', r, c, nreps(r, c));
+reps_by_stim = zeros(trRows, trCols);
+for r = 1:trRows
+	for c = 1:trCols
+		[reps_by_stim(r, c), ~] = size(tracesByStim{r, c}');
+% 		fprintf('tracesByStim{%d, %d} has %d reps\n', r, c, reps_by_stim(r, c));
 	end
+end
+if length(unique(reshape(reps_by_stim, numel(reps_by_stim), 1))) > 1
+	warning('%s: unequal number of reps in tracesByStim', mfilename);
+	nreps = max((reshape(nreps, numel(reps_by_stim), 1)));
+	fprintf('Using max nreps for allocation: %d\n', nreps);
+else
+	nreps = reps_by_stim(1);
 end
 
 
