@@ -16,6 +16,7 @@ function varargout = threshold_opto_data(Dinf, tracesByStim, varargin)
 %   THRESHOLD				RMS spike threshold (# RMS, default: 3)
 %	 SPIKE_WINDOW			[pre_ts post_ts] window for grabbing spike
 %								waveform snippets, in milliseconds
+%	 FRAMETHOD				'OLD' uses original method for FRA data
 %	 SHOW_DEFAULTS			show default values for options
 % 
 % 	Outputs:
@@ -53,6 +54,8 @@ Forder = 5;
 Threshold = 3;
 % Spike Window [preDetectTime postDetectTime] (ms)
 SpikeWindow = [1 2];
+
+FRAmethod = 'NEW';
 
 %---------------------------------------------------------------------
 % Parse inputs
@@ -103,7 +106,23 @@ if nvararg > 0
 				SpikeWindow = tmp;
 				argIndx = argIndx + 2;
 
-
+			case 'FRAMETHOD'
+				tmp = varargin{argIndx + 1};
+				if ischar(tmp)
+					if strcmpi(tmp, 'OLD')
+						fprintf('%s: using old FRA method threshold\n', mfilename);
+						FRAmethod = 'OLD';
+					elseif strcmpi(tmp, 'NEW')
+						fprintf('%s: using new FRA method threshold\n', mfilename);
+						FRAmethod = 'NEW';
+					else
+						error('%s: unknown FRAMETHOD option: %s', mfilename, tmp);
+					end
+				else
+					error('%s: invalid FRAMETHOD option: %s', mfilename, tmp)
+				end
+				argIndx = argIndx + 2;
+				
 			case 'SHOW_DEFAULTS'
 				% display default values for settings & options
 				fprintf('%s: Default values:\n', mfilename)
@@ -113,6 +132,7 @@ if nvararg > 0
 				fprintf('\tFORDER: %d\n', Forder);
 				fprintf('\tTHRESHOLD: %d\n', Threshold);
 				fprintf('\tSPIKE_WINDOW: %d\n', SpikeWindow);
+				fprintf('\FRAMETHOD: %d\n', FRAmethod);
 				return
 			otherwise
 				error('%s: unknown input arg %s', mfilename, varargin{argIndx});
@@ -155,7 +175,7 @@ for r = 1:trRows
 end
 if length(unique(reshape(reps_by_stim, numel(reps_by_stim), 1))) > 1
 	warning('%s: unequal number of reps in tracesByStim', mfilename);
-	nreps = max((reshape(nreps, numel(reps_by_stim), 1)));
+	nreps = max((reshape(reps_by_stim, numel(reps_by_stim), 1)));
 	fprintf('Using max nreps for allocation: %d\n', nreps);
 else
 	nreps = reps_by_stim(1);
@@ -178,48 +198,9 @@ fprintf('\tMean rms: %.4f\n', mean_rms);
 global_max = max(max(maxvals));
 fprintf('\tGlobal max abs value: %.4f\n', global_max);
 
-%{
-OLD: needed to check on vars...
-
-%---------------------------------------------------------------------
-% Some test-specific things...
-%---------------------------------------------------------------------
-switch upper(cInfo.testtype)
-	case 'FREQ'
-		% list of frequencies, and # of freqs tested
-		varlist = cInfo.varied_values;
-		nvars = length(varlist);
-
-	case 'LEVEL'
-		% list of levels, and # of levels tested
-		varlist = cInfo.varied_values;
-		nvars = length(varlist);
-
-	case 'FREQ+LEVEL'
-		% list of freq, levels
-		varlist = cell(2, 1);
-		% # of freqs in nvars(1), # of levels in nvars(2)
-		nvars = zeros(2, 1);
-		tmprange = cInfo.varied_values;
-		for v = 1:2
-			varlist{v} = unique(tmprange(v, :), 'sorted');
-			nvars(v) = length(varlist{v});
-		end
-
-	case 'OPTO'
-		% not yet implemented
-		
-	case 'WAVFILE'
-		% get list of stimuli (wav file names)
-		varlist = cInfo.Dinf.test.wavlist;
-		nvars = length(varlist);
-
-	otherwise
-		error('%s: unsupported test type %s', mfilename, cInfo.testtype);
-end
-%}
-
+% get varlist
 [varlist, nvars] = cInfo.varlist;
+
 %---------------------------------------------------------------------
 % define filter for data
 %---------------------------------------------------------------------
@@ -251,54 +232,49 @@ end
 %---------------------------------------------------------------------
 % find spikes!
 %---------------------------------------------------------------------
-%{
-OLD~~~~
-% different approaches to storage depending on test type
-switch upper(cInfo.testtype)
-	case 'FREQ+LEVEL'
-		% for FRA data, nvars has values [nfreqs nlevels];
-		spiketimes = cell(nvars(2), nvars(1));
-		for v1 = 1:nvars(1)
-			for v2 = 1:nvars(2)
-				% use rms threshold to find spikes
-				spiketimes{v2, v1} = ...
-						spikeschmitt2(tracesByStim{v2, v1}', Threshold*mean_rms, ...
-																			1, Fs, 'ms');
-			end
-		end
-	otherwise
-		% if test is not FREQ+LEVEL (FRA), nvars will be a single number
-		spiketimes = cell(nvars, 1);
-		for v = 1:nvars
-			% use rms threshold to find spikes
-			spiketimes{v} = spikeschmitt2(tracesByStim{v}', Threshold*mean_rms, ...
-																				1, Fs, 'ms');
-		end
-end
-%}
 
-% different approaches to storage depending on test type
-switch upper(cInfo.testtype)
-	case 'FREQ+LEVEL'
-		% for FRA data, nvars has values [nfreqs nlevels];
-		spiketimes = cell(nvars(2), nvars(1));
-		for v1 = 1:nvars(1)
-			for v2 = 1:nvars(2)
+switch FRAmethod
+	case 'OLD'
+		% different approaches to storage depending on test type
+		switch upper(cInfo.testtype)
+			case 'FREQ+LEVEL'
+				% for FRA data, nvars has values [nfreqs nlevels];
+				spiketimes = cell(nvars(2), nvars(1));
+				for v1 = 1:nvars(1)
+					for v2 = 1:nvars(2)
+						% use rms threshold to find spikes
+						spiketimes{v2, v1} = ...
+								spikeschmitt2(tracesByStim{v2, v1}', Threshold*mean_rms, ...
+																					1, Fs, 'ms');
+					end
+				end
+			otherwise
+				% if test is not FREQ+LEVEL (FRA), nvars will be a single number
+				spiketimes = cell(nvars, 1);
+				for v = 1:nvars
+					% use rms threshold to find spikes
+					spiketimes{v} = spikeschmitt2(tracesByStim{v}', Threshold*mean_rms, ...
+																						1, Fs, 'ms');
+				end
+		end
+		
+	case 'NEW'
+		% allocate spiketimes cell to match tracesByStim
+		spiketimes = cell(trRows, trCols);
+		% detect spikes
+		for r = 1:trRows
+			for c = 1:trCols
 				% use rms threshold to find spikes
-				spiketimes{v2, v1} = ...
-						spikeschmitt2(tracesByStim{v2, v1}', Threshold*mean_rms, ...
-																			1, Fs, 'ms');
+				% need to pass the transpose of tracesByStim because, by default, the
+				% samples go down rows and trials across cols, but spikeschmitt2
+				% expects the opposite....
+				spiketimes{r, c} = spikeschmitt2(tracesByStim{r, c}', ...
+												Threshold*mean_rms, 1, Fs, 'ms');
 			end
 		end
-	otherwise
-		% if test is not FREQ+LEVEL (FRA), nvars will be a single number
-		spiketimes = cell(nvars, 1);
-		for v = 1:nvars
-			% use rms threshold to find spikes
-			spiketimes{v} = spikeschmitt2(tracesByStim{v}', Threshold*mean_rms, ...
-																				1, Fs, 'ms');
-		end
 end
+
+
 %---------------------------------------------------------------------
 % outputs
 %---------------------------------------------------------------------
@@ -315,7 +291,7 @@ if nargout
 									'Threshold', Threshold, ...
 									'BPfilt', BPfilt, ...
 									'nvars', nvars, ...
-									'varlist', {varlist}		);
+									'varlist', varlist		);
 	varargout{4} = tracesByStim;
 
 end
