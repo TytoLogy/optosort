@@ -31,8 +31,15 @@ sep_print('threshold_opto_data...');
 % snippet window: [preTS time, postTStime], milliseconds
 SnippetWindow = [1 2];
 
+
 snips = cell(cInfo.ntrials, 1);
 for tr = 1:cInfo.ntrials
 	snips{tr} = extract_snippets(spiketimes{tr}, tracesByStim{tr}, ...
 												SnippetWindow, cInfo.Dinf.indev.Fs);
 end
+
+%% 
+
+figure(1);
+
+t = 
