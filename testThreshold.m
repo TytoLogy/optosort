@@ -1,8 +1,6 @@
 %------------------------------------------------------------------------
 % Definitions
 %------------------------------------------------------------------------
-% string used to separate text 
-sepstr = '----------------------------------------------------';
 
 % save data to mat file?
 SAVEMAT = 0;
@@ -10,17 +8,22 @@ SAVEMAT = 0;
 
 % data locations
 
-%{
+%
 % Data for 1382_20191212_02_02_3200 has good recordings on 
 % Channels 4, 5, 11, 14
 rawPath = '~/Work/Data/TestData/MT';
 rawFile = '1382_20191212_02_02_3200_FREQ_TUNING.dat';
 Channel = 4;
-%}
+%
+
+%{
+% data for FRA - this is correct data to use for testing as it was
+collected using updated FRA routine in opto program
 
 rawPath = '/Volumes/Wenstrup Laboratory/By User/SJS/Data/SpikeSort/IC-probe';
 rawFile = '1407_20200305_01_01_550_FRA.dat';
 Channel = 8;
+%}
 
 fI = OptoFileName(fullfile(rawPath, rawFile));
 
