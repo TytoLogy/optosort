@@ -59,8 +59,9 @@ classdef CurveInfo
 		nreps
 		ntrials
 		nstims
+		ADFs
+		DAFs
 	end	% END properties(Dependent)
-
 	
 	methods
 		%-------------------------------------------------
@@ -390,7 +391,14 @@ classdef CurveInfo
 		function val = get.nstims(obj)
 			val = obj.Dinf.test.stimcache.nstims;
 		end		
-			
+		% returns Dinf.indev.Fs
+		function val = get.ADFs(obj)
+			val = obj.Dinf.indev.Fs;
+		end
+		% returns Dinf.outdev.Fs
+		function val = get.DAFs(obj)
+			val = obj.Dinf.outdev.Fs;
+		end					
 
 			
 		

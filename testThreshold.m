@@ -5,6 +5,8 @@
 % save data to mat file?
 SAVEMAT = 0;
 
+% spike window (pre, post timestamp, in milliseconds)
+SpikeWindow = [1 2];
 
 % data locations
 
@@ -67,28 +69,30 @@ if SAVEMAT
 end
 
 %------------------------------------------------------------------------
-%% threshold data
+%% threshold data and plot detected waveforms
 %------------------------------------------------------------------------
 sep_print('threshold_opto_data...');
 spikedata = cell(nChannels, 1);
 tset = cell(nChannels, 1);
 for c = 1:nChannels
 	fprintf('Thresholding channel %d\n', Channels(c));
-	[spikedata{c}, tset{c}] = threshold_opto_data(cInfo, Traces{c});
+	[spikedata{c}, tset{c}] = threshold_opto_data(cInfo, Traces{c}, ...
+													'Method', 'RMS', ...
+													'Threshold', 5, ...
+													'Spike_Window', SpikeWindow);
 end
 
-%% show thresholded data
+%  plot waveforms
+for c = 1:nChannels
+	figure(c)
+	SD = spikedata{c};
 
-spikedata{1}.ts{1}
-spikedata{1}.snips{1}
-
-%% plot waveforms
-
-S = spikedata{1};
-
-nstim = len
+	plot_snippets(SD, SpikeWindow, cInfo.ADFs);
+	title({cInfo.F.file, sprintf('Channel %d', Channels(c))}, ...
+							'Interpreter', 'none');
 
 
+	set(gcf, 'Name', [fI.base '-Ch' num2str(Channels(c))])
+end
 
-
-
+%%

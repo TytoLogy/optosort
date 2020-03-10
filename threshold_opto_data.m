@@ -211,6 +211,7 @@ if ~USER_THRESHOLD
 	% find global max value (will be used for plotting)
 	global_max = max(max(maxvals));
 	fprintf('\tGlobal max abs value: %.4f\n', global_max);
+	
 else
 	% user-supplied threshold settings
 	fprintf('Using pre-calculated threshold settings\n');
@@ -232,6 +233,8 @@ else
 	% using user specified Threshold
 	ThresholdMethod = TSet.ThresholdMethod;
 	Threshold = TSet.Threshold;
+	% spike window
+	SpikeWindow = TSet.SpikeWindow;
 end
 
 % calculate threshold - will depend on method
@@ -272,7 +275,6 @@ end
 %---------------------------------------------------------------------
 % find spikes!
 %---------------------------------------------------------------------
-
 % allocate spiketimes cell to match tracesByStim
 spiketimes = cell(trRows, trCols);
 % allocate snippets cell to match tracesByStim
@@ -312,6 +314,7 @@ if nargout
 										'global_max', global_max, ...
 										'ThresholdMethod', ThresholdMethod, ...
 										'Threshold', Threshold, ...
+										'SpikeWindow', SpikeWindow, ...
 										'BPfilt', BPfilt		);
 	end
 	% return tracesByStim;
