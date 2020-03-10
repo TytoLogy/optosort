@@ -10,14 +10,24 @@ SpikeWindow = [1 2];
 
 % data locations
 
-%
+%{
 % Data for 1382_20191212_02_02_3200 has good recordings on 
 % Channels 4, 5, 11, 14
 rawPath = '~/Work/Data/TestData/MT';
 rawFile = '1382_20191212_02_02_3200_FREQ_TUNING.dat';
 Channels = [4 5];
-%
+%}
 
+%
+% Test WAV data
+% 1382_20191212_02_02_3200_WAV.dat
+% 1382_20191212_02_02_3200_WAV_PSTH.fig
+% 1382_20191212_02_02_3200_WAV_wavinfo.mat
+% Channels 4, 5, 11, 14
+rawPath = '~/Work/Data/TestData/MT';
+rawFile = '1382_20191212_02_02_3200_WAV.dat';
+Channels = [4 5];
+%}
 %{
 % data for FRA - this is correct data to use for testing as it was
 collected using updated FRA routine in opto program
@@ -72,11 +82,11 @@ end
 %% threshold data and plot detected waveforms
 %------------------------------------------------------------------------
 sep_print('threshold_opto_data...');
-spikedata = cell(nChannels, 1);
+spikes = cell(nChannels, 1);
 tset = cell(nChannels, 1);
 for c = 1:nChannels
 	fprintf('Thresholding channel %d\n', Channels(c));
-	[spikedata{c}, tset{c}] = threshold_opto_data(cInfo, Traces{c}, ...
+	[spikes{c}, tset{c}] = threshold_opto_data(cInfo, Traces{c}, ...
 													'Method', 'RMS', ...
 													'Threshold', 5, ...
 													'Spike_Window', SpikeWindow);
@@ -85,7 +95,7 @@ end
 %  plot waveforms
 for c = 1:nChannels
 	figure(c)
-	SD = spikedata{c};
+	SD = spikes{c};
 
 	plot_snippets(SD, SpikeWindow, cInfo.ADFs);
 	title({cInfo.F.file, sprintf('Channel %d', Channels(c))}, ...
@@ -95,4 +105,15 @@ for c = 1:nChannels
 	set(gcf, 'Name', [fI.base '-Ch' num2str(Channels(c))])
 end
 
-%%
+%% plot data in explorable form
+
+tracesByStim = Traces{1};
+
+% (1) plot the trace data as a single time series
+
+% convert traces to single "sweep"
+
+
+
+
+

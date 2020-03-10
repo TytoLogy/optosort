@@ -77,13 +77,16 @@ classdef CurveInfo
 				obj.Dinf = varargin{1};
 				obj.F = OptoFileName(obj.Dinf.filename);
 				% if necessary, convert stimtype and curvetype to strings
-				if isnumeric(obj.Dinf.test.stimcache.stimtype)
-					obj.Dinf.test.stimcache.stimtype = ...
+				% not all tests (WAV) have stimcache...
+				if isfield(obj.Dinf.test, 'stimcache')
+					if isnumeric(obj.Dinf.test.stimcache.stimtype)
+						obj.Dinf.test.stimcache.stimtype = ...
 												char(obj.Dinf.test.stimcache.stimtype);
-				end
-				if isnumeric(obj.Dinf.test.stimcache.curvetype)
-					obj.Dinf.test.stimcache.curvetype = ...
+					end
+					if isnumeric(obj.Dinf.test.stimcache.curvetype)
+						obj.Dinf.test.stimcache.curvetype = ...
 												char(obj.Dinf.test.stimcache.curvetype);
+					end
 				end
 			else
 				error('Unknown input type %s', varargin{1});
@@ -207,6 +210,7 @@ classdef CurveInfo
 					nwavs = length(obj.Dinf.stimList);
 					wavlist = cell(nwavs, 1);
 					stimindex = cell(nwavs, 1);
+					% loop through 
 					for w = 1:nwavs
 						stype = obj.Dinf.stimList(w).audio.signal.Type;
 						if strcmpi(stype, 'null')

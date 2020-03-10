@@ -27,7 +27,7 @@ function varargout = threshold_opto_data(cInfo, tracesByStim, varargin)
 %	 SHOW_DEFAULTS			show default values for options
 % 
 % 	Outputs:
-% 	 spikedata		struct with fields:
+% 	 spikes		struct with fields:
 % 							ts  cell array of spiketimes (in milliseconds)
 % 							snips		cell array of spike waveform snippets
 % 	 ThresholdInfo	thresholding information struct:
