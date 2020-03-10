@@ -39,7 +39,15 @@ classdef OptoFileName
 			if isempty(varargin)
 				return
 			end
-			[p, f, ext] = fileparts(varargin{1});
+			% need to deal with pc vs unix/mac file separator issue
+			if ~ispc
+				% replace '\' with '/'
+				tmpstr = varargin{1};
+				tmpstr(strfind(tmpstr, '\')) = filesep;
+				[p, f, ext] = fileparts(tmpstr);
+			else
+				[p, f, ext] = fileparts(varargin{1});
+			end
 			obj.path = p;
 			obj.file = [f ext];
 			f = parseOptoFileName(obj.file);

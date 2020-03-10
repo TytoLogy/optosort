@@ -57,11 +57,6 @@ for c = 1:nChannels
 	end
 end
 
-%%
-tmpF = fullfile('~/Work/Data/TestData/MT', ...
-				fI.newname(  sprintf('Chan%d-%d_TracesByStim', ...
-															Channels(1), Channels(end)), ...
-								'mat') );
 %% store working data to save time in future
 if SAVEMAT
 	tmpF = fullfile('~/Work/Data/TestData/MT', ...
@@ -86,6 +81,14 @@ end
 
 spikedata{1}.ts{1}
 spikedata{1}.snips{1}
+
+%% plot waveforms
+
+S = spikedata{1};
+
+nstim = len
+
+
 
 
 
