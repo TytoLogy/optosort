@@ -15,7 +15,6 @@ SAVEMAT = 0;
 % Channels 4, 5, 11, 14
 rawPath = '~/Work/Data/TestData/MT';
 rawFile = '1382_20191212_02_02_3200_FREQ_TUNING.dat';
-% rawFile = '1382_20191212_02_02_3200_FRA.dat';
 Channel = 4;
 %}
 
