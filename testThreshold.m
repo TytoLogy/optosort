@@ -69,15 +69,6 @@ for c = 1:nChannels
 	end
 end
 
-%% store working data to save time in future
-if SAVEMAT
-	tmpF = fullfile('~/Work/Data/TestData/MT', ...
-				fI.newname(  sprintf('Chan%d-%d_TracesByStim', ...
-															Channels(1), Channels(end)), ...
-								'mat') ); %#ok<UNRCH>
-	save(tmpF, 'Dinf', 'Traces', 'cInfo');
-end
-
 %------------------------------------------------------------------------
 %% threshold data and plot detected waveforms
 %------------------------------------------------------------------------
@@ -105,14 +96,21 @@ for c = 1:nChannels
 	set(gcf, 'Name', [fI.base '-Ch' num2str(Channels(c))])
 end
 
+%% store working data to save time in future
+if SAVEMAT
+	tmpF = fullfile('~/Work/Data/TestData/MT', ...
+				fI.newname(  sprintf('Chan%d-%d_TracesByStim', ...
+															Channels(1), Channels(end)), ...
+								'mat') ); %#ok<UNRCH>
+	save(tmpF, 'Dinf', 'Traces', 'cInfo', 'Channels', 'spikes', 'tset');
+end
+
 %% plot data in explorable form
 
 tracesByStim = Traces{1};
 
-% (1) plot the trace data as a single time series
-
-% convert traces to single "sweep"
-
+f = figure('Units','Normalized','Position',[0.25 0.25 0.5 0.5]);
+a =   axes('Units','Normalized','Position',[0.05 0.15, 0.75 0.75]);
 
 
 
