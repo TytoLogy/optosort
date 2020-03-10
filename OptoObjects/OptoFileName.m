@@ -12,6 +12,8 @@ classdef OptoFileName
 % Revisions:
 %	3 March 2020 (SJS): altered OptoFileName to deal with plexon sorted 
 %								data without "other" element in name
+%	10 Mar 2020 (SJS): added newname method to build new filename with
+%							additional string and new extension
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -54,17 +56,28 @@ classdef OptoFileName
 		% return base name without "other" (test name), e.g.
 		%	1372_20191126_03_01_1500
 		%-------------------------------------------------
-		function val = fileWithoutOther(obj)
-			val = [	obj.animal '_' ...
+		function str = fileWithoutOther(obj)
+			str = [	obj.animal '_' ...
 								obj.datecode '_' ...
 								obj.unit '_' ...
 								obj.penetration '_' ...
 								obj.depth ];
 		end
+		
+		%-------------------------------------------------
+		% utility to create new file using base
+		% e.g., [base]_append_str.ext_str
+		%-------------------------------------------------
+		function str = newname(obj, append_str, ext_str)
+			str = [obj.base '_' append_str '.' ext_str];
+		end
 	end
 end
 
 function F = parseOptoFileName(filename)
+	%---------------------------------------------------------------------
+	% F = parseOptoFileName(filename)
+	%---------------------------------------------------------------------
 	% Input Arguments:
 	% 	filename		data file from opto program
 	%					e.g., 1372_20191126_03_01_1500_FREQ_TUNING.dat
@@ -82,9 +95,8 @@ function F = parseOptoFileName(filename)
 		return
 	end
 
-	%---------------------------------------------------------------------
 	% get info from filename
-	%---------------------------------------------------------------------
+
 	% only need base filename (no path or ext)
 	[~, fname] = fileparts(filename);
 	F.base = fname;

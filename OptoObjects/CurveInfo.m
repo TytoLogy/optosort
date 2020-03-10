@@ -5,7 +5,8 @@ classdef CurveInfo
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
 % implements and encapsulates some utilities for dealing with
-% optodata
+% opto data -> Dinf struct
+%
 % code pulled from opto:getFilteredOptoData
 % 
 %------------------------------------------------------------------------

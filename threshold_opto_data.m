@@ -1,4 +1,4 @@
-function varargout = threshold_opto_data(Dinf, tracesByStim, varargin)
+function varargout = threshold_opto_data(cInfo, tracesByStim, varargin)
 %------------------------------------------------------------------------
 % [spikedata, CurveInfo, ThresholdInfo, tracesByStim] = 
 % 															  threshold_opto_data(see help)
@@ -9,7 +9,7 @@ function varargout = threshold_opto_data(Dinf, tracesByStim, varargin)
 %
 %------------------------------------------------------------------------
 % Inputs:
-%	Dinf					opto data information struct
+%	cInfo				CurveData object
 %	tracesByStim	cell array of recording sweeps organized by stimulus
 %
 %  Input Options:
@@ -20,25 +20,24 @@ function varargout = threshold_opto_data(Dinf, tracesByStim, varargin)
 %	 FORDER					filter order (typically 5 or lower)
 %	 METHOD					default is RMS, optional: absolute (ABS)
 %   THRESHOLD				RMS spike threshold (# RMS, default: 3)
+%	 TSETTINGS				apply previously computed threshold settings
+%								stored in ThresholdInfo struct (see outputs)
 %	 SPIKE_WINDOW			[pre_ts post_ts] window for grabbing spike
 %								waveform snippets, in milliseconds
 %	 SHOW_DEFAULTS			show default values for options
 % 
 % 	Outputs:
 % 	 spikedata		struct with fields:
-% 							spiketimes  cell array of spiketimes (in milliseconds)
-% 							snippets		cell array of spike waveform snippets
-% 	 CurveInfo		curve information object
+% 							ts  cell array of spiketimes (in milliseconds)
+% 							snips		cell array of spike waveform snippets
 % 	 ThresholdInfo	thresholding information struct:
-% 						'netrmsvals'
-% 						'maxvals'
-% 						'mean_rms'
-% 						'global_max'
+% 						netrmsvals
+% 						maxvals
+% 						mean_rms
+% 						global_max
 %						ThresholdMethod
-% 						'Threshold'
-% 						'BPfilt'
-% 						'nvars'
-% 						'varlist'
+% 						Threshold
+% 						BPfilt
 % 	 tracesByStim	cell array of raw traces - usually only useful if 
 % 						FILTER_DATA was requested!
 %------------------------------------------------------------------------
@@ -68,6 +67,9 @@ Forder = 5;
 ThresholdMethod = 'RMS';
 % RMS spike threshold
 Threshold = 3;
+% ThresholdSettings
+USER_THRESHOLD = false;
+TSet = [];
 % Spike Window [preDetectTime postDetectTime] (ms)
 SpikeWindow = [1 2];
 
@@ -117,6 +119,16 @@ if nvararg > 0
 					error('%s: invalid threshold value: %s', mfilename, tmp)
 				end
 				argIndx = argIndx + 2;
+			case 'TSETTINGS'
+				tmp = varargin{argIndx + 1};
+				if ~isstruct(tmp)
+					error('%s: TSETTINGS input must be a struct', mfilename);
+				else
+					TSet = varargin{argIndx + 1};
+					USER_THRESHOLD = true;
+				end
+				argIndx = argIndx + 2;
+					
 			case 'SPIKE_WINDOW'
 				tmp = varargin{argIndx + 1};
 				if ~isnumeric(tmp)
@@ -149,10 +161,10 @@ if strcmpi(ThresholdMethod, 'RMS')
 	end
 end
 
-%---------------------------------------------------------------------
-% create CurveInfo from Dinf
-%---------------------------------------------------------------------
-cInfo = CurveInfo(Dinf);
+% %---------------------------------------------------------------------
+% % create CurveInfo from Dinf
+% %---------------------------------------------------------------------
+% cInfo = CurveInfo(Dinf);
 
 %---------------------------------------------------------------------
 % determine global RMS and max - used for thresholding
@@ -180,22 +192,47 @@ else
 end
 
 %---------------------------------------------------------------------
-% get RMS values
+% get RMS values, calculate threshold if needed
 %---------------------------------------------------------------------
-netrmsvals = zeros(nstim, nreps);
-maxvals = zeros(nstim, nreps);
-% find rms, max vals for each stim
-for s = 1:nstim
-	netrmsvals(s, :) = rms(tracesByStim{s});
-	maxvals(s, :) = max(abs(tracesByStim{s}));
+
+if ~USER_THRESHOLD
+	% get threshold settings
+	netrmsvals = zeros(nstim, nreps);
+	maxvals = zeros(nstim, nreps);
+	% find rms, max vals for each stim
+	for s = 1:nstim
+		netrmsvals(s, :) = rms(tracesByStim{s});
+		maxvals(s, :) = max(abs(tracesByStim{s}));
+	end
+	% compute overall mean rms for threshold
+	fprintf('Calculating mean RMS for data...\n');
+	mean_rms = mean(reshape(netrmsvals, numel(netrmsvals), 1));
+	fprintf('\tMean rms: %.4f\n', mean_rms);
+	% find global max value (will be used for plotting)
+	global_max = max(max(maxvals));
+	fprintf('\tGlobal max abs value: %.4f\n', global_max);
+else
+	% user-supplied threshold settings
+	fprintf('Using pre-calculated threshold settings\n');
+	fprintf('Updating netrmsvals, maxvals\n');
+	netrmsvals = zeros(nstim, nreps);
+	maxvals = zeros(nstim, nreps);
+	% find rms, max vals for each stim
+	for s = 1:nstim
+		netrmsvals(s, :) = rms(tracesByStim{s});
+		maxvals(s, :) = max(abs(tracesByStim{s}));
+	end
+	% use mean_rms, max
+	fprintf('Using user-specified mean RMS and max val for data...\n');
+	mean_rms = TSet.mean_rms;
+	fprintf('\tMean rms: %.4f\n', mean_rms);
+	% find global max value (will be used for plotting)
+	global_max = TSet.global_max;
+	fprintf('\tGlobal max abs value: %.4f\n', global_max);
+	% using user specified Threshold
+	ThresholdMethod = TSet.ThresholdMethod;
+	Threshold = TSet.Threshold;
 end
-% compute overall mean rms for threshold
-fprintf('Calculating mean and max RMS for data...\n');
-mean_rms = mean(reshape(netrmsvals, numel(netrmsvals), 1));
-fprintf('\tMean rms: %.4f\n', mean_rms);
-% find global max value (will be used for plotting)
-global_max = max(max(maxvals));
-fprintf('\tGlobal max abs value: %.4f\n', global_max);
 
 % calculate threshold - will depend on method
 switch ThresholdMethod
@@ -204,12 +241,6 @@ switch ThresholdMethod
 	case 'ABSOLUTE'
 		Threshold = Threshold; %#ok<ASGSL>
 end
-
-
-%---------------------------------------------------------------------
-% get varlist
-%---------------------------------------------------------------------
-[varlist, nvars] = cInfo.varlist;
 
 %---------------------------------------------------------------------
 % define filter for data
@@ -231,7 +262,6 @@ if FilterData
 			for n = 1:cInfo.nreps
 					tracesByStim{r, c}(:, n) = filtfilt(BPfilt.b, BPfilt.a, ...
 																tracesByStim{r, c}(:, n));
-
 			end
 		end
 	end	
@@ -265,28 +295,28 @@ for r = 1:trRows
 	end
 end
 
-
-
 %---------------------------------------------------------------------
 % outputs
 %---------------------------------------------------------------------
 if nargout
-	% raw traces
-	varargout{1} = struct('spiketimes', spiketimes, 'snippets', snippets);
-	% data information
-	varargout{2} = cInfo;
-	% analysis output
-	varargout{3} = struct(	'netrmsvals', netrmsvals, ...
-									'maxvals', maxvals, ...
-									'mean_rms', mean_rms, ...
-									'global_max', global_max, ...
-									'ThresholdMethod', ThresholdMethod, ...
-									'Threshold', Threshold, ...
-									'BPfilt', BPfilt, ...
-									'nvars', nvars, ...
-									'varlist', varlist		);
-	varargout{4} = tracesByStim;
-
+	% spiketimes struct that has spiketimes cell array and snippets
+	% cell array
+	% need to put field in curly braces to prevent struct() command from
+	% creating a struct array (which we don't want, in this case)
+	varargout{1} = struct('ts', {spiketimes}, 'snips', {snippets});
+	% return ThresholdSettings struct
+	if nargout > 1
+		varargout{2} = struct(	'netrmsvals', netrmsvals, ...
+										'maxvals', maxvals, ...
+										'mean_rms', mean_rms, ...
+										'global_max', global_max, ...
+										'ThresholdMethod', ThresholdMethod, ...
+										'Threshold', Threshold, ...
+										'BPfilt', BPfilt		);
+	end
+	% return tracesByStim;
+	if nargout == 3
+		varargout{3} = tracesByStim;
+	end
 end
 
-% save snipindata.mat spiketimes cInfo tracesByStim 
