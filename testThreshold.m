@@ -82,6 +82,8 @@ for c = 1:nChannels
 													'Method', 'RMS', ...
 													'Threshold', 5, ...
 													'Spike_Window', SpikeWindow);
+	% add Channel information
+	spikes{c}.Channel = Channels(c);
 end
 
 %  plot waveforms

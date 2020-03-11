@@ -58,7 +58,6 @@ classdef CurveInfo
 	% class properties
 	%-------------------------------------------------
 	properties
-
 		Dinf
 		F
 		startSweepBin = {}
