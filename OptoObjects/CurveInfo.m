@@ -80,6 +80,10 @@ classdef CurveInfo
 		ADFs
 		DAFs
 	end	% END properties(Dependent)
+	properties (Access = protected)
+		has_stimcache = 0;
+		has_stimList = 0;
+	end
 	
 	methods
 		%-------------------------------------------------
@@ -97,14 +101,19 @@ classdef CurveInfo
 				% if necessary, convert stimtype and curvetype to strings
 				% not all tests (WAV) have stimcache...
 				if isfield(obj.Dinf.test, 'stimcache')
-					if isnumeric(obj.Dinf.test.stimcache.stimtype)
-						obj.Dinf.test.stimcache.stimtype = ...
+					obj.has_stimcache = 1;
+					obj.Dinf.test.stimcache.stimtype = ...
 												char(obj.Dinf.test.stimcache.stimtype);
-					end
-					if isnumeric(obj.Dinf.test.stimcache.curvetype)
-						obj.Dinf.test.stimcache.curvetype = ...
+					obj.Dinf.test.stimcache.curvetype = ...
 												char(obj.Dinf.test.stimcache.curvetype);
-					end
+				else
+					obj.has_stimcache = 0;
+				end
+				% not all tests (WAV) have stimList...
+				if isfield(obj.Dinf, 'stimList')
+					obj.has_stimList = 1;
+				else
+					obj.has_stimList = 0;
 				end
 			else
 				error('Unknown input type %s', varargin{1});

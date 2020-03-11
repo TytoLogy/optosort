@@ -29,11 +29,21 @@ classdef WAVtestdata
 % 	end
 	methods
 		function obj = WAVtestdata(varargin)
+			% constructor needs 0 inputs or Dinf, Traces, Spikes
 			if length(varargin) ~= 2
 				return;
 			end
-			obj.Info = varargin{1};
+			% check Dinf.test.Name to make sure we were passed WAV / WAVFILE
+			% test data
+			tmpDinf = varargin{1};
+			if ~strcmpi('WAV', tmpDinf.test.Name)
+				error('%s: Data (Dinf) are not named WAV (Name = %s)', ...
+										mfilename, tmpDinf.test.Name)
+			end
+			% create WAVInfo object, store in Info
+			obj.Info = WAVInfo(varargin{1});
 			obj.Traces = varargin{2};
+			% see if spikes were provided
 			if length(varargin) == 3
 				Spikes = varargin{3}; %#ok<NASGU>
 			end
