@@ -42,15 +42,24 @@ load(tmpF);
 
 %% plot data in explorable form
 
+stimNames = unique(Dinf.test.wavlist, 'stable');
+
 tracesByStim = Traces{1};
 spikesByStim = spikes{1};
 
+stimNum = 1;
+sweepNum = 1;
+stimTraces = tracesByStim{stimNum};
+sweepData = stimTraces(:, sweepNum)';
+
+[nPts, nTraces] = size(tracesByStim{currentStim});
 fH = figure('Units','Normalized','Position',[0.25 0.25 0.5 0.5]);
 aH =   axes('Units','Normalized','Position',[0.05 0.15, 0.75 0.75]);
+stimCtrlH = uicontrol(fH, 'Style','listbox','Units','Normalized', ...
+							'Position',[0.85 0.15, 0.1, 0.75],...
+							'String', stimNames, ...
+							 'Callback',{@changeStim, aH, sweepNum, stimTraces} );
 
-currentStim = 1;
-size(tracesByStim{currentStim})
-currentTrace = 1;
 
 
 %%
