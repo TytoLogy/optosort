@@ -27,17 +27,18 @@ function varargout = threshold_opto_data(cInfo, tracesByStim, varargin)
 %	 SHOW_DEFAULTS			show default values for options
 % 
 % 	Outputs:
-% 	 spikes		struct with fields:
-% 							ts  cell array of spiketimes (in milliseconds)
-% 							snips		cell array of spike waveform snippets
-% 	 ThresholdInfo	thresholding information struct:
-% 						netrmsvals
-% 						maxvals
-% 						mean_rms
-% 						global_max
-%						ThresholdMethod
-% 						Threshold
-% 						BPfilt
+% 	 spikes	struct with fields:
+%					ts  cell array of spiketimes (in milliseconds)
+% 					snips		cell array of spike waveform snippets
+% 					tset	thresholding information struct:
+% 							netrmsvals
+% 							maxvals
+% 							mean_rms
+% 							global_max
+% 							ThresholdMethod
+% 							Threshold
+% 							SpikeWindow
+% 							BPfilt
 % 	 tracesByStim	cell array of raw traces - usually only useful if 
 % 						FILTER_DATA was requested!
 %------------------------------------------------------------------------
@@ -301,25 +302,25 @@ end
 % outputs
 %---------------------------------------------------------------------
 if nargout
-	% spiketimes struct that has spiketimes cell array and snippets
-	% cell array
-	% need to put field in curly braces to prevent struct() command from
-	% creating a struct array (which we don't want, in this case)
-	varargout{1} = struct('ts', {spiketimes}, 'snips', {snippets});
-	% return ThresholdSettings struct
-	if nargout > 1
-		varargout{2} = struct(	'netrmsvals', netrmsvals, ...
-										'maxvals', maxvals, ...
-										'mean_rms', mean_rms, ...
-										'global_max', global_max, ...
-										'ThresholdMethod', ThresholdMethod, ...
-										'Threshold', Threshold, ...
-										'SpikeWindow', SpikeWindow, ...
-										'BPfilt', BPfilt		);
-	end
+	% spiketimes struct that has spiketimes cell array,  snippets
+	% cell array, tset (threshold settings struct)
+	% **need to put field in curly braces to prevent struct() command from
+	%   creating a struct array (which we don't want, in this case)
+	varargout{1} = struct(	'ts', {spiketimes}, ...
+									'snips', {snippets}, ...
+									'tset', ...
+										struct(	'netrmsvals', netrmsvals, ...
+												'maxvals', maxvals, ...
+												'mean_rms', mean_rms, ...
+												'global_max', global_max, ...
+												'ThresholdMethod', ThresholdMethod, ...
+												'Threshold', Threshold, ...
+												'SpikeWindow', SpikeWindow, ...
+												'BPfilt', BPfilt		) ...
+								);
 	% return tracesByStim;
-	if nargout == 3
-		varargout{3} = tracesByStim;
+	if nargout > 1
+		varargout{2} = tracesByStim;
 	end
 end
 

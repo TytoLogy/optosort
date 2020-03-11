@@ -10,6 +10,33 @@ classdef CurveInfo
 % code pulled from opto:getFilteredOptoData
 % 
 %------------------------------------------------------------------------
+% class properties
+%------------------------------------------------------------------------
+% Dinf				Data information struct from opto .dat files
+% F					opto file object
+% startSweepBin	sample for start of each sweep (for each channel)
+%							cell array
+% endSweepBin		sample for end of each sweep (for each channel)
+%							cell array
+% sweepLen			length (# of samples) for each sweep (for each channel)
+%							vector
+% fileStartBin		sample for start of file in merged file
+% fileEndBin		sample for end of file in merged data file
+% 
+% Dependent properties:
+% 	testtype
+% 	testname
+% 	freqs_bysweep
+% 	levels_bysweep
+% 	varied_parameter
+% 	varied_values
+% 	analysis_window
+% 	nreps
+% 	ntrials
+% 	nstims
+% 	ADFs
+% 	DAFs
+%------------------------------------------------------------------------
 % See also: 
 %------------------------------------------------------------------------
 
@@ -31,15 +58,7 @@ classdef CurveInfo
 	% class properties
 	%-------------------------------------------------
 	properties
-		%{
-			Dinf		Data information struct from opto .dat files
-			F		opto file object
-			startSweepBin	sample for start of each sweep (for each channel)
-			endSweepBin		sample for end of each sweep (for each channel)
-			sweepLen			length (# of samples) for each sweep (for each channel)
-			fileStartBin	sample for start of file in merged file
-			fileEndBin		sample for end of file in merged data file
-		%}
+
 		Dinf
 		F
 		startSweepBin = {}

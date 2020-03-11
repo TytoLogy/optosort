@@ -10,7 +10,7 @@ SpikeWindow = [1 2];
 
 % data locations
 
-%{
+%
 % Data for 1382_20191212_02_02_3200 has good recordings on 
 % Channels 4, 5, 11, 14
 rawPath = '~/Work/Data/TestData/MT';
@@ -18,7 +18,7 @@ rawFile = '1382_20191212_02_02_3200_FREQ_TUNING.dat';
 Channels = [4 5];
 %}
 
-%
+%{
 % Test WAV data
 % 1382_20191212_02_02_3200_WAV.dat
 % 1382_20191212_02_02_3200_WAV_PSTH.fig
@@ -28,6 +28,7 @@ rawPath = '~/Work/Data/TestData/MT';
 rawFile = '1382_20191212_02_02_3200_WAV.dat';
 Channels = [4 5];
 %}
+
 %{
 % data for FRA - this is correct data to use for testing as it was
 collected using updated FRA routine in opto program
@@ -77,7 +78,7 @@ spikes = cell(nChannels, 1);
 tset = cell(nChannels, 1);
 for c = 1:nChannels
 	fprintf('Thresholding channel %d\n', Channels(c));
-	[spikes{c}, tset{c}] = threshold_opto_data(cInfo, Traces{c}, ...
+	[spikes{c}] = threshold_opto_data(cInfo, Traces{c}, ...
 													'Method', 'RMS', ...
 													'Threshold', 5, ...
 													'Spike_Window', SpikeWindow);

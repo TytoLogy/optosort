@@ -1,4 +1,4 @@
-classdef SpikeData
+classdef WAVtestdata
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:opto...
 %------------------------------------------------------------------------
@@ -7,7 +7,7 @@ classdef SpikeData
 %  Sharad J. Shanbhag
 %	sshanbhag@neomed.edu
 %------------------------------------------------------------------------
-% Created: ? 2020 (SJS)
+% Created: 11 March 2020 (SJS)
 %
 % Revisions:
 %------------------------------------------------------------------------
@@ -15,12 +15,14 @@ classdef SpikeData
 %------------------------------------------------------------------------
 
 	properties
-		% Info		SpikeInfo object
-		% Spikes		sorted spikes in table object
-		% plxvar		variable names from Plexon
+		% Info				WAVInfo object
+		% Traces				cell array of spike data		
+		% Spikes				spikes and snippets
+		% 
 		Info
+		Traces		
 		Spikes
-		plxvar
+		Tset
 	end
 	
 	methods
