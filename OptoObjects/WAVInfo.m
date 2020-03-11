@@ -10,6 +10,7 @@ classdef WAVInfo < CurveInfo
 %------------------------------------------------------------------------
 % class properties
 %------------------------------------------------------------------------
+% Dinf				Data information struct from opto .dat files
 % F					opto file object
 % startSweepBin	sample for start of each sweep (for each channel)
 %							cell array
