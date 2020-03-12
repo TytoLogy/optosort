@@ -69,32 +69,19 @@ classdef WAVInfo < CurveInfo
 		%-------------------------------------------------
 		%-------------------------------------------------
 		function obj = WAVInfo(varargin)
+			% invoke superclass constructor
+			obj@CurveInfo(varargin{1})
+			% return if nothing else to do (no Dinf)
 			if isempty(varargin)
 				return
 			end
 			if isstruct(varargin{1})
-				obj.Dinf = varargin{1};
-				obj.F = OptoFileName(obj.Dinf.filename);
-				% if necessary, convert stimtype and curvetype to strings
-				% not all tests (WAV) have stimcache...
-				if isfield(obj.Dinf.test, 'stimcache')
-					if isnumeric(obj.Dinf.test.stimcache.stimtype)
-						obj.Dinf.test.stimcache.stimtype = ...
-												char(obj.Dinf.test.stimcache.stimtype);
-					end
-					if isnumeric(obj.Dinf.test.stimcache.curvetype)
-						obj.Dinf.test.stimcache.curvetype = ...
-												char(obj.Dinf.test.stimcache.curvetype);
-					end
-				end
 				testfields = {'ScriptType', 'optovar_name', 'audiovar_name', ...
 										'audiovar', 'curvetype', 'wavlist'};
 				for n = 1:length(testfields)
 					obj.Dinf.test.(testfields{n}) = ...
-								convert_to_text(obj.Dinf.test.(testfields{n}))
+								convert_to_text(obj.Dinf.test.(testfields{n}));
 				end
-				
-				
 			else
 				error('Unknown input type %s', varargin{1});
 			end
@@ -248,6 +235,70 @@ classdef WAVInfo < CurveInfo
 					error('%s: unsupported test type %s', mfilename, cInfo.testtype);
 			end
 		end
+		
+		%-------------------------------------------------
+		%-------------------------------------------------
+		% shortcut methods to values
+		%-------------------------------------------------
+		%-------------------------------------------------
+		% returns test.stimcache.LEVELS, which is a list of db SPL 
+		% stimulus levels used for each stimulus sweep
+		%	this is a numerical array [nsweeps, 1]
+		function val = levels_bysweep(obj)
+			if obj.has_stimList
+				levels = zeros(obj.ntrials, 1);
+				for l = 1:obj.ntrials
+					levels(l) = obj.Dinf.stimList(l).audio.Level;
+				end
+				val = levels(obj.Dinf.test.stimIndices);
+			else
+				val = [];
+			end
+		end
+		% returns test.stimcache.vname, char string identifying
+		% variable(s) for curve (similar to test.Name
+		function val = varied_parameter(obj)
+			if obj.has_stimList
+				val = {'Level'; 'WAV'};
+			else
+				val = [];
+			end
+		end
+		% returns test.stimcache.vrange, values of varied parameter
+		function val = varied_values(obj)
+			if obj.has_stimList
+				val = {obj.Dinf.test.Level'; ...
+							unique(obj.Dinf.test.wavlist, 'stable')};
+			else
+				val = [];
+			end
+		end
+		% returns test.Reps: # of reps for each stimulus
+		function val = nreps(obj)
+			if obj.has_stimList
+				val = obj.Dinf.test.Reps;
+			else
+				val = [];
+			end
+		end
+		% returns test.stimcache.ntrials: # of stimulus types
+		function val = ntrials(obj)
+			if obj.has_stimList
+				val = obj.Dinf.test.nCombinations;
+			else
+				val = [];
+			end
+		end
+		% returns test.stimcache.nstims: total # of stimulus presentations
+		% (usually equal to nreps * ntrials
+		function val = nstims(obj)
+			if obj.has_stimList
+				val = length(obj.Dinf.test.stimIndices);
+			else
+				val = [];
+			end
+		end
+		
 		
 		%-------------------------------------------------
 		%-------------------------------------------------

@@ -69,14 +69,14 @@ classdef CurveInfo
 	properties (Dependent)
 		testtype
 		testname
-		freqs_bysweep
-		levels_bysweep
-		varied_parameter
-		varied_values
+% 		freqs_bysweep
+% 		levels_bysweep
+% 		varied_parameter
+% 		varied_values
 		analysis_window
-		nreps
-		ntrials
-		nstims
+% 		nreps
+% 		ntrials
+% 		nstims
 		ADFs
 		DAFs
 	end	% END properties(Dependent)
@@ -101,17 +101,25 @@ classdef CurveInfo
 				% if necessary, convert stimtype and curvetype to strings
 				% not all tests (WAV) have stimcache...
 				if isfield(obj.Dinf.test, 'stimcache')
-					obj.has_stimcache = 1;
-					obj.Dinf.test.stimcache.stimtype = ...
-												char(obj.Dinf.test.stimcache.stimtype);
-					obj.Dinf.test.stimcache.curvetype = ...
-												char(obj.Dinf.test.stimcache.curvetype);
+					if ~isempty(obj.Dinf.test.stimcache)
+						obj.has_stimcache = 1;
+						obj.Dinf.test.stimcache.stimtype = ...
+													char(obj.Dinf.test.stimcache.stimtype);
+						obj.Dinf.test.stimcache.curvetype = ...
+													char(obj.Dinf.test.stimcache.curvetype);
+					else
+						obj.has_stimcache = 0;
+					end
 				else
 					obj.has_stimcache = 0;
 				end
 				% not all tests (WAV) have stimList...
 				if isfield(obj.Dinf, 'stimList')
-					obj.has_stimList = 1;
+					if ~isempty(obj.Dinf.stimList)
+						obj.has_stimList = 1;
+					else
+						obj.has_stimList = 0;
+					end
 				else
 					obj.has_stimList = 0;
 				end
@@ -370,12 +378,82 @@ classdef CurveInfo
 			end
 		end
 		
-		%-------------------------------------------------
-		%-------------------------------------------------
-		% access for dependent properties
-		%-------------------------------------------------
-		%-------------------------------------------------
 		
+		
+		%-------------------------------------------------
+		%-------------------------------------------------
+		% shortcut methods to stimcache values
+		%-------------------------------------------------
+		%-------------------------------------------------
+	
+		% returns test.stimcache.FREQS, which is a list of frequencies (or
+		% freq ranges for BBN) used for each stimulus sweep
+		%	this is a cell array {nsweeps, 1}
+		function val = freqs_bysweep(obj)
+			if obj.has_stimcache
+				val = obj.Dinf.test.stimcache.FREQ;
+			else
+				val = [];
+			end
+		end
+		% returns test.stimcache.LEVELS, which is a list of db SPL 
+		% stimulus levels used for each stimulus sweep
+		%	this is a numerical array [nsweeps, 1]
+		function val = levels_bysweep(obj)
+			if obj.has_stimcache
+				val = obj.Dinf.test.stimcache.LEVEL;
+			else
+				val = [];
+			end
+		end
+		% returns test.stimcache.vname, char string identifying
+		% variable(s) for curve (similar to test.Name
+		function val = varied_parameter(obj)
+			if obj.has_stimcache
+				val = char(obj.Dinf.test.stimcache.vname);
+			else
+				val = [];
+			end
+		end
+		% returns test.stimcache.vrange, values of varied parameter
+		function val = varied_values(obj)
+			if obj.has_stimcache
+				val = obj.Dinf.test.stimcache.vrange;
+			else
+				val = [];
+			end
+		end
+		% returns test.stimcache.nreps: # of reps for each stimulus
+		function val = nreps(obj)
+			if obj.has_stimcache
+				val = obj.Dinf.test.stimcache.nreps;
+			else
+				val = [];
+			end
+		end
+		% returns test.stimcache.ntrials: # of stimulus types
+		function val = ntrials(obj)
+			if obj.has_stimcache
+				val = obj.Dinf.test.stimcache.ntrials;
+			else
+				val = [];
+			end
+		end
+		% returns test.stimcache.nstims: total # of stimulus presentations
+		% (usually equal to nreps * ntrials
+		function val = nstims(obj)
+			if obj.has_stimcache
+				val = obj.Dinf.test.stimcache.nstims;
+			else
+				val = [];
+			end
+		end
+		
+		%-------------------------------------------------
+		%-------------------------------------------------
+		% get/set access for dependent properties
+		%-------------------------------------------------
+		%-------------------------------------------------
 		% returns test.Type
 		function val = get.testtype(obj)
 			val = obj.Dinf.test.Type;
@@ -384,44 +462,11 @@ classdef CurveInfo
 		function val = get.testname(obj)
 			val = obj.Dinf.test.Name;
 		end
-		% returns test.stimcache.FREQS, which is a list of frequencies (or
-		% freq ranges for BBN) used for each stimulus sweep
-		%	this is a cell array {nsweeps, 1}
-		function val = get.freqs_bysweep(obj)
-			val = obj.Dinf.test.stimcache.FREQ;
-		end
-		% returns test.stimcache.LEVELS, which is a list of db SPL 
-		% stimulus levels used for each stimulus sweep
-		%	this is a numerical array [nsweeps, 1]
-		function val = get.levels_bysweep(obj)
-			val = obj.Dinf.test.stimcache.LEVEL;
-		end
-		% returns test.stimcache.vname, char string identifying
-		% variable(s) for curve (similar to test.Name
-		function val = get.varied_parameter(obj)
-			val = char(obj.Dinf.test.stimcache.vname);
-		end
-		% returns test.stimcache.vrange, values of varied parameter
-		function val = get.varied_values(obj)
-			val = obj.Dinf.test.stimcache.vrange;
-		end
 		% returns analysis_window : audio Delay to Delay+Duration interval
 		function val = get.analysis_window(obj)
-			val = [obj.Dinf.audio.Delay (obj.Dinf.audio.Delay + obj.Dinf.audio.Duration)];
+			val = [obj.Dinf.audio.Delay ...
+							(obj.Dinf.audio.Delay + obj.Dinf.audio.Duration)];
 		end
-		% returns test.stimcache.nreps: # of reps for each stimulus
-		function val = get.nreps(obj)
-			val = obj.Dinf.test.stimcache.nreps;
-		end
-		% returns test.stimcache.ntrials: # of stimulus types
-		function val = get.ntrials(obj)
-			val = obj.Dinf.test.stimcache.ntrials;
-		end
-		% returns test.stimcache.nstims: total # of stimulus presentations
-		% (usually equal to nreps * ntrials
-		function val = get.nstims(obj)
-			val = obj.Dinf.test.stimcache.nstims;
-		end		
 		% returns Dinf.indev.Fs
 		function val = get.ADFs(obj)
 			val = obj.Dinf.indev.Fs;
@@ -429,11 +474,69 @@ classdef CurveInfo
 		% returns Dinf.outdev.Fs
 		function val = get.DAFs(obj)
 			val = obj.Dinf.outdev.Fs;
-		end					
+		end
 
-			
 		
-		
+		%{
+		% returns test.Type
+		function val = testtype(obj)
+			val = obj.Dinf.test.Type;
+		end
+		% returns test.Name
+		function val = testname(obj)
+			val = obj.Dinf.test.Name;
+		end
+		% returns test.stimcache.FREQS, which is a list of frequencies (or
+		% freq ranges for BBN) used for each stimulus sweep
+		%	this is a cell array {nsweeps, 1}
+		function val = freqs_bysweep(obj)
+			val = obj.Dinf.test.stimcache.FREQ;
+		end
+		% returns test.stimcache.LEVELS, which is a list of db SPL 
+		% stimulus levels used for each stimulus sweep
+		%	this is a numerical array [nsweeps, 1]
+		function val = levels_bysweep(obj)
+			val = obj.Dinf.test.stimcache.LEVEL;
+		end
+		% returns test.stimcache.vname, char string identifying
+		% variable(s) for curve (similar to test.Name
+		function val = varied_parameter(obj)
+			val = char(obj.Dinf.test.stimcache.vname);
+		end
+		% returns test.stimcache.vrange, values of varied parameter
+		function val = varied_values(obj)
+			val = obj.Dinf.test.stimcache.vrange;
+		end
+		% returns analysis_window : audio Delay to Delay+Duration interval
+		function val = analysis_window(obj)
+			val = [obj.Dinf.audio.Delay (obj.Dinf.audio.Delay + obj.Dinf.audio.Duration)];
+		end
+		% returns test.stimcache.nreps: # of reps for each stimulus
+		function val = nreps(obj)
+			if obj.has_stimcache
+				val = obj.Dinf.test.stimcache.nreps;
+			elseif obj.has_stimList
+				val = obj.Dinf.test.Reps;
+			end
+		end
+		% returns test.stimcache.ntrials: # of stimulus types
+		function val = ntrials(obj)
+			val = obj.Dinf.test.stimcache.ntrials;
+		end
+		% returns test.stimcache.nstims: total # of stimulus presentations
+		% (usually equal to nreps * ntrials
+		function val = nstims(obj)
+			val = obj.Dinf.test.stimcache.nstims;
+		end		
+		% returns Dinf.indev.Fs
+		function val = ADFs(obj)
+			val = obj.Dinf.indev.Fs;
+		end
+		% returns Dinf.outdev.Fs
+		function val = DAFs(obj)
+			val = obj.Dinf.outdev.Fs;
+		end
+		%}
 		
 		
 	end	% END methods

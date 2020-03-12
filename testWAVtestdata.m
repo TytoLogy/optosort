@@ -54,6 +54,9 @@ end
 %% create WAVtestdata object
 %------------------------------------------------------------------------
 
+c = WAVInfo(Dinf)
+
+%%
 W = WAVtestdata(Dinf, Traces)
 
 
