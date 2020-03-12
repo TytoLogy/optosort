@@ -63,10 +63,12 @@ classdef TestSuperClass
 		%-------------------------------------------------------
 		% Plot sorted waveforms for each identified unit
 		%-------------------------------------------------------
-		function H = plotWaveformsForChannel(obj, varargin)
+		function varargout = plotWaveformsForChannel(obj, varargin)
 			if ~ obj.hasSpikes
 				warning('No Spikes loaded!')
-				H = [];
+				if nargout
+					varargout{1} = [];
+				end
 				return
 			end
  			if isempty(varargin)
@@ -79,6 +81,7 @@ classdef TestSuperClass
 			% first, get channels present in Spikes
 			[ChannelsLoaded, ~] = obj.listChannels;
 			% then look for indices to the desired channels
+			H = zeros(length(channel_to_plot), 1);
 			for c = 1:length(channel_to_plot)
 				chanID = find(channel_to_plot(c) == ChannelsLoaded);
 				if chanID == 0 
@@ -87,14 +90,22 @@ classdef TestSuperClass
 				figure
 				H(c) = plot_snippets(obj.Spikes{chanID}, ...
 						obj.Spikes{chanID}.tset.SpikeWindow, obj.Info.ADFs);
-				title({obj.Info.F.file, sprintf('Channel %d', channel_to_plot(c))}, ...
+				title(	{obj.Info.F.file, ...
+								sprintf('Channel %d', channel_to_plot(c))}, ...
 							'Interpreter', 'none');
-				set(gcf, 'Name', [obj.Info.F.base '-Ch' num2str(channel_to_plot(c))])
+				set(gcf, 'Name', [obj.Info.F.base '-snips-Ch' ...
+									num2str(channel_to_plot(c))])
 			end
-
+			if nargout
+				varargout{1} = H;
+			end
 		end
 		
+
 		function val = hasSpikes(obj)
+		%-------------------------------------------------------
+		% returns true if Spikes struct has been assigned, false if not
+		%-------------------------------------------------------
 			if isempty(obj.Spikes)
 				val = false;
 			else
