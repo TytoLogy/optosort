@@ -1,6 +1,7 @@
 %------------------------------------------------------------------------
 % Definitions
 %------------------------------------------------------------------------
+addOptoPaths
 
 % save data to mat file?
 SAVEMAT = 0;
@@ -27,16 +28,23 @@ fI = OptoFileName(fullfile(rawPath, rawFile));
 %------------------------------------------------------------------------
 %% get filtered data
 %------------------------------------------------------------------------
-% probably don't need full raw data in D....
+% determine #  of desired channels to read in
 nChannels = length(Channels);
+% allocate cell storage for Traces struct: each channel's data will be
+% stored in Traces
 Traces = cell(nChannels, 1);
+% loop through channels
 for c = 1:nChannels
+	sep_print(sprintf('testThreshold: Reading data for A/D channel %d', ...
+																			Channels(c)));
+% older method (non object)
+% probably don't need full raw data in D....
 % 	[D, Dinf, Traces{c}] = getFilteredOptoData( ...
 % 											fullfile(rawPath, rawFile), ...
 % 											'Filter', [300 5000], ...
 % 											'Channels, Channels(c));
-	sep_print(sprintf('testThreshold: Reading data for A/D channel %d', ...
-																			Channels(c)));
+	% Dinf will be the same for all channels, so only keep first one.
+	% probably should make getOptoTracesByStim work for multi-channels....
 	if c == 1	
 		[Traces{c}, Dinf] = getOptoTracesByStim( ...
 											fullfile(rawPath, rawFile), ...
@@ -68,7 +76,7 @@ spikes = cell(nChannels, 1);
 tset = cell(nChannels, 1);
 for c = 1:nChannels
 	fprintf('Thresholding channel %d\n', Channels(c));
-	[spikes{c}] = threshold_opto_data(cInfo, Traces{c}, ...
+	[spikes{c}] = threshold_opto_data(W.Info, Traces{c}, ...
 													'Method', 'RMS', ...
 													'Threshold', 5, ...
 													'Spike_Window', SpikeWindow);
@@ -81,8 +89,8 @@ for c = 1:nChannels
 	figure(c)
 	SD = spikes{c};
 
-	plot_snippets(SD, SpikeWindow, cInfo.ADFs);
-	title({cInfo.F.file, sprintf('Channel %d', Channels(c))}, ...
+	plot_snippets(SD, SpikeWindow, W.Info.ADFs);
+	title({W.Info.F.file, sprintf('Channel %d', Channels(c))}, ...
 							'Interpreter', 'none');
 
 

@@ -1,4 +1,4 @@
-classdef WAVtestdata < TestSuperClass
+classdef TestSuperClass
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:opto...
 %------------------------------------------------------------------------
@@ -7,41 +7,34 @@ classdef WAVtestdata < TestSuperClass
 %  Sharad J. Shanbhag
 %	sshanbhag@neomed.edu
 %------------------------------------------------------------------------
-% Created: 11 March 2020 (SJS)
+% Created: 12 March 2020 (SJS)
 %
 % Revisions:
 %------------------------------------------------------------------------
-% TO DO: how to handle multiple channels?????
+% TO DO: how to handle multiple channels: answer: Traces will hold them
 %------------------------------------------------------------------------
 
 	properties
-		% Info				WAVInfo object
+		% Info				Info object (CurveInfo or subclass)
 		% Traces				cell array of spike data
 		% Spikes				spikes, snippets, threshold, channel info, cell array
 		% 
-% 		Info
-% 		Traces
-% 		Spikes
+		Info
+		Traces
+		Spikes
 	end
 % 	properties (Dependent)
 % 		Channels
 % 		nChannels
 % 	end
 	methods
-		function obj = WAVtestdata(varargin)
+		function obj = TestSuperClass(varargin)
 			% constructor needs 0 inputs or Dinf, Traces, Spikes
 			if length(varargin) ~= 2
 				return;
 			end
-			% check Dinf.test.Name to make sure we were passed WAV / WAVFILE
-			% test data
-			tmpDinf = varargin{1};
-			if ~strcmpi('WAV', tmpDinf.test.Name)
-				error('%s: Data (Dinf) are not named WAV (Name = %s)', ...
-										mfilename, tmpDinf.test.Name)
-			end
-			% create WAVInfo object, store in Info
-			obj.Info = WAVInfo(varargin{1});
+			% create CurveInfo object, store in Info
+			obj.Info = CurveInfo(varargin{1});
 			obj.Traces = varargin{2};
 			% see if spikes were provided
 			if length(varargin) == 3
@@ -49,37 +42,67 @@ classdef WAVtestdata < TestSuperClass
 			end
 		end
 		
-		%{
 		%-------------------------------------------------------
 		% return a list of channels in the Spikes array
 		%-------------------------------------------------------
 		function [Channels, nChan] = listChannels(obj)
 			if isempty(obj.Spikes)
+				warning('No Spikes loaded')
 				Channels = [];
 				nChan = 0;
 			else
+				% need to create array of Spikes structs
 				tmp = [obj.Spikes{:}];
+				% then get array of channels
 				Channels = [tmp.Channel];
+				% and count them
 				nChan = length(Channels);
 			end
 		end
 		
-		
 		%-------------------------------------------------------
 		% Plot sorted waveforms for each identified unit
 		%-------------------------------------------------------
-		function H = plotWaveformsForChannel(obj, aChannel)
-			% note Fs is not defined yet!!!!!
-			[Channels, ~] = obj.listChannels;
-			chanID = find(Channels == aChannel);
-			if isempty(chanID)
-				error('%s: channel %d not found in Spikes', mfilename, aChannel);
+		function H = plotWaveformsForChannel(obj, varargin)
+			if ~ obj.hasSpikes
+				warning('No Spikes loaded!')
+				H = [];
+				return
 			end
-			H = plot_snippets(obj.Spikes{chanID}, ...
-						obj.Spikes{chanID}.tset.SpikeWindow, Fs);
+ 			if isempty(varargin)
+				% plot all channels
+				channel_to_plot = obj.listChannels;
+			else
+				channel_to_plot = varargin{1};
+			end
+			% look for channels
+			% first, get channels present in Spikes
+			[ChannelsLoaded, ~] = obj.listChannels;
+			% then look for indices to the desired channels
+			for c = 1:length(channel_to_plot)
+				chanID = find(channel_to_plot(c) == ChannelsLoaded);
+				if chanID == 0 
+					error('channel %d not found in Spikes', channel_to_plot(c));
+				end
+				figure
+				H(c) = plot_snippets(obj.Spikes{chanID}, ...
+						obj.Spikes{chanID}.tset.SpikeWindow, obj.Info.ADFs);
+				title({obj.Info.F.file, sprintf('Channel %d', channel_to_plot(c))}, ...
+							'Interpreter', 'none');
+				set(gcf, 'Name', [obj.Info.F.base '-Ch' num2str(channel_to_plot(c))])
+			end
+
 		end
 		
-		%}
+		function val = hasSpikes(obj)
+			if isempty(obj.Spikes)
+				val = false;
+			else
+				val = true;
+			end
+		end
+		
+		
 		
 	end
 end
