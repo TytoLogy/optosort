@@ -71,6 +71,8 @@ function varargout = export_for_plexon(varargin)
 % 		ramp time (ms) to apply to each sweep in order to cutdown on onset/offset
 % 		transients from filtering:
 % 		 exportOpts.BPfilt.ramp = 1;
+%		filter type is either 'bessel' or 'butter' (butterworth)
+%		 exportOpts.BPfilet.type = 'bessel';
 % 
 %
 % Output Arguments:
@@ -100,6 +102,8 @@ function varargout = export_for_plexon(varargin)
 %	15 Jan 2020 (SJS): added documentation, writing info to .mat file
 %	12 Feb 2020 (SJS): revising for object oriented storage
 %	3 Mar 2020 (SJS): converted fData to CurveInfo array
+%	26 Mar 2020 (SJS): reworking for real world use. 
+%		- added filter 'type' to exportOpts.BPfilt struct
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -304,7 +308,13 @@ for f = 1:nFiles
 		BPfilt.Fs = cInfo(f).Dinf.indev.Fs;
 		BPfilt.Fnyq = cInfo(f).Dinf.indev.Fs / 2;
 		BPfilt.cutoff = BPfilt.Fc / BPfilt.Fnyq;
-		[BPfilt.b, BPfilt.a] = butter(BPfilt.forder, BPfilt.cutoff, 'bandpass');
+		if strcmpi(BPfilt.type, 'bessel')
+			[BPfilt.b, BPfilt.a] = besself(BPfilt.forder, BPfilt.cutoff, 'bandpass');
+		elseif strcmpi(BPfilt.type, 'butter')
+			[BPfilt.b, BPfilt.a] = butter(BPfilt.forder, BPfilt.cutoff, 'bandpass');
+		else
+			error('%s: unknown filter type %s', mfilename, BPfilt.type)
+		end
 	end
 	
 	% check to make sure consistent # of sweeps (aka trials)

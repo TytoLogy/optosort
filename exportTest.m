@@ -16,16 +16,22 @@
 % Created: 8 January, 2020 (SJS)
 %
 % Revisions:
+%	26 Mar 2020 (SJS): reworking for use
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
 
-clear all
-
+% check to make sure tytoLogy (esp opto) things are on path
 if ~exist('readOptoData', 'file')
-	addpath('~/Work/Code/Matlab/dev/TytoLogy/Experiments/Opto');
+	fprintf(['readOptoData (and possibly other TytoLogy/opto functions' ...
+						'not found!\n'])
+	fprintf('Please check Matlab path(s)\n');
+	fprintf(['e.g.:\n' ...
+				'addpath(''~/Work/Code/Matlab/dev/TytoLogy/Experiments/Opto'')\n']);
 end
 	
+% add the opto objects path
+addpath('OptoObjects');
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -148,6 +154,8 @@ exportOpts.BPfilt.forder = 5;
 % ramp time (ms) to apply to each sweep in order to cutdown on onset/offset
 % transients from filtering
 exportOpts.BPfilt.ramp = 1;
+% filter type. 'bessel' or 'butter' (for butterworth). typically use bessel
+exportOpts.BPfilt.type = 'bessel';
 
 %------------------------------------------------------------------------
 % run!
