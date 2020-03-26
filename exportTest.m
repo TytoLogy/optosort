@@ -127,21 +127,24 @@ addpath('OptoObjects');
 % 1382_20191212_02_02_3200_WAV.dat
 % 1382_20191212_02_02_3200_WAV_PSTH.fig
 % 1382_20191212_02_02_3200_WAV_wavinfo.mat
-exportOpts.DataPath = '~/Work/Data/TestData/MT';
-exportOpts.DataFile = {	'1382_20191212_02_02_3200_FREQ_TUNING.dat'; ...
-					'1382_20191212_02_02_3200_BBN.dat'; ...
-					'1382_20191212_02_02_3200_FRA.dat';	};
-exportOpts.TestFile = {	'1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'; ...
-					'1382_20191212_02_02_3200_BBN_testdata.mat'; ...
-					'1382_20191212_02_02_3200_FRA_testdata.mat'; };
-exportOpts.Channels = [4, 5, 11, 14];
-exportOpts.OutputPath = exportOpts.DataPath;
-exportOpts.OutputFile = '1382_20191212_02_02_3200_MERGE.nex';
-% exportOpts.OutputFile = '1382_20191212_02_02_3200_CURVEOBJ.nex';
-% exportOpts.OutputPath = pwd;
-% exportOpts.OutputFile = 'test.nex';
+% exportOpts.DataPath = '~/Work/Data/TestData/MT';
+% exportOpts.DataFile = {	'1382_20191212_02_02_3200_FREQ_TUNING.dat'; ...
+% 					'1382_20191212_02_02_3200_BBN.dat'; ...
+% 					'1382_20191212_02_02_3200_FRA.dat';	};
+% exportOpts.TestFile = {	'1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'; ...
+% 					'1382_20191212_02_02_3200_BBN_testdata.mat'; ...
+% 					'1382_20191212_02_02_3200_FRA_testdata.mat'; };
+% exportOpts.Channels = [4, 5, 11, 14];
+% exportOpts.OutputPath = exportOpts.DataPath;
+% exportOpts.OutputFile = '1382_20191212_02_02_3200_MERGE.nex';
 %---------------------------------------
 
+exportOpts.DataPath = '~/Work/Data/TestData/MT';
+exportOpts.DataFile = {	'1382_20191212_02_02_3200_FREQ_TUNING.dat'	};
+exportOpts.TestFile = {	'1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'};
+exportOpts.Channels = [4, 5, 11, 14];
+exportOpts.OutputPath = exportOpts.DataPath;
+exportOpts.OutputFile = '1382_20191212_02_02_3200_FREQ_TUNING.nex';
 
 %------------------------------------------------------------------------
 % filter parameters for raw neural data
@@ -154,8 +157,10 @@ exportOpts.BPfilt.forder = 5;
 % ramp time (ms) to apply to each sweep in order to cutdown on onset/offset
 % transients from filtering
 exportOpts.BPfilt.ramp = 1;
-% filter type. 'bessel' or 'butter' (for butterworth). typically use bessel
-exportOpts.BPfilt.type = 'bessel';
+% filter type. 'bessel' or 'butter' (for butterworth). typically use butter
+% as bessel is low-pass only and we need to remove low frequency crap from
+% the raw data
+exportOpts.BPfilt.type = 'butter';
 
 %------------------------------------------------------------------------
 % run!
