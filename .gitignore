@@ -51,3 +51,16 @@ Temporary Items
 *.mat
 *.pdf
 *.nex
+
+# Office
+# Word temporary
+~$*.doc*
+
+# Word Auto Backup File
+Backup of *.doc*
+
+# Excel temporary
+~$*.xls*
+
+# Excel Backup File
+*.xlk

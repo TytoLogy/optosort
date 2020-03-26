@@ -1,6 +1,6 @@
 function varargout = export_for_plexon(varargin)
 %------------------------------------------------------------------------
-% [nD, nexInfo] = export_for_plexon(exportInfo)
+% [nD, nexInfo] = export_for_plexon(DataFileStruct)
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
@@ -16,68 +16,14 @@ function varargout = export_for_plexon(varargin)
 %	With no inputs provided, a dialog will open to specify a file with a 
 %	list of .dat files to process (not yet implemented!!!!)
 %
-% exportInfo	data file and options struct
-%	see exportTest.m for examples
-%
-%----------------------
-% 	Fields:
-%----------------------
-% 	exportInfo.DataPath: 
-% 	 Path(s) to data files
-% 		can specify individual file paths in a cell array...
-% 			exportInfo.DataPath = {'~/Work/Data/TestData/MT_IC';
-% 							'~/Work/Data/TestData/MT_IC'; ...
-% 							'~/Work/Data/TestData/MT_IC'; };
-% 		or single path that applies to all files specified:
-% 			exportInfo.DataPath = '~/Work/Data/TestData/MT_IC';
-% 			exportInfo.DataPath = 
-% 								'/Volumes/Wenstrup Laboratory/By User/SJS/Data/SpikeSort';
-% 
-% 	exportInfo.DataFile:
-% 	 list (cell array) of data files to export (and merge)
-% 		exportInfo.DataFile = {'1372_20191126_03_01_1500_FREQ_TUNING.dat'; ...
-% 						'1372_20191126_03_01_1500_BBN.dat'; ...
-% 						'1372_20191126_03_01_1500_FRA.dat'; ...
-% 						'1372_20191126_03_01_1500_WAV.dat'; };
-% 
-% 	exportInfo.TestFile:
-% 	 list (cell array) of test data files corresponding to DataFiles;
-%		exportInfo.TestFile = {'1372_20191126_03_01_1500_FREQ_TUNING_testdata.mat'; ...
-% 										'1372_20191126_03_01_1500_BBN_testdata.mat'; ...
-% 										'1372_20191126_03_01_1500_FRA_testdata.mat'; ...
-% 										''; };
-% 
-%	exportInfo.OutputPath, exportInfo.OutputFile
-% 	 you can specify an output path and nex file name, or just leave blank
-% 	 and export_plexon_data will create one in current directory
-% 		exportInfo.OutputPath = exportOpts.DataPath;
-% 		exportInfo.OutputFile = '1372_20191126_03_01_1500_test.nex';
-% 
-%	exportInfo.Channels:
-% 	 neural A/D channels to export from data file(s). 
-% 	 note that channels must be consistent across all the data files to be
-% 	 merged in the exported file!
-% 	 If blank, all channels present in file will be included
-% 		exportInfo.Channels = [11 9 14];
-% 
-% 	exportInfo.BPfilt:
-% 	 specifies filter for processing output data.
-% 	 if blank/unspecified, no filter will be applied to data
-% 		[highpass lowpass] cutoff frequencies in Hz:
-% 		 exportOpts.BPfilt.Fc = [300 4000];
-% 		order of filter. note that the filtfilt() function in MATLAB is used,
-% 		so the effective order is doubled. typically use 5:
-% 		 exportOpts.BPfilt.forder = 5;
-% 		ramp time (ms) to apply to each sweep in order to cutdown on onset/offset
-% 		transients from filtering:
-% 		 exportOpts.BPfilt.ramp = 1;
-% 
+% DataFileStruct	<file with list of data files.m>
+%	see exportTest.m for example
 %
 % Output Arguments:
 % 	nD		NeuroExplorer nex data struct written to output file
 %	nexInfo	struct with information about data written to .nex file:
 % 		NexFileName			name of _nexinfo.mat file
-% 		fData					array of CurveInfo objects with info about data files
+% 		fData					struct array with info about data files
 % 		sweepStartBin		sample index for sweep start
 % 		sweepEndBin			sample index for sweep end
 % 		fileStartBin		sample index for data start for each data file
@@ -98,8 +44,6 @@ function varargout = export_for_plexon(varargin)
 %
 % Revisions:
 %	15 Jan 2020 (SJS): added documentation, writing info to .mat file
-%	12 Feb 2020 (SJS): revising for object oriented storage
-%	3 Mar 2020 (SJS): converted fData to CurveInfo array
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -111,8 +55,9 @@ sepstr = '----------------------------------------------------';
 NEX_UTIL_PATH = ['~/Work/Code/Matlab/stable/Toolbox/NeuroExplorer' ...
 					'/HowToReadAndWriteNexAndNex5FilesInMatlab'];
 % filter info
-defaultFilter = [];
-
+defaultFilter.Fc = [300 4000];
+defaultFilter.forder = 5;
+defaultFilter.ramp = 1;
 %------------------------------------------------------------------------
 % Setup
 %------------------------------------------------------------------------
@@ -224,68 +169,39 @@ fprintf('Animal: %s\n', F(1).animal);
 nChannels = length(Channels);
 
 %------------------------------------------------------------------------
-% If not provided, create output .nex file name - adjust depending on # of files
-%	assume data from first file is consistent with others!!!!!!!!!
-%------------------------------------------------------------------------
-if isempty(NexFileName)
-	if nFiles > 1
-		% append MERGE to filename
-		NexFileName = [	F(1).fileWithoutOther '_' ...
-								'MERGE.nex'];
-	else
-		NexFileName = [	F(1).base '.nex'];
-	end
-end
-
-%------------------------------------------------------------------------
-% create nexInfo object (SpikeInfo) to hold sweep/file bin and time data
-%------------------------------------------------------------------------
-nexInfo = SpikeInfo();
-nexInfo.FileName = fullfile(NexFilePath, NexFileName);
-% create output _nexinfo.mat file name - base is same as .nex file
-[~, nibase] = fileparts(nexInfo.FileName);
-nexInfo.InfoFileName = fullfile(NexFilePath, [nibase '_nexinfo.mat']);
-clear nibase
-% store channel information
-nexInfo.ADchannel = Channels;
-
-%------------------------------------------------------------------------
-% pre-allocate some things
-%------------------------------------------------------------------------
-% bins for start and end of each file's data
-nexInfo.fileStartBin = zeros(1, nFiles);
-nexInfo.fileEndBin = zeros(1, nFiles);
-% bins for all sweep starts and ends
-nexInfo.sweepStartBin = cell(1, nFiles);
-nexInfo.sweepEndBin = cell(1, nFiles);
-% each file's sampling rate for neural data
-tmpFs = zeros(nFiles, 1);
-% cell array to hold sweep data - this will be converted to a single
-% "vector" of values per channel that will be added to the .nex file
-cSweeps = cell(nFiles, 1);
-% struct to hold everything for each file
-% fData = repmat(	struct(		'startSweepBin', {}, ...
-% 										'endSweepBin', {}, ...
-% 										'sweepLen', [], ...
-% 										'fileStartBin', [], ...
-% 										'fileEndBin', [], ...
-% 										'Dinf', [] ...
-% 								), ...
-% 						1, nFiles);
-					
-% class array to hold everything for each file
-cInfo(nFiles, 1) = CurveInfo;
-
-%------------------------------------------------------------------------
 % Read data
 %------------------------------------------------------------------------
 sendmsg('Reading data');
 
+% allocate some things
+% bins for start and end of each file's data
+fileStartBin = zeros(1, nFiles);
+fileEndBin = zeros(1, nFiles);
+% bins for all sweep starts and ends
+sweepStartBin = cell(1, nFiles);
+sweepEndBin = cell(1, nFiles);
+% each file's sampling rate for neural data
+tmpFs = zeros(nFiles, 1);
+% struct to hold everything for each file
+fData = repmat(	struct(		'DataPath', '', ...
+										'DataFile', '', ...
+										'cSweeps', {}, ...
+										'startSweepBin', {}, ...
+										'endSweepBin', {}, ...
+										'sweepLen', [], ...
+										'fileStartBin', [], ...
+										'fileEndBin', [], ...
+										'Dinf', [] ...
+								), ...
+						1, nFiles);
+
 % loop through files
 for f = 1:nFiles
-	% save file info object for current data file
-	cInfo(f).F = F(f);
-	
+	% save parse file info
+	fData(f).F = F(f);
+	% save data path and file... these are redundant!
+	fData(f).DataPath = F(f).path;
+	fData(f).DataFile = F(f).file;
 	% get data for each file and channel and convert to row vector format
 	% algorithm:
 	%		(1) put each sweep for this channel in a {1, # sweeps} cell array
@@ -293,57 +209,61 @@ for f = 1:nFiles
 	%		(2) make a note of the length of each sweep to use for
 	%				markers/timestamps
 	%		(3) after cSweeps is built, convert to a row vector using cell2mat
-
+	% 
+	% read in data
 	% use readOptoData to read in raw data. 
-	[D, tmpDinf] = readOptoData(fullfile(F(f).path, F(f).file));
+	[D, Dinf] = readOptoData(fullfile(F(f).path, F(f).file));
 	% Fix test info
-	cInfo(f).Dinf = correctTestType(tmpDinf);
-
+	Dinf = correctTestType(Dinf);
+% 	% store file info
+% 	fData(f).DataPath = DataPath;
+% 	fData(f).DataFile = DataFile{f};
 	% build filter for neural data
-	if ~isempty(BPfilt)
-		BPfilt.Fs = cInfo(f).Dinf.indev.Fs;
-		BPfilt.Fnyq = cInfo(f).Dinf.indev.Fs / 2;
-		BPfilt.cutoff = BPfilt.Fc / BPfilt.Fnyq;
-		[BPfilt.b, BPfilt.a] = butter(BPfilt.forder, BPfilt.cutoff, 'bandpass');
-	end
-	
+	BPfilt.Fs = Dinf.indev.Fs;
+	BPfilt.Fnyq = Dinf.indev.Fs / 2;
+	BPfilt.cutoff = BPfilt.Fc / BPfilt.Fnyq;
+	[BPfilt.b, BPfilt.a] = butter(BPfilt.forder, BPfilt.cutoff, 'bandpass');
+
 	% check to make sure consistent # of sweeps (aka trials)
-	if cInfo(f).Dinf.nread ~= length(D)
+	if Dinf.nread ~= length(D)
 		error('%s: mismatch in Dinf.nread (%d) and length(D) (%d)', ...
-					mfilename, cInfo(f).Dinf.nread, length(D));
+					mfilename, Dinf.nread, length(D));
 	end
 	
 	% build into sweeps by channel format
-	fprintf('Test type: %s\n', cInfo(f).testtype);
-	[cSweeps{f}, ...
-		cInfo(f).startSweepBin, cInfo(f).endSweepBin, cInfo(f).sweepLen] = ...
-					buildChannelData(Channels, BPfilt, D, cInfo(f).Dinf);
+	fprintf('Test type: %s\n', Dinf.test.Type);
+	[fData(f).cSweeps, ...
+		fData(f).startSweepBin, fData(f).endSweepBin, fData(f).sweepLen] = ...
+					buildChannelData(Channels, BPfilt, D, Dinf);
 	% check the start and end sweep bin data for consistency
-	if check_sweeps(cInfo(f).startSweepBin)
+	if check_sweeps(fData(f).startSweepBin)
 		warning(['File %s: Inconsistent startSweepBin' ...
-							'values across channels!!!!'], cInfo(f).F.file);
+							'values across channels!!!!'], fData(f).DataFile);
 	end
-	if check_sweeps(cInfo(f).endSweepBin)
+	if check_sweeps(fData(f).endSweepBin)
 		warning('Inconsistent endSweepBin values across channels!!!!');
 	end
 	% store sample for start of this file (should be 1); use channel 1 value
-	cInfo(f).fileStartBin = cInfo(f).startSweepBin{1}(1);
+	fData(f).fileStartBin = fData(f).startSweepBin{1}(1);
 	% store sample for end of this file
-	cInfo(f).fileEndBin = cInfo(f).endSweepBin{1}(end);
-% 	% store file information struct
-% 	fData(f).Dinf = Dinf;
+	fData(f).fileEndBin = fData(f).endSweepBin{1}(end);
+	% store file information struct
+	fData(f).Dinf = Dinf;
 	% to avoid any issues, should make sure sample rates are consistent
-	% to do this, store list of sample rates and check once out of this loop
-	tmpFs(f) = cInfo(f).Dinf.indev.Fs;
+	% need in implement a check somehow.  this code doesn't work:
+	% if any(Dinf.indev.Fs ~= [fData(:).Dinf.indev.Fs])
+	%	error('Sample Rate Mismatch found!');
+	% end
+	tmpFs(f) = fData(f).Dinf.indev.Fs;
 	
 	% calculate overall start and end bins for each file's data
 	if f == 1
-		nexInfo.fileStartBin(f) = cInfo(f).fileStartBin;
-		nexInfo.fileEndBin(f) = cInfo(f).fileEndBin;
+		fileStartBin(f) = fData(f).fileStartBin;
+		fileEndBin(f) = fData(f).fileEndBin;
 	else
 		% add 1 to prior end bin for start
-		nexInfo.fileStartBin(f) = nexInfo.fileEndBin(f-1) + 1;
-		nexInfo.fileEndBin(f) = nexInfo.fileStartBin(f) + cInfo(f).fileEndBin - 1;
+		fileStartBin(f) = fileEndBin(f-1) + 1;
+		fileEndBin(f) = fileStartBin(f) + fData(f).fileEndBin - 1;
 	end
 end
 
@@ -352,14 +272,12 @@ sendmsg('Building start and end sweep indices:');
 for f = 1:nFiles
 	% calculate start and end sweep bins for each file's data
 	if f == 1
-		nexInfo.sweepStartBin{f} = cInfo(f).startSweepBin{1};
-		nexInfo.sweepEndBin{f} = cInfo(f).endSweepBin{1};
+		sweepStartBin{f} = fData(f).startSweepBin{1};
+		sweepEndBin{f} = fData(f).endSweepBin{1};
 	else
 		% add previous file's final endSweepBin value as offset
-		nexInfo.sweepStartBin{f} = cInfo(f).startSweepBin{1} + ...
-												nexInfo.sweepEndBin{f-1}(end);
-		nexInfo.sweepEndBin{f} = cInfo(f).endSweepBin{1} + ...
-												nexInfo.sweepEndBin{f-1}(end);
+		sweepStartBin{f} = fData(f).startSweepBin{1} + sweepEndBin{f-1}(end);
+		sweepEndBin{f} = fData(f).endSweepBin{1} + sweepEndBin{f-1}(end);
 	end
 end
 
@@ -372,8 +290,18 @@ if ~all(tmpFs(1) == tmpFs)
 else
 	% store overall sample rate
 	Fs = tmpFs(1);
-	nexInfo.Fs = Fs;
 end
+
+% convert file start/end bins to times
+fileStartTime = (fileStartBin - 1) ./ Fs;
+fileEndTime = (fileEndBin - 1) ./ Fs;
+
+% convert sweep bin cells to vectors...
+startBins = [sweepStartBin{:}];
+endBins = [sweepEndBin{:}];
+% ... and then to times
+startTimes = (startBins - 1) ./ Fs;
+endTimes = (endBins - 1) ./ Fs;
 
 %------------------------------------------------------------------------
 % convert (concatenate) cSweeps to vector for each channel, 
@@ -384,7 +312,29 @@ end
 % data struct.
 %------------------------------------------------------------------------
 sendmsg('Adding continuous and event data to nex struct:');
-fprintf('Exporting data to %s\n', nexInfo.FileName);
+
+% If not provided, create output .nex file name - adjust depending on # of files
+%	assume data from first file is consistent with others!!!!!!!!!
+if isempty(NexFileName)
+	if nFiles > 1
+		% append MERGE to filename
+		NexFileName = [	fData(1).F.animal '_' ...
+								fData(1).F.datecode '_' ...
+								fData(1).F.unit '_' ...
+								fData(1).F.penetration '_' ...
+								fData(1).F.depth '_' ...
+								'MERGE.nex'];
+	else
+		NexFileName = [	fData(1).F.animal '_' ...
+								fData(1).F.datecode '_' ...
+								fData(1).F.unit '_' ...
+								fData(1).F.penetration '_' ...
+								fData(1).F.depth '_' ...
+								fData(1).F.other ...
+								'.nex'];
+	end
+end
+fprintf('Exporting data to %s\n', fullfile(NexFilePath, NexFileName));
 
 % start new nex file data struct
 nD = nexCreateFileData(Fs);
@@ -395,7 +345,7 @@ for c = 1:nChannels
 	% 	[# channels, (# sweeps) * (# samples per sweep)
 	cVector = cell(1, nFiles);
 	for f = 1:nFiles
-		cVector{1, f} = cSweeps{f}(c, :);
+		cVector{1, f} = fData(f).cSweeps(c, :);
 	end
 	% concatenate cell array, convert to vector, add to nex struct
 	% steps:
@@ -403,7 +353,7 @@ for c = 1:nChannels
 	%	tmpVector = cell2mat(tmp);
 	%  add to nex struct:
 	%	[nexFile] = nexAddContinuous( nexFile, startTime, adFreq, values, name)
-	nD = nexAddContinuous(nD, nexInfo.fileStartTime(1), Fs, ...
+	nD = nexAddContinuous(nD, fileStartTime(1), Fs, ...
 									cell2mat([cVector{:}]), ...
 									sprintf('spikechan_%d', Channels(c)));
 	% clear cVector to save memory
@@ -413,28 +363,45 @@ end
 % add start sweep time stamps as event - assume consistent across channels!
 %  [nexFile] = nexAddEvent( nexFile, timestamps, name )
 % events must be in column format...?
-nD = nexAddEvent(nD, force_col(nexInfo.startTimeVector), 'startsweep');
+nD = nexAddEvent(nD, force_col(startTimes), 'startsweep');
 % add end sweep time stamps as event - assume consistent across channels!
-nD = nexAddEvent(nD, force_col(nexInfo.endTimeVector), 'endsweep');
+nD = nexAddEvent(nD, force_col(endTimes), 'endsweep');
 % add file times
-nD = nexAddEvent(nD, force_col(nexInfo.fileStartTime), 'filestart');
-nD = nexAddEvent(nD, force_col(nexInfo.fileEndTime), 'fileend');
+nD = nexAddEvent(nD, force_col(fileStartTime), 'filestart');
+nD = nexAddEvent(nD, force_col(fileEndTime), 'fileend');
 
-sendmsg(sprintf('Writing nex file %s:', nexInfo.FileName));
+sendmsg(sprintf('Writing nex file %s:', fullfile(NexFilePath, NexFileName)));
 % write to nexfile
-writeNexFile(nD, nexInfo.FileName);
+writeNexFile(nD, fullfile(NexFilePath, NexFileName));
 
 %------------------------------------------------------------------------
-% write useful information to _nexinfo.mat file 
+% write useful information to _nexinfo.mat file
 %------------------------------------------------------------------------
-% assign cInfo to nexInfo.FileData
-nexInfo.FileData = cInfo;
-% store filter info
-nexInfo.dataFilter = BPfilt;
+
+% create output _nexinfo.mat file name - base is same as .nex file
+[~, nibase] = fileparts(NexFileName);
+NexinfoFileName = [nibase '_nexinfo.mat'];
+
+% create nexInfo struct to hold sweep/file bin and time data
+nexInfo.NexFileName = NexFileName;
+% need to remove cSweeps from nexInfo copy of fData to save memory
+nexInfo.fData = rmfield(fData, 'cSweeps');
+nexInfo.nFiles = nFiles;
+nexInfo.Fs = Fs;
+nexInfo.sweepStartBin = sweepStartBin;
+nexInfo.sweepEndBin = sweepEndBin;
+nexInfo.fileStartBin = fileStartBin;
+nexInfo.fileEndBin = fileEndBin;
+nexInfo.startTimes = startTimes;
+nexInfo.endTimes = endTimes;
+nexInfo.fileStartTime = fileStartTime;
+nexInfo.fileEndTime = fileEndTime;
+nexInfo.Channels = Channels;
+
 % save to matfile
 sendmsg(sprintf('Writing _nexinfo.mat file %s:', ...
-											nexInfo.InfoFileName));
-save(nexInfo.InfoFileName, 'nexInfo', '-MAT');
+											fullfile(NexFilePath, NexinfoFileName)));
+save(fullfile(NexFilePath, NexinfoFileName), 'nexInfo', '-MAT');
 
 %------------------------------------------------------------------------
 % output
@@ -484,19 +451,20 @@ function varargout = defineSampleData(varargin)
 		error('%s->defineSampleData: invalid inputs', mfilename)
 	end
 
-	% loop through # of data files, create file objects
+	% loop through # of data files
 	for f = 1:length(DataFile)
+		tmpF = parse_opto_filename(DataFile{f});
 		if length(DataPath) == 1
 			% only 1 element in DataPath so assume all data files are on this
 			% path
-			F(f) = OptoFileName(fullfile(DataPath{1}, DataFile{f})); %#ok<AGROW>
+			tmpF.path = DataPath{1};
 		else
-			F(f) = OptoFileName(fullfile(DataPath{f}, DataFile{f})); %#ok<AGROW>
+			tmpF.path = DataPath{f};
 		end
-		F(f).testfile = TestFile{f};  %#ok<AGROW>
-	end	
-	
-	% assign outputs
+		tmpF.file = DataFile{f}; 
+		tmpF.testfile = TestFile{f}; 
+		F(f) = tmpF; %#ok<AGROW>
+	end
 	varargout{1} = F;
 	if nargout == 2
 		varargout{2} = Channels;

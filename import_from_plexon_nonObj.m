@@ -1,11 +1,11 @@
-% function varargout = import_from_plexon(varargin)
+% function varargout = import_from_plexon_nonObj(varargin)
 %------------------------------------------------------------------------
 % import_from_plexon.m
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
 % working script for importing sorted data from plexon
-% uses objects
+% 
 %------------------------------------------------------------------------
 % See also: 
 %------------------------------------------------------------------------
@@ -14,8 +14,8 @@
 %  Sharad J. Shanbhag
 %	sshanbhag@neomed.edu
 %------------------------------------------------------------------------
-% Created: 12 February, 2020 (SJS)
-%	- adapted from import_from_plexon_nonObj
+% Created: 8 January, 2020 (SJS)
+%
 % Revisions:
 %------------------------------------------------------------------------
 % TO DO:
@@ -43,7 +43,7 @@ sortedFile = '1382_20191212_02_02_3200.mat';
 nexInfoFile = '1382_20191212_02_02_3200_MERGE_nexinfo.mat';
 
 % nex file
-nexFile = '1382_20191212_02_02_3200_MERGE.nex';
+nexFile = '1382_20191212_02_02_3200_MERGE.mat';
 
 %------------------------------------------------------------------------
 % Setup
@@ -52,9 +52,40 @@ fprintf('\n%s\n', sepstr);
 fprintf('import_from_plexon running...\n');
 fprintf('%s\n', sepstr);
 
+
+%------------------------------------------------------------------------
+%% load data
+%------------------------------------------------------------------------
+fprintf('\n%s\n', sepstr);
+fprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexPath, nexInfoFile));
+fprintf('%s\n', sepstr);
+% nexinfo
+load(fullfile(nexPath, nexInfoFile), 'nexInfo');
+
+% plexon sorted data
+plxvars = who('-file', fullfile(sortedPath, sortedFile));
+if isempty(plxvars)
+	error('No variables in plexon output file %s', ...
+					fullfile(sortedPath, sortedFile));
+else
+	fprintf('\n%s\n', sepstr);
+	fprintf('Found %d channels in %s\n', length(plxvars), ...
+							fullfile(sortedPath, sortedFile))
+	for n = 1:length(plxvars)
+		fprintf('\t%s\n', plxvars{n});
+	end
+	fprintf('%s\n', sepstr);
+end
+
+% for now, just load the first channel data - need to figure out a way to
+% deal with multiple channels
+tmp = load(fullfile(sortedPath, sortedFile), '-MAT', plxvars{1});
+spikesAll = tmp.(plxvars{1});
+clear tmp;
+
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
-%% Plexon-exported sorted data:
+% Plexon-exported sorted data:
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 % Column 1: unit number (where 0 is unsorted)
@@ -140,53 +171,6 @@ nexInfo.fData.F
 %		Column 6: PCA3 weight
 %		Column 7-end : waveform
 % 
-
-%------------------------------------------------------------------------
-%% load data
-%------------------------------------------------------------------------
-
-% plexon sorted data
-plxvars = who('-file', fullfile(sortedPath, sortedFile));
-if isempty(plxvars)
-	error('No variables in plexon output file %s', ...
-					fullfile(sortedPath, sortedFile));
-else
-	fprintf('\n%s\n', sepstr);
-	fprintf('Found %d channels in %s\n', length(plxvars), ...
-							fullfile(sortedPath, sortedFile))
-	for n = 1:length(plxvars)
-		fprintf('\t%s\n', plxvars{n});
-	end
-	fprintf('%s\n', sepstr);
-end
-
-% create SpikeData object
-S = SpikeData();
-fprintf('\n%s\n', sepstr);
-fprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexPath, nexInfoFile));
-fprintf('%s\n', sepstr);
-% nexinfo
-S.Info = SpikeInfo('file', fullfile(nexPath, nexInfoFile));
-
-% add spikes
-% for now, just load the first channel data - need to figure out a way to
-% deal with multiple channels (array of SpikeData objects?)
-tmp = load(fullfile(sortedPath, sortedFile), '-MAT', plxvars{1});
-spikesAll = tmp.(plxvars{1});
-S = S.addPlexonSpikes(tmp.(plxvars{1}), plxvars{1});
-clear tmp;
-
-% save Sobject in file
-% get base from one of the file objects in S.Info
-sfile = [S.Info.FileData(1).F.fileWithoutOther '_Sobj.mat'];
-fprintf('\n%s\n', sepstr);
-fprintf('writing Sobj to file\n\t%s\n', fullfile(nexPath, sfile));
-fprintf('%s\n', sepstr);
-save(fullfile(nexPath, sfile), '-MAT', 'S');
-
-
-%% break up spiketimes by data file
-% use file Start/End time to do this
 [~, nc] = size(spikesAll);
 CHAN_COL = 1;
 UNIT_COL = 2;
@@ -194,81 +178,46 @@ TS_COL = 3;
 PCA_COL = 4:6;
 WAV_COL = 7:nc;
 
-sbf = cell(S.Info.nFiles, 1);
+%% break up spiketimes by data file
+% use file Start/End time to do this
 
-for f = 1:S.Info.nFiles
+spikesByFile = cell(nexInfo.nFiles, 1);
+
+for f = 1:nexInfo.nFiles
 	% could use between() function, but using something explicit here for
 	% clarity
-	valid_ts = (spikesAll(:, TS_COL) >= S.Info.fileStartTime(f)) & ...
-					(spikesAll(:, TS_COL) <= S.Info.fileEndTime(f));
-	sbf{f} = spikesAll(valid_ts, :);
+	valid_ts = (spikesAll(:, TS_COL) >= nexInfo.fileStartTime(f)) & ...
+					(spikesAll(:, TS_COL) <= nexInfo.fileEndTime(f));
+	spikesByFile{f} = spikesAll(valid_ts, :);
 end
 
-%% try with object
-spikesByFile = cell(S.Info.nFiles, 1);
-for f = 1:S.Info.nFiles
-	spikesByFile{f} = S.spikesForFile(f);
+%{
+for f = 1:nexInfo.nFiles
+
+	% shift spike times to correspond to start of each data file
+	% make a local copy...
+	tmpS = spikesByFile{f}(:, TS_COL);
+	% ...and subtract fileStartTime in seconds from all time stamps
+	tmpS = tmpS - nexInfo.fileStartTime(f);
+	% put back into spikes ByFile
+	spikesByFile{f}(:, TS_COL) = tmpS;
 end
+%}
 
 %% N next step: assign spike times to appropriate sweeps/stimuli
-
-% ORIG
 % store spikes for each file in spikes ByStim
-sbs = cell(S.Info.nFiles, 1);
+spikesByStim = cell(nexInfo.nFiles, 1);
 % loop through files
-for f = 1:S.Info.nFiles
-	sbs{f} = assign_spikes_to_sweeps(spikesByFile{f}, ...
-												S.Info.sweepStartBin{f}, ...
-												S.Info.sweepEndBin{f}, ...
-												1, ...
-												S.Info.Fs, ...
+for f = 1:nexInfo.nFiles
+	spikesByStim{f} = assign_spikes_to_sweeps(spikesByFile{f}, ...
+												nexInfo.sweepStartBin{f}, ...
+												nexInfo.sweepEndBin{f}, ...
+												nexInfo.Fs, ...
 												'sweep');
 end
+spikesOrig{end}(:, TS_COL), spikesByStim{end}{end}(:, TS_COL)
 
-%% OBJ - by unit
-unitID = S.listUnits;
-nunits = S.nUnits;
-% store spikes for each file in spikes ByStim, all units
-spikesBySweepAndUnit = cell(S.Info.nFiles, nunits);
-% loop through files
-for f = 1:S.Info.nFiles
-	% loop through units
-	for u = 1:nunits
-		% get spikes (as a table) for each file (rows) and unit (columns)
-		spikesBySweepAndUnit{f, u} = S.spikesForAnalysisByUnit(f, unitID(u), 'sweep');
-	end
-end
-
-%% OBJ - don't separate by unit - can do posthoc
-% store spikes for each file in spikes ByStim, all units
-spikesBySweep = cell(S.Info.nFiles, 1);
-% loop through files
-for f = 1:S.Info.nFiles
-		spikesBySweep{f} = S.spikesForAnalysis(f, 'sweep');
-end
-
-%% extract timestamps for use in analysis, raster plots, etc., separated by unit
-% convert to timestamps
-spikesForAnalysis = cell(S.Info.nFiles, nunits);
-
-% loop through files
-for f = 1:S.Info.nFiles
-	% loop through units
-	for u = 1:nunits
-		% extract timestamp data from each table, store in 
-		spikesForAnalysis{f, u} = S.spikesForAnalysisByUnit(f, unitID(u), 'sweep');
-	end
-end
-
-extractTimeStamps
-
-
-
-%% plot waveforms
-
-S.plotUnitWaveforms(S.listUnits);
-
-
+spikesByStim{end}{3}(:, TS_COL)
 %% need to adjust spike times to start of each sweep
 %{
 for f = 1:nexInfo.nFiles
@@ -288,13 +237,13 @@ end
 %}
 
 %% convert spikes to table
-% 
-% Channel = spikesAll(:, CHAN_COL);
-% Unit = spikesAll(:, UNIT_COL);
-% TS = spikesAll(:, TS_COL);
-% PCAmat = spikesAll(:, PCA_COL);
-% WAVmat = spikesAll(:, WAV_COL);
-% PCA = num2cell(PCAmat, 2);
-% WAV = num2cell(WAVmat, 2);
-% 
-% T = table(Channel, Unit, TS, PCA, WAV)
+
+Channel = spikesAll(:, CHAN_COL);
+Unit = spikesAll(:, UNIT_COL);
+TS = spikesAll(:, TS_COL);
+PCAmat = spikesAll(:, PCA_COL);
+WAVmat = spikesAll(:, WAV_COL);
+PCA = num2cell(PCAmat, 2);
+WAV = num2cell(WAVmat, 2);
+
+T = table(Channel, Unit, TS, PCA, WAV)

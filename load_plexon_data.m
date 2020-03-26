@@ -1,11 +1,10 @@
-% function varargout = import_from_plexon(varargin)
+function varargout = load_plexon_data(varargin)
 %------------------------------------------------------------------------
-% import_from_plexon.m
+% load_plexon_data.m
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
-% working script for importing sorted data from plexon
-% uses objects
+% loads sorted data, returns SpikeData objects
 %------------------------------------------------------------------------
 % See also: 
 %------------------------------------------------------------------------
@@ -14,43 +13,69 @@
 %  Sharad J. Shanbhag
 %	sshanbhag@neomed.edu
 %------------------------------------------------------------------------
-% Created: 12 February, 2020 (SJS)
-%	- adapted from import_from_plexon_nonObj
+% Created: 3 <arch, 2020 (SJS)
+%	- adapted from import_from_plexon
 % Revisions:
 %------------------------------------------------------------------------
-% TO DO:
+% TO DO: DOESNT HANDLE MULTIPLE CHANNELS
 %------------------------------------------------------------------------
 % Initial things to define
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
-% Definitions
+% definitions
 %------------------------------------------------------------------------
+
 % string used to separate text 
 sepstr = '----------------------------------------------------';
 
-% data locations
-sortedPath = '~/Work/Data/TestData/MT';
-rawPath = '~/Work/Data/TestData/MT';
-nexPath = '~/Work/Data/TestData/MT';
-
-% sorted data file
-% sortedFile = '1323_20190722_03_02_632_MERGE.mat';
-sortedFile = '1382_20191212_02_02_3200.mat';
-
-% nexinfo file
-% nexInfoFile = '1323_20190722_03_02_632_MERGE_nexinfo.mat';
-nexInfoFile = '1382_20191212_02_02_3200_MERGE_nexinfo.mat';
-
-% nex file
-nexFile = '1382_20191212_02_02_3200_MERGE.nex';
 
 %------------------------------------------------------------------------
-% Setup
+% process inputs
 %------------------------------------------------------------------------
-fprintf('\n%s\n', sepstr);
-fprintf('import_from_plexon running...\n');
-fprintf('%s\n', sepstr);
+
+% if no input file provided, get file from user
+if nargin == 0
+	[sortedPath, sortedFile] = uigetfile('*.mat', ...
+														'Select Plexon output .mat file');
+	% if user cancelled, exit gracefully
+	if sortedPath == 0
+		fprintf('%s: cancelled\n', mfilename);
+		varargout{1} = [];
+		return
+	end
+elseif nargin == 1
+	% user provided sorted data file only
+	[sortedPath, tmpFile, tmpExt] = fileparts(varargin{1});
+	sortedFile = [tmpFile, tmpExt];
+	% build nexinfo file name from sortedFile
+	nexInfoPath = sortedPath;
+	nexInfoFile = buildNexInfoFromPlexonMat(sortedFile);	
+	% check
+	if ~exist(fullfile(sortedPath, nexInfoFile), 'file')
+		warning('Could not locate nexinfo file %s', nexInfoFile);
+		[nexInfoPath, nexInfoFile] = uigetfile( ...
+											fullfile(nexInfoPath, '*_nexinfo.mat'), ...
+											'Select nexinfo output .mat file');
+		% if user cancelled, exit gracefully
+		if nexInfoPath == 0
+			fprintf('%s: cancelled\n', mfilename);
+			varargout{1} = [];
+			return
+		end
+	end
+	
+elseif nargin == 2
+	% user provided sorted and nexinfo file
+	[sortedPath, tmpFile, tmpExt] = fileparts(varargin{1});
+	sortedFile = [tmpFile, tmpExt];
+	[nexInfoPath, tmpFile, tmpExt] = fileparts(varargin{2});
+	nexInfoFile = [tmpFile, tmpExt];
+	
+else
+	error('%s: huh????', mfilename);
+end
+
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -163,138 +188,26 @@ end
 % create SpikeData object
 S = SpikeData();
 fprintf('\n%s\n', sepstr);
-fprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexPath, nexInfoFile));
+fprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexInfoPath, nexInfoFile));
 fprintf('%s\n', sepstr);
 % nexinfo
-S.Info = SpikeInfo('file', fullfile(nexPath, nexInfoFile));
+S.Info = SpikeInfo('file', fullfile(nexInfoPath, nexInfoFile));
 
 % add spikes
 % for now, just load the first channel data - need to figure out a way to
 % deal with multiple channels (array of SpikeData objects?)
 tmp = load(fullfile(sortedPath, sortedFile), '-MAT', plxvars{1});
-spikesAll = tmp.(plxvars{1});
 S = S.addPlexonSpikes(tmp.(plxvars{1}), plxvars{1});
 clear tmp;
 
-% save Sobject in file
-% get base from one of the file objects in S.Info
-sfile = [S.Info.FileData(1).F.fileWithoutOther '_Sobj.mat'];
-fprintf('\n%s\n', sepstr);
-fprintf('writing Sobj to file\n\t%s\n', fullfile(nexPath, sfile));
-fprintf('%s\n', sepstr);
-save(fullfile(nexPath, sfile), '-MAT', 'S');
+varargout{1} = S;
 
-
-%% break up spiketimes by data file
-% use file Start/End time to do this
-[~, nc] = size(spikesAll);
-CHAN_COL = 1;
-UNIT_COL = 2;
-TS_COL = 3;
-PCA_COL = 4:6;
-WAV_COL = 7:nc;
-
-sbf = cell(S.Info.nFiles, 1);
-
-for f = 1:S.Info.nFiles
-	% could use between() function, but using something explicit here for
-	% clarity
-	valid_ts = (spikesAll(:, TS_COL) >= S.Info.fileStartTime(f)) & ...
-					(spikesAll(:, TS_COL) <= S.Info.fileEndTime(f));
-	sbf{f} = spikesAll(valid_ts, :);
 end
 
-%% try with object
-spikesByFile = cell(S.Info.nFiles, 1);
-for f = 1:S.Info.nFiles
-	spikesByFile{f} = S.spikesForFile(f);
+function nexinfofilename = buildNexInfoFromPlexonMat(plexfilename)
+% from plexfilename, build nexfilename
+
+	% first, init opto file obj
+	F = OptoFileName(plexfilename);
+	nexinfofilename = [F.fileWithoutOther '_nexinfo.mat'];
 end
-
-%% N next step: assign spike times to appropriate sweeps/stimuli
-
-% ORIG
-% store spikes for each file in spikes ByStim
-sbs = cell(S.Info.nFiles, 1);
-% loop through files
-for f = 1:S.Info.nFiles
-	sbs{f} = assign_spikes_to_sweeps(spikesByFile{f}, ...
-												S.Info.sweepStartBin{f}, ...
-												S.Info.sweepEndBin{f}, ...
-												1, ...
-												S.Info.Fs, ...
-												'sweep');
-end
-
-%% OBJ - by unit
-unitID = S.listUnits;
-nunits = S.nUnits;
-% store spikes for each file in spikes ByStim, all units
-spikesBySweepAndUnit = cell(S.Info.nFiles, nunits);
-% loop through files
-for f = 1:S.Info.nFiles
-	% loop through units
-	for u = 1:nunits
-		% get spikes (as a table) for each file (rows) and unit (columns)
-		spikesBySweepAndUnit{f, u} = S.spikesForAnalysisByUnit(f, unitID(u), 'sweep');
-	end
-end
-
-%% OBJ - don't separate by unit - can do posthoc
-% store spikes for each file in spikes ByStim, all units
-spikesBySweep = cell(S.Info.nFiles, 1);
-% loop through files
-for f = 1:S.Info.nFiles
-		spikesBySweep{f} = S.spikesForAnalysis(f, 'sweep');
-end
-
-%% extract timestamps for use in analysis, raster plots, etc., separated by unit
-% convert to timestamps
-spikesForAnalysis = cell(S.Info.nFiles, nunits);
-
-% loop through files
-for f = 1:S.Info.nFiles
-	% loop through units
-	for u = 1:nunits
-		% extract timestamp data from each table, store in 
-		spikesForAnalysis{f, u} = S.spikesForAnalysisByUnit(f, unitID(u), 'sweep');
-	end
-end
-
-extractTimeStamps
-
-
-
-%% plot waveforms
-
-S.plotUnitWaveforms(S.listUnits);
-
-
-%% need to adjust spike times to start of each sweep
-%{
-for f = 1:nexInfo.nFiles
-	% shift spike times to correspond to start of each data file
-	
-	% get offset to apply to timestamps (in seconds)
-	ts_offset = nexInfo.fileStartTime(f);
-	
-	for 
-	% make a local copy...
-	tmpS = spikesByFile{f}(:, TS_COL);
-	% ...and subtract fileStartTime in seconds from all time stamps
-	tmpS = tmpS - nexInfo.fileStartTime(f);
-	% put back into spikes ByFile
-	spikesByFile{f}(:, TS_COL) = tmpS;
-end
-%}
-
-%% convert spikes to table
-% 
-% Channel = spikesAll(:, CHAN_COL);
-% Unit = spikesAll(:, UNIT_COL);
-% TS = spikesAll(:, TS_COL);
-% PCAmat = spikesAll(:, PCA_COL);
-% WAVmat = spikesAll(:, WAV_COL);
-% PCA = num2cell(PCAmat, 2);
-% WAV = num2cell(WAVmat, 2);
-% 
-% T = table(Channel, Unit, TS, PCA, WAV)
