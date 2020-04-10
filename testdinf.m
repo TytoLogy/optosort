@@ -1,3 +1,6 @@
+% saves test Dinf data for later use 
+
+
 DataPath = '~/Work/Data/TestData/MT';
 
 
@@ -29,7 +32,6 @@ WAVInfoFile = '1382_20191212_02_02_3200_WAV_wavinfo.mat';
 [~, tmpDinf] = readOptoData(fullfile(DataPath, DataFile));
 % Fix test info
 wavDinf = correctTestType(tmpDinf);
-tmpWinfo = load(fullfile('~/Work/Data/TestData/MT', '1382_20191212_02_02_3200_WAV_wavinfo.mat'))
+wavinfo_from_file = load(fullfile(DataPath, WAVInfoFile));
 
-WI = WAVInfo(wavDinf, tmpWinfo) 
-
+save Dinf.mat
