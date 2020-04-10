@@ -143,14 +143,34 @@ addpath('OptoObjects');
 %---------------------------------------
 % Example to export a single test's data
 %---------------------------------------
+% exportOpts.DataPath = '~/Work/Data/TestData/MT';
+% exportOpts.OutputPath = exportOpts.DataPath;
+% % exportOpts.DataFile = {	'1382_20191212_02_02_3200_FREQ_TUNING.dat'	};
+% % exportOpts.TestFile = {	'1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'};
+% % exportOpts.OutputFile = '1382_20191212_02_02_3200_FREQ_TUNING.nex';
+% exportOpts.DataFile = {	'1382_20191212_02_02_3200_FREQ_TUNING.dat'	};
+% exportOpts.TestFile = {	'1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'};
+% exportOpts.OutputFile = '1382_20191212_02_02_3200_FREQ_TUNING.nex';
+% exportOpts.Channels = [4, 5, 11, 14];
+%---------------------------------------
+%---------------------------------------
+
+
+%---------------------------------------
+%---------------------------------------
+% Example testing for WAVInfo object
+%---------------------------------------
 exportOpts.DataPath = '~/Work/Data/TestData/MT';
-exportOpts.DataFile = {	'1382_20191212_02_02_3200_FREQ_TUNING.dat'	};
-exportOpts.TestFile = {	'1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'};
-exportOpts.Channels = [4, 5, 11, 14];
 exportOpts.OutputPath = exportOpts.DataPath;
-exportOpts.OutputFile = '1382_20191212_02_02_3200_FREQ_TUNING.nex';
+exportOpts.DataFile = {	'1382_20191212_02_02_3200_WAV.dat', ...
+								'1382_20191212_02_02_3200_FREQ_TUNING.dat'};
+exportOpts.TestFile = {	'1382_20191212_02_02_3200_WAV_testdata.dat', ...
+								'1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'};
+exportOpts.OutputFile = '1382_20191212_02_02_3200_FREQWAVMERGE.nex';
+exportOpts.Channels = [4, 5, 11, 14];
 %---------------------------------------
 %---------------------------------------
+
 
 %------------------------------------------------------------------------
 % filter parameters for raw neural data

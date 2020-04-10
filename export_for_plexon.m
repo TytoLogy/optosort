@@ -277,18 +277,19 @@ cSweeps = cell(nFiles, 1);
 % 								), ...
 % 						1, nFiles);
 					
-% CurveInfo class array to hold everything for each file
-cInfo(nFiles, 1) = CurveInfo;
+% % CurveInfo class array to hold everything for each file
+% cInfo(nFiles, 1) = CurveInfo;
 
 %------------------------------------------------------------------------
 % Read data
 %------------------------------------------------------------------------
 sendmsg('Reading data');
 
+cInfo = cell(nFiles, 1);
+
 % loop through files
 for f = 1:nFiles
-	% save file info object for current data file
-	cInfo(f).F = F(f);
+
 	
 	% get data for each file and channel and convert to row vector format
 	% algorithm:
@@ -301,8 +302,30 @@ for f = 1:nFiles
 	% use readOptoData to read in raw data. 
 	[D, tmpDinf] = readOptoData(fullfile(F(f).path, F(f).file));
 	% Fix test info
-	cInfo(f).Dinf = correctTestType(tmpDinf);
-
+	tmpDinf = correctTestType(tmpDinf);
+	
+	% CurveInfo (or WavInfo) to hold everything for each file
+	switch(upper(tmpDinf.test.Type))
+		case {'FREQ', 'LEVEL', 'FREQ+LEVEL', 'OPTO'}
+			cInfo{f} = CurveInfo(tmpDinf);
+		case {'WAV', 'WAVFILE'}
+			% build wavinfo file and load it
+			wavinfo_filename = [F(f).base '_wavinfo.mat'];
+			if ~exist(fullfile(F(f).path,wavinfo_filename), 'file')
+				warning('%s: wavinfo file %s not found', mfilename, ...
+																wavinfo_filename);
+				cInfo{f} = WAVInfo(tmpDinf);
+			else
+				tmpW = load(fullfile(F(f).path,wavinfo_filename));
+				cInfo{f} = WAVInfo(tmpDinf, tmpW);
+			end
+	
+		otherwise
+			error('%s: unknown test.Type %s', mfilename, tmpDinf.test.Type);
+	end
+% 	% save file info object for current data file
+% 	cInfo(f).F = F(f);
+	
 	% build filter for neural data
 	if ~isempty(BPfilt)
 		BPfilt.Fs = cInfo(f).Dinf.indev.Fs;

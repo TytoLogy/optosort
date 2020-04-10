@@ -66,7 +66,7 @@ Roadmap:
 
 %% read in test data
 DataPath = '~/Work/Data/TestData/MT';
-DataFile = '1382_20191212_02_02_3200_WAV.dat';
+DataFile = '1382_20191212_02_02_3200_BBN.dat';
 
 % use readOptoData to read in raw data. 
 [D, tmpDinf] = readOptoData(fullfile(DataPath, DataFile));
