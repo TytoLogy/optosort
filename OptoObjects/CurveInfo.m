@@ -20,6 +20,8 @@ classdef CurveInfo
 %							cell array
 % sweepLen			length (# of samples) for each sweep (for each channel)
 %							vector
+% stimStartBin		sample for stimulus onset (vector)
+% stimEndBin		sample for stimulus offset (vector)
 % fileStartBin		sample for start of file in merged file
 % fileEndBin		sample for end of file in merged data file
 % 
@@ -50,6 +52,7 @@ classdef CurveInfo
 %	3 Mar 2020 (SJS): adding elements from fData struct in the 
 %		export_for_plexon.m function to avoid future duplications and
 %		streamline curve/test information handling
+%	9 Apr 2020 (SJS): adding stimStartBin, stimEndBin.
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -62,6 +65,8 @@ classdef CurveInfo
 		F
 		startSweepBin = {}
 		endSweepBin = {}
+		stimStartBin = [];
+		stimEndBin = [];
 		sweepLen
 		fileStartBin
 		fileEndBin

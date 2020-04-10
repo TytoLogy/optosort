@@ -277,7 +277,7 @@ cSweeps = cell(nFiles, 1);
 % 								), ...
 % 						1, nFiles);
 					
-% class array to hold everything for each file
+% CurveInfo class array to hold everything for each file
 cInfo(nFiles, 1) = CurveInfo;
 
 %------------------------------------------------------------------------

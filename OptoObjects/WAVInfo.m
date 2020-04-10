@@ -56,7 +56,7 @@ classdef WAVInfo < CurveInfo
 	% class properties
 	%-------------------------------------------------
 	properties
-
+		wavInfo
 	end	% END properties (main)
 	properties (Dependent)
 
@@ -69,15 +69,18 @@ classdef WAVInfo < CurveInfo
 		%-------------------------------------------------
 		%-------------------------------------------------
 		function obj = WAVInfo(varargin)
-			% invoke superclass constructor
+			% invoke superclass constructor - this initializes obj.Dinf if it
+			% was provided as input
 			obj@CurveInfo(varargin{1})
 			% return if nothing else to do (no Dinf)
 			if isempty(varargin)
 				return
 			end
 			if isstruct(varargin{1})
+% 				testfields = {'ScriptType', 'optovar_name', 'audiovar_name', ...
+% 										'audiovar', 'curvetype', 'wavlist'};
 				testfields = {'ScriptType', 'optovar_name', 'audiovar_name', ...
-										'audiovar', 'curvetype', 'wavlist'};
+										'audiovar', 'curvetype'};
 				for n = 1:length(testfields)
 					obj.Dinf.test.(testfields{n}) = ...
 								convert_to_text(obj.Dinf.test.(testfields{n}));
@@ -85,8 +88,43 @@ classdef WAVInfo < CurveInfo
 			else
 				error('Unknown input type %s', varargin{1});
 			end
+			% if wavinfo is provided, use it
+			if nargin == 2
+				if isstruct(varargin{2})
+					obj.wavInfo = obj.init_wavInfo(varargin{2});
+				else
+					error('Unknown type for wavInfo input');
+				end
+			end
 		end
 
+		%-------------------------------------------------
+		function wInf = init_wavInfo(obj, W) %#ok<INUSL>
+		%-------------------------------------------------
+		% takes variables read in from _wavinfo.mat file, stores in new
+		% struct
+		% don't need to store stimList, stimIndices!
+		%-------------------------------------------------		
+			% wavInfo needs to be remapped to differently named field
+			% nwavs struct array with information about wav stimulus
+			wInf.wavs = W.wavInfo;
+			% store waveform inside .wavs field
+			if length(W.wavInfo) ~= length(W.wavS0)
+				error('mismatch in wavInfo and wavS0 lengths');
+			else
+				for n = length(W.wavInfo)
+					wInf.wavs(n).wavS0 = W.wavS0{n};
+				end
+			end
+			% audio has information about general audio properties, might be
+			% redundant or not totally accurate (i.e. level info)
+			wInf.audio = W.audio;
+			% nullstim has information about the null (no) stimulus
+			wInf.nullstim = W.nullstim;
+			% noise has information about noise stimulus (BBN)
+			wInf.noise = W.noise;
+		end
+		
 		%-------------------------------------------------
 		%-------------------------------------------------
 		% returns stimulus Indices and list of stim variables
@@ -131,7 +169,7 @@ classdef WAVInfo < CurveInfo
 		end	% END getStimulusIndices method
 		
 		
-		
+		%{
 		function titleString = getCurveTitleString(obj)
 		% returns title string for curve type
 		
@@ -194,10 +232,9 @@ classdef WAVInfo < CurveInfo
 					end
 				otherwise
 					error('%s: unsupported test type %s', mfilename, obj.testtype);
-			end
-		
-			
+			end			
 		end
+		%}
 		
 		function [varlist, nvars] = varlist(obj)
 		%---------------------------------------------------------------------
