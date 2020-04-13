@@ -104,6 +104,10 @@ function varargout = export_for_plexon(varargin)
 %	3 Mar 2020 (SJS): converted fData to CurveInfo array
 %	26 Mar 2020 (SJS): reworking for real world use. 
 %		- added filter 'type' to exportOpts.BPfilt struct
+%	10 Apr, 2020 (SJS): cInfo converted to cell array instead of array of
+%	CurveInfo objects - this was done in order to include WAVInfo objects
+%	(which is subclass of CurveInfo) to be included in the array. will need
+%	to update downstream code.
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -279,17 +283,15 @@ cSweeps = cell(nFiles, 1);
 					
 % % CurveInfo class array to hold everything for each file
 % cInfo(nFiles, 1) = CurveInfo;
-
+cInfo = cell(nFiles, 1);
 %------------------------------------------------------------------------
 % Read data
 %------------------------------------------------------------------------
-sendmsg('Reading data');
 
-cInfo = cell(nFiles, 1);
 
 % loop through files
 for f = 1:nFiles
-
+	sendmsg(sprintf('Reading data for file %s', F(f).file));
 	
 	% get data for each file and channel and convert to row vector format
 	% algorithm:
@@ -308,6 +310,7 @@ for f = 1:nFiles
 	switch(upper(tmpDinf.test.Type))
 		case {'FREQ', 'LEVEL', 'FREQ+LEVEL', 'OPTO'}
 			cInfo{f} = CurveInfo(tmpDinf);
+			
 		case {'WAV', 'WAVFILE'}
 			% build wavinfo file and load it
 			wavinfo_filename = [F(f).base '_wavinfo.mat'];
@@ -323,8 +326,6 @@ for f = 1:nFiles
 		otherwise
 			error('%s: unknown test.Type %s', mfilename, tmpDinf.test.Type);
 	end
-% 	% save file info object for current data file
-% 	cInfo(f).F = F(f);
 	
 	% build filter for neural data
 	if ~isempty(BPfilt)
