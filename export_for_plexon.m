@@ -77,7 +77,10 @@ function varargout = export_for_plexon(varargin)
 %
 % Output Arguments:
 % 	nD		NeuroExplorer nex data struct written to output file
-%	nexInfo	struct with information about data written to .nex file:
+%	nexInfo	SpikeInfo object
+
+% OLD:
+%     nexInfo struct with information about data written to .nex file:
 % 		NexFileName			name of _nexinfo.mat file
 % 		fData					array of CurveInfo objects with info about data files
 % 		sweepStartBin		sample index for sweep start
@@ -89,7 +92,7 @@ function varargout = export_for_plexon(varargin)
 % 		fileStartTime		start times (seconds) for data from each file
 % 		fileEndTime			end times (seconds) for data from each file
 %------------------------------------------------------------------------
-% See also: 
+% See also: SpikeInfo, CurveInfo, WAVInfo classes
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -268,26 +271,16 @@ nexInfo.sweepEndBin = cell(1, nFiles);
 tmpFs = zeros(nFiles, 1);
 % cell array to hold sweep data - this will be converted to a single
 % "vector" of values per channel that will be added to the .nex file
+% (algorithm will be outlined in the next section)
 cSweeps = cell(nFiles, 1);
-% THIS IS OLD - probably ok to delete (13 Apr 2020)
-% struct to hold everything for each file
-% fData = repmat(	struct(		'startSweepBin', {}, ...
-% 										'endSweepBin', {}, ...
-% 										'sweepLen', [], ...
-% 										'fileStartBin', [], ...
-% 										'fileEndBin', [], ...
-% 										'Dinf', [] ...
-% 								), ...
-% 						1, nFiles);
-					
-% % CurveInfo class array to hold everything for each file
-% cInfo(nFiles, 1) = CurveInfo;
-
+% allocate cell array to hold information for each file
+% we'll assign/allocate/initialize objects (CurveInfo, WAVINfo) as we loop
+% through the files in the next section
 cInfo = cell(nFiles, 1);
-%------------------------------------------------------------------------
-% Read data
-%------------------------------------------------------------------------
 
+%------------------------------------------------------------------------
+% Read and process data from raw files
+%------------------------------------------------------------------------
 
 % loop through files
 for f = 1:nFiles
@@ -352,9 +345,7 @@ for f = 1:nFiles
 % 	[cSweeps{f}, ...
 % 		cInfo{f}.startSweepBin, cInfo{f}.endSweepBin, cInfo{f}.sweepLen] = ...
 % 					buildChannelData(Channels, BPfilt, D, cInfo{f}.Dinf);
-	[cSweeps{f}, ...
-		startSweepBin, endSweepBin, sweepLen] = ...
-					cInfo{f}.buildChannelData(Channels, BPfilt, D);
+	cSweeps{f} = cInfo{f}.buildChannelData(Channels, BPfilt, D);
 
 	% check the start and end sweep bin data for consistency
 	if check_sweeps(cInfo{f}.startSweepBin)
@@ -368,8 +359,7 @@ for f = 1:nFiles
 	 cInfo{f}.fileStartBin = cInfo{f}.startSweepBin{1}(1);
 	% store sample for end of this file
 	 cInfo{f}.fileEndBin = cInfo{f}.endSweepBin{1}(end);
-% 	% store file information struct
-% 	fData(f).Dinf = Dinf;
+
 	% to avoid any issues, should make sure sample rates are consistent
 	% to do this, store list of sample rates and check once out of this loop
 	tmpFs(f) = cInfo{f}.Dinf.indev.Fs;
@@ -385,6 +375,20 @@ for f = 1:nFiles
 	end
 end
 
+sendmsg('Checking sample rates across files');
+% check sampling rates
+if ~all(tmpFs(1) == tmpFs)
+	error('%s: Sample Rate Mismatch!!!', mfilename);
+else
+	% store overall sample rate
+	Fs = tmpFs(1);
+	nexInfo.Fs = Fs;
+	sendmsg(sprintf('Neural A/D Fs = %.4f', Fs));
+end
+
+%------------------------------------------------------------------------
+% Create file and sweep start/end bin and timestamp vectors
+%------------------------------------------------------------------------
 sendmsg('Building start and end sweep indices:');
 % assign values for bins
 for f = 1:nFiles
@@ -399,18 +403,6 @@ for f = 1:nFiles
 		nexInfo.sweepEndBin{f} = cInfo{f}.endSweepBin{1} + ...
 												nexInfo.sweepEndBin{f-1}(end);
 	end
-end
-
-%------------------------------------------------------------------------
-% Create file and sweep start/end bin and timestamp vectors
-%------------------------------------------------------------------------
-%check sampling rates
-if ~all(tmpFs(1) == tmpFs)
-	error('Sample Rate Mismatch!!!');
-else
-	% store overall sample rate
-	Fs = tmpFs(1);
-	nexInfo.Fs = Fs;
 end
 
 %------------------------------------------------------------------------
@@ -458,8 +450,8 @@ nD = nexAddEvent(nD, force_col(nexInfo.endTimeVector), 'endsweep');
 nD = nexAddEvent(nD, force_col(nexInfo.fileStartTime), 'filestart');
 nD = nexAddEvent(nD, force_col(nexInfo.fileEndTime), 'fileend');
 
-sendmsg(sprintf('Writing nex file %s:', nexInfo.FileName));
 % write to nexfile
+sendmsg(sprintf('Writing nex file %s:', nexInfo.FileName));
 writeNexFile(nD, nexInfo.FileName);
 
 %------------------------------------------------------------------------
@@ -481,6 +473,7 @@ if nargout
 	varargout{1} = nD;
 	if nargout > 1
 		varargout{2} = nexInfo;
+		varargout{3} = cInfo;
 	end
 end
 %------------------------------------------------------------------------
