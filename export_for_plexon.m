@@ -343,15 +343,6 @@ for f = 1:nFiles
 	% build into sweeps by channel format
 	fprintf('Test type: %s\n', cInfo{f}.testtype);
 	[cInfo{f}, cSweeps{f}] = cInfo{f}.buildChannelData(Channels, BPfilt, D);
-
-	% check the start and end sweep bin data for consistency
-	if check_sweeps(cInfo{f}.startSweepBin)
-		warning(['File %s: Inconsistent startSweepBin' ...
-							'values across channels!!!!'], cInfo{f}.F.file);
-	end
-	if check_sweeps(cInfo{f}.endSweepBin)
-		warning('Inconsistent endSweepBin values across channels!!!!');
-	end
 	
 	% store sample for start of this file (should be 1); use channel 1 value
 	 cInfo{f}.fileStartBin = cInfo{f}.startSweepBin{1}(1);
@@ -536,34 +527,7 @@ function varargout = defineSampleData(varargin)
 	
 end
 
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-function checkstatus = check_sweeps(sweepbins)
-%------------------------------------------------------------------------
-% checkstatus = check_sweeps(sweepbins)
-%------------------------------------------------------------------------
-% Check consistency of sweep bins across channels
-%------------------------------------------------------------------------
-% Input Arguments:
-% 	sweepbins		{nchannels, 1} cell array of vectors, where 
-% 						each element is an array [1, nsweeps] of sweep bins
-% Output Arguments:
-% 	checkstatus		true if sweep times are inconsistent, false if all
-%						are consistent (equal)
-%------------------------------------------------------------------------
-	tmp = cell2mat(sweepbins);
-	[nr, ~] = size(tmp);
-	tmp2 = 0;
-	for r = 1:nr
-		tmp2 = tmp2 + sum(tmp(r, :) - tmp(1, :));
-	end
-	
-	if tmp2 ~= 0
-		checkstatus = true;
-	else
-		checkstatus = false;
-	end
-end
+
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------

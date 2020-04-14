@@ -51,6 +51,7 @@ function [obj, varargout] = buildChannelData(obj, Channels, BPfilt, D, varargin)
 %------------------------------------------------------------------------
 % TO DO: 
 % - probably should have filter as an option vs. default input arg
+% - make Channels an option and have, by default, all channels returned??
 %------------------------------------------------------------------------
 
 % original call (from export_for_plexon):
@@ -146,8 +147,9 @@ else
 		channelIndx(c) = find(Channels(c) == obj.Dinf.channels.RecordChannelList);
 	end
 end
+
 %------------------------------------------------------------------------
-% process data to get start and end of sweeps
+% process data: get start and end of sweeps
 %------------------------------------------------------------------------
 % initialize cD to a store sweeps for each channel
 cD = cell(nChannelsToRead, obj.Dinf.nread);
@@ -209,6 +211,55 @@ for c = 1:nChannelsToRead
 	obj.endSweepBin{c} = tmpEndI;
 end
 
+% check the start and end sweep bin data for consistency
+if check_sweeps(obj.startSweepBin)
+	warning(['File %s: Inconsistent startSweepBin' ...
+						'values across channels!!!!'], obj.F.file);
+end
+if check_sweeps(obj.endSweepBin)
+	warning(['File %s: Inconsistent endSweepBin' ...
+						'values across channels!!!!'], obj.F.file);
+end
+
+%------------------------------------------------------------------------
+% process data: get onset and offset of each stimulus (will need to be 
+% slightly modified for WAV stimuli - do this in WAVInfo subclass of
+% CurveInfo
+% assume consistent across channels!!!!!
+%------------------------------------------------------------------------
+%{
+idea for algorithm:
+
+	loop through trials
+
+	get stimulus onset, offset info:
+		onset = stimulus delay
+		offset = stimulus delay + stimulus duration
+
+	use indev.Fs to convert to samples from milliseconds
+
+	To reference to absolute "time"/samples, add CurveInfo.startSweepBin(n) to
+	n'th onset and offset
+
+some caveats:
+
+	will be different synthesized (tone, bbn) vs. wav stimuli, so will need to
+	handle those different cases - look at optoproc_plotPSTH_WAVbyLevel to get ideas!
+
+10 Apr 2020 (SJS):
+Roadmap:
+ work here on more simple approach for BBN, freq tuning, etc. Then
+ incorporate as method in CurveInfo object. Then override for use with WAV
+ data in WAVInfo object
+%}
+
+
+
+
+%------------------------------------------------------------------------
+% if DEBUG specified, write a known value (+/- exp(1)) to the start and
+% beginning to each sweep
+%------------------------------------------------------------------------
 if DEBUG
 	% loop through channels
 	for c = 1:nChannelsToRead
@@ -221,8 +272,9 @@ if DEBUG
 	end
 end
 
-% 
-
+%------------------------------------------------------------------------
+% assign output args
+%------------------------------------------------------------------------
 if nargout > 1
 	varargout{1} = cD;
 	varargout{1} = obj.startSweepBin;
