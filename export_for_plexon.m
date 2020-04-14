@@ -342,10 +342,7 @@ for f = 1:nFiles
 	
 	% build into sweeps by channel format
 	fprintf('Test type: %s\n', cInfo{f}.testtype);
-% 	[cSweeps{f}, ...
-% 		cInfo{f}.startSweepBin, cInfo{f}.endSweepBin, cInfo{f}.sweepLen] = ...
-% 					buildChannelData(Channels, BPfilt, D, cInfo{f}.Dinf);
-	cSweeps{f} = cInfo{f}.buildChannelData(Channels, BPfilt, D);
+	[cInfo{f}, cSweeps{f}] = cInfo{f}.buildChannelData(Channels, BPfilt, D);
 
 	% check the start and end sweep bin data for consistency
 	if check_sweeps(cInfo{f}.startSweepBin)
@@ -355,6 +352,7 @@ for f = 1:nFiles
 	if check_sweeps(cInfo{f}.endSweepBin)
 		warning('Inconsistent endSweepBin values across channels!!!!');
 	end
+	
 	% store sample for start of this file (should be 1); use channel 1 value
 	 cInfo{f}.fileStartBin = cInfo{f}.startSweepBin{1}(1);
 	% store sample for end of this file
@@ -373,6 +371,9 @@ for f = 1:nFiles
 		nexInfo.fileStartBin(f) = nexInfo.fileEndBin(f-1) + 1;
 		nexInfo.fileEndBin(f) = nexInfo.fileStartBin(f) + cInfo{f}.fileEndBin - 1;
 	end
+	
+	
+	
 end
 
 sendmsg('Checking sample rates across files');

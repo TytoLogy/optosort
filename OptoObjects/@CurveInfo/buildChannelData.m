@@ -1,6 +1,6 @@
-function [cD, varargout] = buildChannelData(obj, Channels, BPfilt, D, varargin)
+function [obj, varargout] = buildChannelData(obj, Channels, BPfilt, D, varargin)
 %------------------------------------------------------------------------
-% [cD, varargout] = CurveInfo.buildChannelData(Channels, BPfilt, D, varargin)
+% [obj, varargout] = CurveInfo.buildChannelData(Channels, BPfilt, D, varargin)
 %------------------------------------------------------------------------
 % TytoLogy:optosort:CurveInfo Object method
 %------------------------------------------------------------------------
@@ -26,6 +26,7 @@ function [cD, varargout] = buildChannelData(obj, Channels, BPfilt, D, varargin)
 % 		'PLOT_SWEEPS'		<'N'/'Y'>	plot sweeps?
 %
 % Output Arguments:
+%	obj		updated copy of object
 % 	cD			{# Channels, # sweeps} cell array of channel sweep data
 % 				each element of cD will be a row vector of raw data for a sweep
 % 	startI	{# Channels, 1} cell array with each element being
@@ -46,6 +47,7 @@ function [cD, varargout] = buildChannelData(obj, Channels, BPfilt, D, varargin)
 % Revisions:
 %	13 Jan 2020 (SJS): added comments , optional args
 %	13 Apr 2020 (SJS): moved into CurveInfo class
+%	14 Apr 2020 (SJS): need to return obj...
 %------------------------------------------------------------------------
 % TO DO: 
 % - probably should have filter as an option vs. default input arg
@@ -145,7 +147,7 @@ else
 	end
 end
 %------------------------------------------------------------------------
-% process data
+% process data to get start and end of sweeps
 %------------------------------------------------------------------------
 % initialize cD to a store sweeps for each channel
 cD = cell(nChannelsToRead, obj.Dinf.nread);
@@ -201,6 +203,7 @@ for c = 1:nChannelsToRead
 		end
 		tmpEndI(s) = tmpStartI(s) + length(cD{c, s}) - 1;
 	end
+	
 	% assign sweep indices to cell arrays
 	obj.startSweepBin{c} = tmpStartI;
 	obj.endSweepBin{c} = tmpEndI;
@@ -218,7 +221,10 @@ if DEBUG
 	end
 end
 
+% 
+
 if nargout > 1
+	varargout{1} = cD;
 	varargout{1} = obj.startSweepBin;
 	varargout{2} = obj.endSweepBin;
 	varargout{3} = obj.sweepLen;
