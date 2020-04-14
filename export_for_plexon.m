@@ -217,19 +217,17 @@ else
 	BPfilt = defaultFilter;
 end
 
-%------------------------------------------------------------------------
+% # channel(s) of data to obtain
+nChannels = length(Channels);
 % Get Data File(s) information
-%------------------------------------------------------------------------
 sendmsg('Data Files:');
 % determine # of files
 nFiles = length(F);
+% let user know about files
 for f = 1:nFiles
 	fprintf('DataFile{%d} = %s\n', f, F(f).file);
 end
 fprintf('Animal: %s\n', F(1).animal);
-
-% # channel(s) of data to obtain
-nChannels = length(Channels);
 
 %------------------------------------------------------------------------
 % If not provided, create output .nex file name - adjust depending on # of files
@@ -271,6 +269,7 @@ tmpFs = zeros(nFiles, 1);
 % cell array to hold sweep data - this will be converted to a single
 % "vector" of values per channel that will be added to the .nex file
 cSweeps = cell(nFiles, 1);
+% THIS IS OLD - probably ok to delete (13 Apr 2020)
 % struct to hold everything for each file
 % fData = repmat(	struct(		'startSweepBin', {}, ...
 % 										'endSweepBin', {}, ...
@@ -283,6 +282,7 @@ cSweeps = cell(nFiles, 1);
 					
 % % CurveInfo class array to hold everything for each file
 % cInfo(nFiles, 1) = CurveInfo;
+
 cInfo = cell(nFiles, 1);
 %------------------------------------------------------------------------
 % Read data
@@ -349,9 +349,13 @@ for f = 1:nFiles
 	
 	% build into sweeps by channel format
 	fprintf('Test type: %s\n', cInfo{f}.testtype);
+% 	[cSweeps{f}, ...
+% 		cInfo{f}.startSweepBin, cInfo{f}.endSweepBin, cInfo{f}.sweepLen] = ...
+% 					buildChannelData(Channels, BPfilt, D, cInfo{f}.Dinf);
 	[cSweeps{f}, ...
-		cInfo{f}.startSweepBin, cInfo{f}.endSweepBin, cInfo{f}.sweepLen] = ...
-					buildChannelData(Channels, BPfilt, D, cInfo{f}.Dinf);
+		startSweepBin, endSweepBin, sweepLen] = ...
+					cInfo{f}.buildChannelData(Channels, BPfilt, D);
+
 	% check the start and end sweep bin data for consistency
 	if check_sweeps(cInfo{f}.startSweepBin)
 		warning(['File %s: Inconsistent startSweepBin' ...

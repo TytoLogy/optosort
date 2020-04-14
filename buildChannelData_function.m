@@ -1,6 +1,6 @@
-function [cD, varargout] = buildChannelData(Channels, BPfilt, D, Dinf, varargin)
+function [cD, varargout] = buildChannelData_function(Channels, BPfilt, D, Dinf, varargin)
 %------------------------------------------------------------------------
-% [cD, varargout] = buildChannelData(Channels, BPfilt, D, Dinf, varargin)
+% [cD, varargout] = buildChannelData_function(Channels, BPfilt, D, Dinf, varargin)
 %------------------------------------------------------------------------
 % TytoLogy
 %------------------------------------------------------------------------

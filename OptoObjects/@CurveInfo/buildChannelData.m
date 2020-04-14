@@ -1,8 +1,8 @@
-function [cD, varargout] = buildChannelData(Channels, BPfilt, D, Dinf, varargin)
+function [cD, varargout] = buildChannelData(obj, Channels, BPfilt, D, varargin)
 %------------------------------------------------------------------------
-% [cD, varargout] = buildChannelData(Channels, BPfilt, D, Dinf, varargin)
+% [cD, varargout] = CurveInfo.buildChannelData(Channels, BPfilt, D, varargin)
 %------------------------------------------------------------------------
-% TytoLogy
+% TytoLogy:optosort:CurveInfo Object method
 %------------------------------------------------------------------------
 % 
 % get data for each channel
@@ -45,13 +45,24 @@ function [cD, varargout] = buildChannelData(Channels, BPfilt, D, Dinf, varargin)
 %
 % Revisions:
 %	13 Jan 2020 (SJS): added comments , optional args
+%	13 Apr 2020 (SJS): moved into CurveInfo class
 %------------------------------------------------------------------------
-% TO DO:
+% TO DO: 
+% - probably should have filter as an option vs. default input arg
 %------------------------------------------------------------------------
 
+% original call (from export_for_plexon):
+%{
+	% build into sweeps by channel format
+	[cSweeps{f}, ...
+		cInfo{f}.startSweepBin, cInfo{f}.endSweepBin, cInfo{f}.sweepLen] = ...
+					buildChannelData(Channels, BPfilt, D, cInfo{f}.Dinf);
+%}
+
 %------------------------------------------------------------------------
-% settings
+% process options
 %------------------------------------------------------------------------
+% initialize options to default settings
 deOffset = true;
 plotSweeps = false;
 filterData = true;
@@ -92,7 +103,11 @@ if ~isempty(varargin)
 		end
 	end
 end
-	
+
+%------------------------------------------------------------------------
+% settings
+%------------------------------------------------------------------------
+% if BPfilt is empty, don't filter data
 if isempty(BPfilt)
 	filterData = false;
 end
@@ -100,54 +115,54 @@ end
 % channel information
 nChannelsToRead = length(Channels);
 % check if list of channels to read is longer than # recorded
-if nChannelsToRead > Dinf.channels.nRecordChannels
+if nChannelsToRead > obj.Dinf.channels.nRecordChannels
 	error('%s: mismatch in nChannelsToRead (%d) and nRecordChannels (%d)', ...
-				mfilename, nChannelsToRead, Dinf.channels.nRecordChannels);
+				mfilename, nChannelsToRead, obj.Dinf.channels.nRecordChannels);
 end
 % make sure requested channel was recorded
 for c = 1:nChannelsToRead
-	if ~any(Channels(c) == Dinf.channels.RecordChannelList)
+	if ~any(Channels(c) == obj.Dinf.channels.RecordChannelList)
 		error('%s: Channel %d not in RecordChannelList!', mfilename, Channels(c));
 	end
 end
 % build channel index
-if Dinf.channels.nRecordChannels == 1
+if obj.Dinf.channels.nRecordChannels == 1
 	% only one channel!
 	channelIndx = 1;
-	if Channels ~= Dinf.channels.RecordChannelList
+	if Channels ~= obj.Dinf.channels.RecordChannelList
 		warning('%s: requested channel %d not found in RecordChannelList', ...
 						mfilename, Channels);
 		fprintf('Using only available channel %d\n', ...
-						Dinf.channels.RecordChannelList);
+						obj.Dinf.channels.RecordChannelList);
 		channelIndx = 1;
 	end
-elseif Dinf.channels.nRecordChannels == 16
+elseif obj.Dinf.channels.nRecordChannels == 16
 	channelIndx = Channels;
 else
 	channelIndx = zeros(nChannelsToRead);
 	for c = 1:nChannelsToRead
-		channelIndx(c) = find(Channels(c) == Dinf.channels.RecordChannelList);
+		channelIndx(c) = find(Channels(c) == obj.Dinf.channels.RecordChannelList);
 	end
 end
 %------------------------------------------------------------------------
 % process data
 %------------------------------------------------------------------------
 % initialize cD to a store sweeps for each channel
-cD = cell(nChannelsToRead, Dinf.nread);
+cD = cell(nChannelsToRead, obj.Dinf.nread);
 % initialize startI and endI to store start and end sample bins
-startI = cell(nChannelsToRead, 1);
-endI = cell(nChannelsToRead, 1);
+obj.startSweepBin = cell(nChannelsToRead, 1);
+obj.endSweepBin = cell(nChannelsToRead, 1);
 % samples in each sweep
-sweepLen = zeros(nChannelsToRead, Dinf.nread);
+obj.sweepLen = zeros(nChannelsToRead, obj.Dinf.nread);
 % loop through channels
 for c = 1:nChannelsToRead
 	channel = channelIndx(c);
 	% initialize startI and endI to store stop/start locations
-	tmpStartI = zeros(1, Dinf.nread);
-	tmpEndI = zeros(1, Dinf.nread);
+	tmpStartI = zeros(1, obj.Dinf.nread);
+	tmpEndI = zeros(1, obj.Dinf.nread);
 
 	% loop through each sweep
-	for s = 1:Dinf.nread
+	for s = 1:obj.Dinf.nread
 		% assign channel sweep data to cD after filtering
 		% need to transpose to row vector
 		cD{c, s} = D{s}.datatrace(:, channel)';
@@ -160,11 +175,11 @@ for c = 1:nChannelsToRead
 		if filterData
 			cD{c, s} = filtfilt(BPfilt.b, BPfilt.a, ...
 										sin2array(cD{c, s}, ...
-										Dinf.indev.Fs, BPfilt.ramp));
+										obj.Dinf.indev.Fs, BPfilt.ramp));
 		end
 
 		% store length of sweep
-		sweepLen(c, s) = length(cD{c, s});
+		obj.sweepLen(c, s) = length(cD{c, s});
 		
 		% plot raw and filtered data
 		if plotSweeps
@@ -172,7 +187,7 @@ for c = 1:nChannelsToRead
 			hold on
 				plot(cD{c, s}, 'b');
 			hold off
-			title(sprintf('Channel: %d  Sweep: %d(%d)', channel, s, Dinf.nread));
+			title(sprintf('Channel: %d  Sweep: %d(%d)', channel, s, obj.Dinf.nread));
 			drawnow
 		end
 		
@@ -187,15 +202,15 @@ for c = 1:nChannelsToRead
 		tmpEndI(s) = tmpStartI(s) + length(cD{c, s}) - 1;
 	end
 	% assign sweep indices to cell arrays
-	startI{c} = tmpStartI;
-	endI{c} = tmpEndI;
+	obj.startSweepBin{c} = tmpStartI;
+	obj.endSweepBin{c} = tmpEndI;
 end
 
 if DEBUG
 	% loop through channels
 	for c = 1:nChannelsToRead
 		% loop through each sweep
-		for s = 1:Dinf.nread
+		for s = 1:obj.Dinf.nread
 			% replace start and end value of each sweep with known value
 			cD{c, s}(1) = exp(1);
 			cD{c, s}(end) = -exp(1);
@@ -204,7 +219,7 @@ if DEBUG
 end
 
 if nargout > 1
-	varargout{1} = startI;
-	varargout{2} = endI;
-	varargout{3} = sweepLen;
+	varargout{1} = obj.startSweepBin;
+	varargout{2} = obj.endSweepBin;
+	varargout{3} = obj.sweepLen;
 end
