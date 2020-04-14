@@ -41,10 +41,12 @@ function [obj, varargout] = buildStimOnOffData(obj)
 %
 %------------------------------------------------------------------------
 
+%{
 %% read in test data
 load('~/Work/Data/TestData/MT/1382_20191212_02_02_3200_FREQWAVMERGE_nexinfo.mat');
 
 obj = nexInfo.FileData{2};
+%}
 
 %------------------------------------------------------------------------
 %% settings

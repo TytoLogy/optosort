@@ -564,9 +564,12 @@ classdef CurveInfo
 		% methods defined in separate files
 		%-------------------------------------------------
 		%-------------------------------------------------
-		[cD, varargout] = buildChannelData(obj, Channels, BPfilt, ...
-													D, Dinf, varargin)
-		
+		% get data  and sweep info for each channel
+		[obj, varargout] = buildChannelData(obj, Channels, BPfilt, ...
+															D, varargin)
+		% builds vector of stimulus onset and offset bins referenced to start
+		% of file
+		[obj, varargout] = buildStimOnOffData(obj)
 	end	% END methods
 	
 end	% END classdef

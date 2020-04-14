@@ -40,6 +40,7 @@ classdef SpikeInfo
 		fileEndBin
 		startBinVector
 		endBinVector
+		% stimStart, stimEnd
 		ADchannel
 		dataFilter
 	end	% END properties (main)
@@ -50,6 +51,7 @@ classdef SpikeInfo
 		sweepEndTime
 		startTimeVector
 		endTimeVector
+		% stimStartTime, stimEndTime
 		nFiles
 	end	% END properties(Dependent)
 	
