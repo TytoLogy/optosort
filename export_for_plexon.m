@@ -450,7 +450,7 @@ writeNexFile(nD, nexInfo.FileName);
 % write useful information to _nexinfo.mat file 
 %------------------------------------------------------------------------
 % assign cInfo to nexInfo.FileData
-nexInfo.FileData = cInfo;
+nexInfo.FileInfo = cInfo;
 % store filter info
 nexInfo.dataFilter = BPfilt;
 % save to matfile

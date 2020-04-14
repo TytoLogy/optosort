@@ -222,41 +222,6 @@ if check_sweeps(obj.endSweepBin)
 end
 
 %------------------------------------------------------------------------
-% process data: get onset and offset of each stimulus (will need to be 
-% slightly modified for WAV stimuli - do this in WAVInfo subclass of
-% CurveInfo
-% assume consistent across channels!!!!!
-%------------------------------------------------------------------------
-%{
-idea for algorithm:
-
-	loop through trials
-
-	get stimulus onset, offset info:
-		onset = stimulus delay
-		offset = stimulus delay + stimulus duration
-
-	use indev.Fs to convert to samples from milliseconds
-
-	To reference to absolute "time"/samples, add CurveInfo.startSweepBin(n) to
-	n'th onset and offset
-
-some caveats:
-
-	will be different synthesized (tone, bbn) vs. wav stimuli, so will need to
-	handle those different cases - look at optoproc_plotPSTH_WAVbyLevel to get ideas!
-
-10 Apr 2020 (SJS):
-Roadmap:
- work here on more simple approach for BBN, freq tuning, etc. Then
- incorporate as method in CurveInfo object. Then override for use with WAV
- data in WAVInfo object
-%}
-
-
-
-
-%------------------------------------------------------------------------
 % if DEBUG specified, write a known value (+/- exp(1)) to the start and
 % beginning to each sweep
 %------------------------------------------------------------------------

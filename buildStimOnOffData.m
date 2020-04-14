@@ -37,25 +37,30 @@
 %------------------------------------------------------------------------
 
 
+%------------------------------------------------------------------------
+% process data: get onset and offset of each stimulus (will need to be 
+% slightly modified for WAV stimuli - do this in WAVInfo subclass of
+% CurveInfo
+% assume consistent across channels!!!!!
+%------------------------------------------------------------------------
 %{
-
 idea for algorithm:
 
-loop through trials
+	loop through trials
 
-get stimulus onset, offset info:
-	onset = stimulus delay
-	offset = stimulus delay + stimulus duration
+	get stimulus onset, offset info:
+		onset = stimulus delay
+		offset = stimulus delay + stimulus duration
 
-use indev.Fs to convert to samples from milliseconds
+	use indev.Fs to convert to samples from milliseconds
 
-To reference to absolute "time"/samples, add CurveInfo.startSweepBin(n) to
-n'th onset and offset
+	To reference to absolute "time"/samples, add CurveInfo.startSweepBin(n) to
+	n'th onset and offset
 
 some caveats:
 
-will be different synthesized (tone, bbn) vs. wav stimuli, so will need to
-handle those different cases - look at optoproc_plotPSTH_WAVbyLevel to get ideas!
+	will be different synthesized (tone, bbn) vs. wav stimuli, so will need to
+	handle those different cases - look at optoproc_plotPSTH_WAVbyLevel to get ideas!
 
 10 Apr 2020 (SJS):
 Roadmap:
@@ -64,14 +69,11 @@ Roadmap:
  data in WAVInfo object
 %}
 
-%% read in test data
-DataPath = '~/Work/Data/TestData/MT';
-DataFile = '1382_20191212_02_02_3200_BBN.dat';
 
-% use readOptoData to read in raw data. 
-[D, tmpDinf] = readOptoData(fullfile(DataPath, DataFile));
-% Fix test info
-Dinf = correctTestType(tmpDinf);
+%% read in test data
+load('~/Work/Data/TestData/MT/1382_20191212_02_02_3200_FREQWAVMERGE_nexinfo.mat')
+
+obj = nexInfo.FileData{2}
 
 %------------------------------------------------------------------------
 %% settings
