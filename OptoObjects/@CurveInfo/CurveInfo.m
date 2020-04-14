@@ -133,6 +133,15 @@ classdef CurveInfo
 				else
 					obj.has_stimList = 0;
 				end
+				% signal name should be a char
+				if isfield(obj.Dinf, 'audio')
+					if isfield(obj.Dinf.audio.signal)
+						if isfield(obj.Dinf.audio.signal.Type)
+							obj.Dinf.audio.signal.Type = ...
+											char(obj.Dinf.audio.signal.Type);
+						end
+					end
+				end
 			else
 				error('Unknown input type %s', varargin{1});
 			end
@@ -148,8 +157,7 @@ classdef CurveInfo
 		function varargout = getStimulusIndices(obj)
 		%-------------------------------------------------
 		% returns stimindex{} and stimvar{} lists
-		%-------------------------------------------------
-		
+		%-------------------------------------------------		
 			% make sure Dinf is initialized
 			if isempty(obj.Dinf)
 				error('Dinf not defined/is empty')
@@ -279,15 +287,15 @@ classdef CurveInfo
 				otherwise
 					error('%s: unsupported test type %s', mfilename, obj.testtype);
 			end
-		
-	
 		end	% END getStimulusIndices method
 		
-		
-		
+
+		%-------------------------------------------------
+		%-------------------------------------------------
 		function titleString = getCurveTitleString(obj)
+		%-------------------------------------------------
 		% returns title string for curve type
-		
+		%-------------------------------------------------
 			[~, fname, fext] = fileparts(obj.Dinf.filename);
 			fname = [fname '.' fext];
 			switch obj.testtype
@@ -348,10 +356,12 @@ classdef CurveInfo
 				otherwise
 					error('%s: unsupported test type %s', mfilename, obj.testtype);
 			end
-		
-			
 		end
-		
+		%-------------------------------------------------
+		%-------------------------------------------------
+
+		%-------------------------------------------------
+		%-------------------------------------------------
 		function [varlist, nvars] = varlist(obj)
 		%---------------------------------------------------------------------
 		% returns list of variable value and # of vars..
@@ -388,6 +398,8 @@ classdef CurveInfo
 					error('%s: unsupported test type %s', mfilename, cInfo.testtype);
 			end
 		end
+		%-------------------------------------------------
+		%-------------------------------------------------
 
 		
 		%-------------------------------------------------
@@ -486,7 +498,6 @@ classdef CurveInfo
 			val = obj.Dinf.outdev.Fs;
 		end
 
-		
 		%{
 		% returns test.Type
 		function val = testtype(obj)

@@ -1,6 +1,7 @@
 function [obj, varargout] = buildChannelData(obj, Channels, BPfilt, D, varargin)
 %------------------------------------------------------------------------
-% [obj, varargout] = CurveInfo.buildChannelData(Channels, BPfilt, D, varargin)
+% [obj, cD, startI, endI, sweepLen] = ...
+% 						CurveInfo.buildChannelData(Channels, BPfilt, D, varargin)
 %------------------------------------------------------------------------
 % TytoLogy:optosort:CurveInfo Object method
 %------------------------------------------------------------------------
@@ -35,7 +36,7 @@ function [obj, varargout] = buildChannelData(obj, Channels, BPfilt, D, varargin)
 % 					[# sweeps] vector holding end samples timestamp for each sweep
 %	sweepLen	[# Channels, # sweeps] matrix of # of samples in each sweep
 %------------------------------------------------------------------------
-% See also: 
+% See also: CurveInfo, WAVInfo, buildStimOnOffData methods, export_for_plexon
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
