@@ -267,6 +267,10 @@ nexInfo.fileEndBin = zeros(1, nFiles);
 % bins for all sweep starts and ends
 nexInfo.sweepStartBin = cell(1, nFiles);
 nexInfo.sweepEndBin = cell(1, nFiles);
+% bins for stim onset, offset
+nexInfo.stimStartBin = cell(1, nFiles);
+nexInfo.stimEndBin = cell(1, nFiles);
+
 % each file's sampling rate for neural data
 tmpFs = zeros(nFiles, 1);
 % cell array to hold sweep data - this will be converted to a single
@@ -363,8 +367,9 @@ for f = 1:nFiles
 		nexInfo.fileEndBin(f) = nexInfo.fileStartBin(f) + cInfo{f}.fileEndBin - 1;
 	end
 	
-	
-	
+	% compute stimulus onset/offset bins for this file
+	cInfo{f} = cInfo{f}.buildStimOnOffData;
+		
 end
 
 sendmsg('Checking sample rates across files');
@@ -379,7 +384,7 @@ else
 end
 
 %------------------------------------------------------------------------
-% Create file and sweep start/end bin and timestamp vectors
+% Create file, sweep, stimulus start/end bin and timestamp vectors
 %------------------------------------------------------------------------
 sendmsg('Building start and end sweep indices:');
 % assign values for bins
@@ -395,6 +400,11 @@ for f = 1:nFiles
 		nexInfo.sweepEndBin{f} = cInfo{f}.endSweepBin{1} + ...
 												nexInfo.sweepEndBin{f-1}(end);
 	end
+	
+	% for stim onset/offset, align to file start bin *** would this work for
+	% the sweep start and end computation above???? need to test!!!!!
+	nexInfo.stimStartBin{f} = nexInfo.fileStartBin(f) + cInfo{f}.stimStartBin;
+	nexInfo.stimEndBin{f} = nexInfo.fileStartBin(f) + cInfo{f}.stimEndBin;
 end
 
 %------------------------------------------------------------------------
@@ -441,6 +451,9 @@ nD = nexAddEvent(nD, force_col(nexInfo.endTimeVector), 'endsweep');
 % add file times
 nD = nexAddEvent(nD, force_col(nexInfo.fileStartTime), 'filestart');
 nD = nexAddEvent(nD, force_col(nexInfo.fileEndTime), 'fileend');
+% add stimulus onset and offset times
+nD = nexAddEvent(nD, force_col(nexInfo.stimStartTimeVector), 'stimstart');
+nD = nexAddEvent(nD, force_col(nexInfo.stimEndTimeVector), 'stimend');
 
 % write to nexfile
 sendmsg(sprintf('Writing nex file %s:', nexInfo.FileName));

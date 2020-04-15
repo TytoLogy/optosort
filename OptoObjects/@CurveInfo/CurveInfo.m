@@ -135,8 +135,8 @@ classdef CurveInfo
 				end
 				% signal name should be a char
 				if isfield(obj.Dinf, 'audio')
-					if isfield(obj.Dinf.audio.signal)
-						if isfield(obj.Dinf.audio.signal.Type)
+					if isfield(obj.Dinf.audio, 'signal')
+						if isfield(obj.Dinf.audio.signal, 'Type')
 							obj.Dinf.audio.signal.Type = ...
 											char(obj.Dinf.audio.signal.Type);
 						end
