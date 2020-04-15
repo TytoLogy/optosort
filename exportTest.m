@@ -158,16 +158,46 @@ addpath('OptoObjects');
 
 %---------------------------------------
 %---------------------------------------
-% Example testing for WAVInfo object
+% testing scenarios
 %---------------------------------------
 exportOpts.DataPath = '~/Work/Data/TestData/MT';
 exportOpts.OutputPath = exportOpts.DataPath;
+exportOpts.Channels = [4, 5, 11, 14];
+%{
+% WAV, FREQ merged
 exportOpts.DataFile = {	'1382_20191212_02_02_3200_WAV.dat', ...
 								'1382_20191212_02_02_3200_FREQ_TUNING.dat'};
 exportOpts.TestFile = {	'1382_20191212_02_02_3200_WAV_testdata.dat', ...
 								'1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'};
-exportOpts.OutputFile = '1382_20191212_02_02_3200_FREQWAVMERGE.nex';
-exportOpts.Channels = [4, 5, 11, 14];
+exportOpts.OutputFile = 'FREQWAVMERGE.nex';
+%}
+
+%{
+% FREQ only
+exportOpts.DataFile = {	'1382_20191212_02_02_3200_FREQ_TUNING.dat'};
+exportOpts.TestFile = {	'1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'};
+exportOpts.OutputFile = 'FREQ.nex';
+%}
+
+%{
+% Wav Only
+exportOpts.DataFile = {	'1382_20191212_02_02_3200_WAV.dat'};
+exportOpts.TestFile = {	'1382_20191212_02_02_3200_WAV_testdata.dat'};
+exportOpts.OutputFile = 'WAV.nex';
+%}
+
+%{
+% BBN only
+exportOpts.DataFile = {	'1382_20191212_02_02_3200_BBN.dat'};
+exportOpts.TestFile = {	'1382_20191212_02_02_3200_BBN_testdata.dat'};
+exportOpts.OutputFile = 'BBN.nex';
+%}
+
+% FRA only
+exportOpts.DataFile = {	'1382_20191212_02_02_3200_FRA.dat'};
+exportOpts.TestFile = {	'1382_20191212_02_02_3200_FRA_testdata.dat'};
+exportOpts.OutputFile = 'FRA.nex';
+
 %---------------------------------------
 %---------------------------------------
 

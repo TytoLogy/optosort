@@ -147,13 +147,11 @@ classdef CurveInfo
 			end
 		end
 
-
 		%-------------------------------------------------
 		%-------------------------------------------------
 		% returns stimulus Indices and list of stim variables
 		%-------------------------------------------------
 		%-------------------------------------------------
-
 		function varargout = getStimulusIndices(obj)
 		%-------------------------------------------------
 		% returns stimindex{} and stimvar{} lists
@@ -252,36 +250,13 @@ classdef CurveInfo
 					varargout{1} = stimindex;
 					varargout{2} = {freqlist levellist};
 
-
 			% for OPTO test...
-				 case 'OPTO'
+				case 'OPTO'
 					fprintf('\t%s test, finding indices\n', obj.testtype);
 
-			% for WavFile, need to find indices with same filename.
+			% for WavFile, tell user to use WAVInfo class.
 				case 'WAVFILE'
-					fprintf('\t%s test, finding indices\n', obj.testtype);
-					% get list of stimuli (wav file names)
-					nwavs = length(obj.Dinf.stimList);
-					wavlist = cell(nwavs, 1);
-					stimindex = cell(nwavs, 1);
-					% loop through 
-					for w = 1:nwavs
-						stype = obj.Dinf.stimList(w).audio.signal.Type;
-						if strcmpi(stype, 'null')
-							wavlist{w} = 'null';
-						elseif strcmpi(stype, 'noise')
-							wavlist{w} = 'BBN';
-						elseif strcmpi(stype, 'wav')
-							[~, wavlist{w}] = ...
-								fileparts(obj.Dinf.stimList(w).audio.signal.WavFile);
-						else
-							error('%s: unknown type %s', mfilename, stype);
-						end
-						stimindex{w} = find(obj.Dinf.test.stimIndices == w);
-					end
-					% assign outputs
-					varargout{1} = stimindex;
-					varargout{2} = wavlist;
+					error('%s: Please use WAVInfo class for these data', mfilename);
 				
 				% unknown type
 				otherwise

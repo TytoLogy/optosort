@@ -127,18 +127,17 @@ classdef WAVInfo < CurveInfo
 		
 		%-------------------------------------------------
 		%-------------------------------------------------
+		% overload the CurveInfo method
 		% returns stimulus Indices and list of stim variables
 		%-------------------------------------------------
 		%-------------------------------------------------
-
 		function varargout = getStimulusIndices(obj)
 		%-------------------------------------------------
 		% returns stimindex{} and stimvar{} lists
 		%-------------------------------------------------
-		
 			% make sure Dinf is initialized
 			if isempty(obj.Dinf)
-				error('Dinf not defined/is empty')
+				error('%s: Dinf not defined/is empty', mfilename)
 			end
 			
 			% for WavFile, need to find indices with same filename.
@@ -165,7 +164,6 @@ classdef WAVInfo < CurveInfo
 			% assign outputs
 			varargout{1} = stimindex;
 			varargout{2} = wavlist;
-	
 		end	% END getStimulusIndices method
 		
 		
@@ -236,6 +234,7 @@ classdef WAVInfo < CurveInfo
 		end
 		%}
 		
+%{
 		function [varlist, nvars] = varlist(obj)
 		%---------------------------------------------------------------------
 		% returns list of variable value and # of vars..
@@ -272,7 +271,9 @@ classdef WAVInfo < CurveInfo
 					error('%s: unsupported test type %s', mfilename, cInfo.testtype);
 			end
 		end
-		
+%}
+
+%{		
 		%-------------------------------------------------
 		%-------------------------------------------------
 		% shortcut methods to values
@@ -335,7 +336,7 @@ classdef WAVInfo < CurveInfo
 				val = [];
 			end
 		end
-		
+%}		
 		
 		%-------------------------------------------------
 		%-------------------------------------------------
