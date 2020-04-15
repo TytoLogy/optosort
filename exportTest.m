@@ -179,12 +179,11 @@ exportOpts.TestFile = {	'1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'};
 exportOpts.OutputFile = 'FREQ.nex';
 %}
 
-%{
+
 % Wav Only
 exportOpts.DataFile = {	'1382_20191212_02_02_3200_WAV.dat'};
 exportOpts.TestFile = {	'1382_20191212_02_02_3200_WAV_testdata.dat'};
 exportOpts.OutputFile = 'WAV.nex';
-%}
 
 %{
 % BBN only
@@ -193,11 +192,12 @@ exportOpts.TestFile = {	'1382_20191212_02_02_3200_BBN_testdata.dat'};
 exportOpts.OutputFile = 'BBN.nex';
 %}
 
+%{
 % FRA only
 exportOpts.DataFile = {	'1382_20191212_02_02_3200_FRA.dat'};
 exportOpts.TestFile = {	'1382_20191212_02_02_3200_FRA_testdata.dat'};
 exportOpts.OutputFile = 'FRA.nex';
-
+%}
 %---------------------------------------
 %---------------------------------------
 
