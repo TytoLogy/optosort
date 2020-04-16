@@ -1,4 +1,4 @@
-% function [obj, varargout] = buildStimOnOffData(obj)
+function [obj, varargout] = buildStimOnOffData(obj)
 %------------------------------------------------------------------------
 % [obj, onsetI, offsetI] = WAVInfo.buildStimOnOffData()
 %------------------------------------------------------------------------
@@ -35,14 +35,6 @@
 %	include option to have onset include/exclude stim delay???
 %
 %------------------------------------------------------------------------
-
-
-%% read in test data
-load('a.mat');
-
-obj = a;
-
-
 
 %------------------------------------------------------------------------
 %% settings
@@ -111,9 +103,9 @@ end
 
 % quick check on stimindices and nread
 if obj.Dinf.nread ~= length(obj.Dinf.test.stimIndices)
-	tmpstr = sprintf('Dinf.nread (%d) ~= length(Dinf.test.stimIndices (%d)', ...
-							obj.Dinf.nread, obj.Dinf.test.stimIndices);
-	error('%s: %s', mfilename, tempstr);
+	error('%s: %s', mfilename, ...
+				sprintf('Dinf.nread (%d) ~= length(Dinf.test.stimIndices (%d)', ...
+							obj.Dinf.nread, obj.Dinf.test.stimIndices));
 end
 
 % allocate storage for times
@@ -135,7 +127,6 @@ for s = 1:obj.Dinf.nread
 	
 	% what happens next will depend on stimulus type ('null', 'noise' or
 	% 'wav')
-	fprintf('stimulus %d: %s\n', s, stim.audio.signal.Type);
 	switch upper(stim.audio.signal.Type)
 		case {'NULL', 'NOISE'}
 			% if NULL or NOISE stim, delay and duration are just plain old
@@ -169,74 +160,24 @@ for s = 1:obj.Dinf.nread
 	wavonsetI(s) = obj.startSweepBin{1}(s) + ms2bin(stim.audio.Delay, obj.ADFs);
 end
 
-
-
 % assign to obj.stimStartBin and obj.stimEndBin
 obj.stimStartBin = onsetI;
 obj.stimEndBin = offsetI;
-
+obj.wavOnsetBin = wavonsetI;
 
 if nargout > 1
 	varargout{1} = onsetI;
 	varargout{2} = offsetI;
-	varargout{3} = sweepLen;
 end
-
-
-%%
-
-
-
-
-
-
-
-
-
-%------------------------------------------------------------------------
-%% process data
-%------------------------------------------------------------------------
-
-
-% get stimulus delay - but do a check for consistency
-if obj.Dinf.audio.Delay ~= obj.wavInfo.audio.Delay
-	warning('%s: unequal Dinf.audio.Delay and obj.wavInfo.audio.Delay', ...
-							mfilename);
-end
-delay_ms = obj.Dinf.audio.Delay;
-% convert to samples - need to use spike sampling rate (ADFs)
-delay = ms2bin(delay_ms, obj.ADFs);
-
-
-
-% get wav onset times
-wav_onsetTimes_ms = bin2ms([obj.wavInfo.wavs.OnsetBin], ...
-														obj.wavInfo.wavs(1).SampleRate);
-% and offset bins
-wav_offsetTimes_ms = bin2ms([obj.wavInfo.wavs.OffsetBin], ...
-														obj.wavInfo.wavs(1).SampleRate);
-% loop through each sweep
-for s = 1:obj.Dinf.nread
-	
-	% need to get stimulus index from stimIndices
-	stim_index = obj.Dinf.test.stimIndices(s);
-	
-	
-	% build list of stimulus onset and offset indices 
-	% **** referenced to start of each sweep ********
-	% wav onset will be startSweepBin + stimulus delay
-	onsetI(s) = obj.startSweepBin{1}(s) + delay;
-	% stim offset will onset bin + duration
-	offsetI(s) = onsetI(s) + duration;
-	
-	% waveonset is simple startSweepBin + delay.
-	wavonsetI(s) = obj.startSweepBin{1}(s) + delay;
-end
-
-
-%{
 
 %% test
+
+%{
+tmp = [obj.wavOnsetBin; obj.stimStartBin];
+
+tmp(:, 1:10)
+
+bin2ms(diff(tmp(:, 1:10)), obj.ADFs)
 
 plot(obj.startSweepBin{1}, ones(obj.Dinf.nread, 1), 'g.')
 hold on

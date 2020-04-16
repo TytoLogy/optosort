@@ -123,7 +123,6 @@ obj.stimEndBin = offsetI;
 if nargout > 1
 	varargout{1} = onsetI;
 	varargout{2} = offsetI;
-	varargout{3} = sweepLen;
 end
 
 %{
