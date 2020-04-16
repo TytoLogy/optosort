@@ -6,34 +6,20 @@ classdef WAVInfo < CurveInfo
 %------------------------------------------------------------------------
 % implements and encapsulates some utilities for dealing with
 % opto data -> Dinf struct
-%% 
 %------------------------------------------------------------------------
 % class properties
 %------------------------------------------------------------------------
-% Dinf				Data information struct from opto .dat files
-% F					opto file object
-% startSweepBin	sample for start of each sweep (for each channel)
-%							cell array
-% endSweepBin		sample for end of each sweep (for each channel)
-%							cell array
-% sweepLen			length (# of samples) for each sweep (for each channel)
-%							vector
-% fileStartBin		sample for start of file in merged file
-% fileEndBin		sample for end of file in merged data file
 % 
+% wavOnsetBin		sample for onset of wav stimulus playback
+%						this is effectively the same as stimStartBin for
+%						CurveInfo. For WAV stimuli, stimStart and stimEnd refer
+%						to the actual onset of stimulus waveform. This is done
+%						because stimStart/End are typically used for analysis of
+%						the neural response to a stimulus and we want these
+%						onset/offset bin values to be consistent across stimuli
+%
 % Dependent properties:
-% 	testtype
-% 	testname
-% 	freqs_bysweep
-% 	levels_bysweep
-% 	varied_parameter
-% 	varied_values
-% 	analysis_window
-% 	nreps
-% 	ntrials
-% 	nstims
-% 	ADFs
-% 	DAFs
+% 
 %------------------------------------------------------------------------
 % See also: 
 %------------------------------------------------------------------------
@@ -48,6 +34,8 @@ classdef WAVInfo < CurveInfo
 %	3 Mar 2020 (SJS): adding elements from fData struct in the 
 %		export_for_plexon.m function to avoid future duplications and
 %		streamline curve/test information handling
+%	15 Apr 2020 (SJS): adding code to determine stim onset, offset and wav
+%	onset
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -57,6 +45,7 @@ classdef WAVInfo < CurveInfo
 	%-------------------------------------------------
 	properties
 		wavInfo
+		wavOnsetBin = [];
 	end	% END properties (main)
 	properties (Dependent)
 
@@ -77,8 +66,6 @@ classdef WAVInfo < CurveInfo
 				return
 			end
 			if isstruct(varargin{1})
-% 				testfields = {'ScriptType', 'optovar_name', 'audiovar_name', ...
-% 										'audiovar', 'curvetype', 'wavlist'};
 				testfields = {'ScriptType', 'optovar_name', 'audiovar_name', ...
 										'audiovar', 'curvetype'};
 				for n = 1:length(testfields)
@@ -344,13 +331,21 @@ classdef WAVInfo < CurveInfo
 		%-------------------------------------------------
 		%-------------------------------------------------
 	
-		
+		%-------------------------------------------------
+		%-------------------------------------------------
+		% methods defined in separate files
+		%-------------------------------------------------
+		%-------------------------------------------------
+		% builds vector of stimulus onset and offset bins referenced to start
+		% of file
+		[obj, varargout] = buildStimOnOffData(obj)		
 	end	% END methods
 	
 end	% END classdef
 	
 function out = convert_to_text(in)
 % convert double ascii arrays or cell array of ascii arrays to char
+% this should really be moved to Utilities toolbox...
 	if iscell(in)
 		n_in = numel(in);
 		out = cell(size(in));
