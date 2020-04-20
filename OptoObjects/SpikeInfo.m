@@ -168,8 +168,9 @@ classdef SpikeInfo
 		function val = get.fileEndTime(obj)
 			val = (1/obj.Fs) * (obj.fileEndBin - 1);
 		end
-		
+		%-------------------------------------------------		
 		% convert sweep bin cells to vectors... 
+		%-------------------------------------------------
 		function val = get.startBinVector(obj)
 			val = [obj.sweepStartBin{:}];
 		end

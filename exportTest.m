@@ -161,7 +161,7 @@ addpath('OptoObjects');
 % testing scenarios
 %---------------------------------------
 exportOpts.DataPath = '~/Work/Data/TestData/MT';
-exportOpts.OutputPath = exportOpts.DataPath;
+exportOpts.OutputPath = '/Volumes/WD8GB/Data/TestData/NEXtest';
 exportOpts.Channels = [4, 5, 11, 14];
 %{
 % WAV, FREQ merged

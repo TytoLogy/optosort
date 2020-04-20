@@ -372,6 +372,11 @@ for f = 1:nFiles
 		
 end
 
+% assign cInfo to nexInfo.FileData
+nexInfo.FileInfo = cInfo;
+% store filter info
+nexInfo.dataFilter = BPfilt;
+
 sendmsg('Checking sample rates across files');
 % check sampling rates
 if ~all(tmpFs(1) == tmpFs)
@@ -455,6 +460,7 @@ nD = nexAddEvent(nD, force_col(nexInfo.fileEndTime), 'fileend');
 nD = nexAddEvent(nD, force_col(nexInfo.stimStartTimeVector), 'stimstart');
 nD = nexAddEvent(nD, force_col(nexInfo.stimEndTimeVector), 'stimend');
 
+nD = nexAddEvent(nD, nexInfo.stimStartTimeVector(1:10), 'test');
 % write to nexfile
 sendmsg(sprintf('Writing nex file %s:', nexInfo.FileName));
 writeNexFile(nD, nexInfo.FileName);
@@ -462,10 +468,6 @@ writeNexFile(nD, nexInfo.FileName);
 %------------------------------------------------------------------------
 % write useful information to _nexinfo.mat file 
 %------------------------------------------------------------------------
-% assign cInfo to nexInfo.FileData
-nexInfo.FileInfo = cInfo;
-% store filter info
-nexInfo.dataFilter = BPfilt;
 % save to matfile
 sendmsg(sprintf('Writing _nexinfo.mat file %s:', ...
 											nexInfo.InfoFileName));
