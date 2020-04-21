@@ -459,8 +459,6 @@ nD = nexAddEvent(nD, force_col(nexInfo.fileEndTime), 'fileend');
 % add stimulus onset and offset times
 nD = nexAddEvent(nD, force_col(nexInfo.stimStartTimeVector), 'stimstart');
 nD = nexAddEvent(nD, force_col(nexInfo.stimEndTimeVector), 'stimend');
-
-nD = nexAddEvent(nD, nexInfo.stimStartTimeVector(1:10), 'test');
 % write to nexfile
 sendmsg(sprintf('Writing nex file %s:', nexInfo.FileName));
 writeNexFile(nD, nexInfo.FileName);
