@@ -68,12 +68,16 @@ end
 PLXPath = '/Volumes/Lexar/Work/DATA/Plexon-ICdata';
 % plx file to open
 PLXFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
+fname = fullfile(PLXPath, PLXFile);
 
 %% read in everything
-fname = fullfile(PLXPath, PLXFile);
 p = readPLXFileC(fname, 'fullread', 'all');
 
 %%
 p2 = readPLXFileC(fname, 'all', 'nocontinuous')
 
+%% test object
 
+pObj = PLXData(fname);
+
+%%
