@@ -97,6 +97,7 @@ if ~isempty(varargin)
 				tmpArg = varargin{argIndx + 1};
 				if strcmpi(tmpArg(1), 'Y')
 					DEBUG = true;
+					fprintf('%s: DEBUG is ON!\n', mfilename);
 				else
 					DEBUG = false;
 				end
@@ -243,7 +244,7 @@ end
 %------------------------------------------------------------------------
 if nargout > 1
 	varargout{1} = cD;
-	varargout{1} = obj.startSweepBin;
-	varargout{2} = obj.endSweepBin;
-	varargout{3} = obj.sweepLen;
+	varargout{2} = obj.startSweepBin;
+	varargout{3} = obj.endSweepBin;
+	varargout{4} = obj.sweepLen;
 end
