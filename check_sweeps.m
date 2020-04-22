@@ -1,37 +1,41 @@
+function checkstatus = check_sweeps(sweepbins)
 %------------------------------------------------------------------------
-% addOptoPaths.m
+% checkstatus = check_sweeps(sweepbins)
 %------------------------------------------------------------------------
-% TytoLogy:Experiments:optosort
+% TytoLogy:optosort
 %------------------------------------------------------------------------
-% adds paths to opo related dirs
-% 
+% Check consistency of sweep bins across channels
 %------------------------------------------------------------------------
-% See also: 
+% Input Arguments:
+% 	sweepbins		{nchannels, 1} cell array of vectors, where 
+% 						each element is an array [1, nsweeps] of sweep bins
+% Output Arguments:
+% 	checkstatus		true if sweep times are inconsistent, false if all
+%						are consistent (equal)
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
 %  Sharad J. Shanbhag
 %	sshanbhag@neomed.edu
 %------------------------------------------------------------------------
-% Created: 8 January, 2020 (SJS)
+% Created: 14 January, 2020 (SJS)
 %
 % Revisions:
-%	10 Mar 2020 (SJS): streamlined code, added optosort and OptoObjects dirs
+%	14 Apr, 2020 (SJS): moved out of export_for_plexon into separate file
 %------------------------------------------------------------------------
-% TO DO: customize for each user's setup?
+% TO DO:
 %------------------------------------------------------------------------
 
 
-paths_to_add = { ...
-	'~/Work/Code/Matlab/dev/TytoLogy/Experiments/Opto', ...
-	'~/Work/Code/Matlab/dev/TytoLogy/Experiments/OptoAnalysis', ...
-	'~/Work/Code/Matlab/dev/TytoLogy/Experiments/optosort', ...
-	'~/Work/Code/Matlab/dev/TytoLogy/Experiments/optosort/OptoObjects' ...
-};
-	
-fprintf('Adding path to opto functions:\n');
+tmp = cell2mat(sweepbins);
+[nr, ~] = size(tmp);
+tmp2 = 0;
+for r = 1:nr
+	tmp2 = tmp2 + sum(tmp(r, :) - tmp(1, :));
+end
 
-for p = 1:length(paths_to_add)
-	fprintf('\t%s\n', paths_to_add{p});
-	addpath(paths_to_add{p});
+if tmp2 ~= 0
+	checkstatus = true;
+else
+	checkstatus = false;
 end
