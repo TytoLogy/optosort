@@ -45,17 +45,34 @@ classdef PLXData
 			if isempty(varargin)
 				return;
 			end
-			% get parts of the provided file
-			[tmpPath, tmpFile, tmpExt] = fileparts(varargin{1});
-			% check if it is a .plx file
-			if ~strcmpi(tmpExt, '.plx')
-				% ...if not, warn user
-				warning('PLXData: file %s does not have .plx extension!', ...
+			
+			% try different options depending on input
+			if ischar(varargin{1})
+				% if character string, assume a filename was provided
+			
+				% get parts of the provided file
+				[tmpPath, tmpFile, tmpExt] = fileparts(varargin{1});
+				% check if it is a .plx file
+				if ~strcmpi(tmpExt, '.plx')
+					% ...if not, warn user
+					warning('PLXData: file %s does not have .plx extension!', ...
 																					varargin{1});
+				end
+				% assign path and filename.
+				obj.pathname = tmpPath;
+				obj.filename = [tmpFile tmpExt];
+				
+				% load data from filename
+				obj = obj.loadPLX_nocontinuous;
+				
+			elseif isstruct(varargin{1})
+				% if struct, assume it is output from readPLXFileC
+				obj.P = varargin{1};
+				
+			else
+				error('PLXData: unknown input to constructor');
 			end
-			% assign path and filename.
-			obj.pathname = tmpPath;
-			obj.filename = [tmpFile tmpExt];
+			
 		end
 		
 		% load data from file, without continuous data, store in P property
@@ -88,7 +105,44 @@ classdef PLXData
 				return
 			end
 		end			
-		
-	end
+	end % END OF METHODS (general)
 	
+	methods (Static)
+		%-------------------------------------------------
+		%-------------------------------------------------
+		% internal method to act as interface to readPLXFileC 
+		% function - this will add filename to the struct returned
+		% by readPLXFileC
+		%
+		% NEED TO INCLUDE OTHER OPTIONS (i.e. continuous)
+		%-------------------------------------------------
+		%-------------------------------------------------
+		function pStruct = read_plx_file(varargin)
+			if isempty(varargin)
+				% get file from user
+				[fname, fpath] = uigetfile('*.plx', 'Select .plx file');
+				if fname == 0
+					fprintf('User Cancelled\n');
+					pStruct = [];
+					return
+				else
+					pStruct = readPLXFileC(fullfile(fpath, fname), ...
+														'all', 'nocontinuous');
+					pStruct.PLXFile = fullfile(fpath, fname);
+				end
+			elseif ischar(varargin{1})
+				if ~exist(varargin{1}, 'file')
+					error('read_plx_file: File not found %s', varargin{1})
+				else
+					pStruct = readPLXFileC(varargin{1}, 'all', 'nocontinuous');
+					pStruct.PLXFile = varargin{1};
+				end
+			else
+				error('read_plx_file: unknown input');
+			end
+		end
+		%-------------------------------------------------
+		%-------------------------------------------------
+
+	end
 end

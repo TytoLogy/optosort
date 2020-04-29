@@ -65,7 +65,9 @@ end
 %% define input files
 
 % path to plx file(s)
-PLXPath = '/Volumes/Lexar/Work/DATA/Plexon-ICdata';
+% PLXPath = '/Volumes/Lexar/Work/DATA/Plexon-ICdata';
+% external shared drive
+PLXPath = '/Volumes/ACEData/ACEData/TestData/Plexon-ICdata';
 % plx file to open
 PLXFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
 fname = fullfile(PLXPath, PLXFile);
