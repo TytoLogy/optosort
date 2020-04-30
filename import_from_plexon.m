@@ -30,21 +30,28 @@
 sepstr = '----------------------------------------------------';
 
 % data locations
-sortedPath = '~/Work/Data/TestData/MT';
-rawPath = '~/Work/Data/TestData/MT';
-nexPath = '~/Work/Data/TestData/MT';
+% sortedPath = '~/Work/Data/TestData/MT';
+% rawPath = sortedPath;
+% nexPath = sortedPath;
+sortedPath = '/Volumes/ACEData/ACEData/TestData/Plexon-ICdata';
+rawPath = sortedPath;
+nexPath = sortedPath;
 
 % sorted data file
 % sortedFile = '1323_20190722_03_02_632_MERGE.mat';
-sortedFile = '1382_20191212_02_02_3200.mat';
-
+% sortedFile = '1382_20191212_02_02_3200.mat';
+sortedFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.mat';
 % nexinfo file
 % nexInfoFile = '1323_20190722_03_02_632_MERGE_nexinfo.mat';
-nexInfoFile = '1382_20191212_02_02_3200_MERGE_nexinfo.mat';
+% nexInfoFile = '1382_20191212_02_02_3200_MERGE_nexinfo.mat';
+nexInfoFile = '1407_20200309_03_01_1350_BBN_nexinfo.mat';
 
 % nex file
-nexFile = '1382_20191212_02_02_3200_MERGE.nex';
+% nexFile = '1382_20191212_02_02_3200_MERGE.nex';
+nexFile = '1407_20200309_03_01_1350_BBN.nex';
 
+% plx file
+plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
 %------------------------------------------------------------------------
 % Setup
 %------------------------------------------------------------------------
@@ -160,7 +167,7 @@ else
 	fprintf('%s\n', sepstr);
 end
 
-% create SpikeData object
+%% create SpikeData object
 S = SpikeData();
 fprintf('\n%s\n', sepstr);
 fprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexPath, nexInfoFile));

@@ -10,6 +10,7 @@ classdef SpikeData
 % Created: ? 2020 (SJS)
 %
 % Revisions:
+%	30 Apr 2020 (SJS): changing addPlexonSpikes to addPlexonSpikesFromMat
 %------------------------------------------------------------------------
 % TO DO: how to handle multiple channels?????
 %------------------------------------------------------------------------
@@ -35,19 +36,26 @@ classdef SpikeData
 			end
 		end
 		
-		function obj = addPlexonSpikes(obj, plxSpikes, varargin)
-			% addPlexonSpikes(plxSpikes, (optional) plxvar)
-			% Define some handy values for indexing into plxSpikes 
-			% and similar arrays
-			%		Column 1: channel (? need to figure out how 
-			%									this maps to original data)
-			%		Column 2: unit #
-			%		Column 3: timestamp (in seconds)
-			%		Column 4: PCA1 weight
-			%		Column 5: PCA2 weight
-			%		Column 6: PCA3 weight
-			%		Column 7-end : waveform
-			% 
+		function obj = addPlexonSpikesFromMat(obj, plxSpikes, varargin)
+		% addPlexonSpikes(plxSpikes, (optional) plxvar)
+		%	plxSpikes is nspikes X ??? matrix exported from Plexon Offline
+		%	Sorter (OFS)
+		%
+		%	optional plxvar is a string from the matfile indicating the adc
+		%	channel
+		%
+		
+		% Define some handy values for indexing into plxSpikes 
+		% and similar arrays
+		%		Column 1: channel (? need to figure out how 
+		%									this maps to original data)
+		%		Column 2: unit #
+		%		Column 3: timestamp (in seconds)
+		%		Column 4: PCA1 weight
+		%		Column 5: PCA2 weight
+		%		Column 6: PCA3 weight
+		%		Column 7-end : waveform
+		% 
 			[~, nc] = size(plxSpikes);
 			CHAN_COL = 1;
 			UNIT_COL = 2;
