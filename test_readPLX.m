@@ -79,7 +79,7 @@ p = readPLXFileC(fname, 'fullread', 'all');
 p2 = readPLXFileC(fname, 'all', 'nocontinuous')
 
 %% test object
+pObj = PLXData(fname, 'all', 'nocontinuous');
 
-pObj = PLXData(fname);
-
-%%
+%% test use of just the embedded read plx function in PLXData
+% tmp = PLXData.read_plx_file(fname, 'all', 'continuous');

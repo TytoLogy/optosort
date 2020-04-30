@@ -36,6 +36,7 @@ classdef PLXData
 	methods
 
 		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
 		% Constructor
 		%------------------------------------------------------------------------
 		function obj = PLXData(varargin)
@@ -62,20 +63,46 @@ classdef PLXData
 				obj.pathname = tmpPath;
 				obj.filename = [tmpFile tmpExt];
 				
-				% load data from filename
-				obj = obj.loadPLX_nocontinuous;
+				% use default if no arguments provided
+				if nargin == 1
+					% load data from filename with defaults ('all',
+					% 'nocontinuous')
+					obj.P = obj.read_plx_file(obj.plxfile);
+				else
+					% use provided options
+					obj.P = obj.read_plx_file(obj.plxfile, varargin{2:end});
+				end
+					
 				
 			elseif isstruct(varargin{1})
 				% if struct, assume it is output from readPLXFileC
 				obj.P = varargin{1};
-				
+				% check if PLXFile field is defined
+				if isfield(obj.P, 'PLXFile')
+					if isempty(obj.P.PLXFile)
+						obj.pathname = '';
+						obj.filename = '';
+					else
+						[tmpPath, tmpFile, tmpExt] = fileparts(obj.P.PLXFile);
+						% assign path and filename.
+						obj.pathname = tmpPath;
+						obj.filename = [tmpFile tmpExt];
+					end
+				else
+					obj.pathname = '';
+					obj.filename = '';
+				end
 			else
 				error('PLXData: unknown input to constructor');
 			end
 			
 		end
+		%------------------------------------------------------------------------
 		
+		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
 		% load data from file, without continuous data, store in P property
+		%------------------------------------------------------------------------
 		function obj = loadPLX_nocontinuous(obj)
 			plxfile = obj.plxfile;
 			if isempty(plxfile)
@@ -83,14 +110,35 @@ classdef PLXData
 			end
 			% read in data using readPLXFileC
 			obj.P = readPLXFileC(plxfile, 'all', 'nocontinuous');
+			obj.P.PLXFile = plxfile;
 		end
-		
-		%-------------------------------------------------
-		%-------------------------------------------------
+		%------------------------------------------------------------------------
+
+		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
+		% load data from file, with continuous data, store in P property
+		%------------------------------------------------------------------------
+		function obj = loadPLX_continuous(obj)
+			plxfile = obj.plxfile;
+			if isempty(plxfile)
+				error('PLXData: filename not defined');
+			end
+			% read in data using readPLXFileC
+			obj.P = readPLXFileC(plxfile, 'all', 'continuous');
+			obj.P.PLXFile = plxfile;
+		end
+		%------------------------------------------------------------------------
+
+		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
 		% get/set access for dependent properties
-		%-------------------------------------------------
-		%-------------------------------------------------
+		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
+
+		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
 		% returns test.Type
+		%------------------------------------------------------------------------
 		function val = get.plxfile(obj)
 			% check to make sure file is specified
 			if isempty(obj.filename)
@@ -105,44 +153,57 @@ classdef PLXData
 				return
 			end
 		end			
+		%------------------------------------------------------------------------
+
 	end % END OF METHODS (general)
 	
 	methods (Static)
-		%-------------------------------------------------
-		%-------------------------------------------------
+		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
 		% internal method to act as interface to readPLXFileC 
 		% function - this will add filename to the struct returned
 		% by readPLXFileC
 		%
 		% NEED TO INCLUDE OTHER OPTIONS (i.e. continuous)
-		%-------------------------------------------------
-		%-------------------------------------------------
+		%------------------------------------------------------------------------
 		function pStruct = read_plx_file(varargin)
 			if isempty(varargin)
-				% get file from user
+				% get file from user if file wasn't provided
 				[fname, fpath] = uigetfile('*.plx', 'Select .plx file');
 				if fname == 0
 					fprintf('User Cancelled\n');
 					pStruct = [];
 					return
 				else
-					pStruct = readPLXFileC(fullfile(fpath, fname), ...
-														'all', 'nocontinuous');
-					pStruct.PLXFile = fullfile(fpath, fname);
+					plxfile = fullfile(fpath, fname);
 				end
+				
 			elseif ischar(varargin{1})
+				% If user provided a filename, check if it exists
 				if ~exist(varargin{1}, 'file')
 					error('read_plx_file: File not found %s', varargin{1})
 				else
-					pStruct = readPLXFileC(varargin{1}, 'all', 'nocontinuous');
-					pStruct.PLXFile = varargin{1};
+					% if so, use it
+					plxfile = varargin{1};
 				end
-			else
-				error('read_plx_file: unknown input');
 			end
+			
+			% see if options were provided
+			if length(varargin) > 1
+				plxreadArgs = varargin(2:end);							
+			else
+				% otherwise, use defaults
+				plxreadArgs = {'all', 'nocontinuous'};
+			end
+
+			% read in data
+			fprintf('read_plx_file: Reading from %s\n', plxfile);
+			fprintf('\treadPLXFileC options: %s\n', plxreadArgs{:});
+			pStruct = readPLXFileC(plxfile, plxreadArgs{:});
+			fprintf('read_plx_file: Done\n');
+			pStruct.PLXFile = plxfile;
 		end
-		%-------------------------------------------------
-		%-------------------------------------------------
+		%------------------------------------------------------------------------
 
 	end
 end
