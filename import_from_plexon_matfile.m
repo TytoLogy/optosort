@@ -1,4 +1,4 @@
-% function varargout = import_from_plexon(varargin)
+% function varargout = import_from_plexon_matfile(varargin)
 %------------------------------------------------------------------------
 % import_from_plexon.m
 %------------------------------------------------------------------------
