@@ -164,16 +164,52 @@ classdef PLXData
 		%------------------------------------------------------------------------
 		% export data in OFS mat format
 		%------------------------------------------------------------------------
-		function val = export_as_mat(obj)
-			% get channels
-			nChannels = obj.P.NumSpikeChannels;
+		function [val, varargout] = export_as_mat(obj, varargin)
 			% create cell array
-			Carr = cell(nChannels, 1);
+			Carr = cell(obj.P.NumSpikeChannels, 1);
 			% loop through channels
-			for c = 1:nChannels
-				P
-				
+			for c = 1:obj.P.NumSpikeChannels
+				Carr{c} = export_channel_as_mat(obj, c);
 			end
+			
+			if ~isempty(varargin)
+				if strcmpi(varargin{1}, 'sort_by_timestamp')
+					val = sortrows(cell2mat(Carr), 3);
+				end
+			else
+				val = cell2mat(Carr);
+			end
+			if nargout > 1
+				varargout{1} = Carr;
+			end
+		end
+		
+		function val = export_channel_as_mat(obj, channel)
+		% Match format expected by SpikeData object:
+		%		Column 1: channel is AD Channel from
+		%									P.SpikeChannels(cNumber).Name)
+		%		Column 2: unit #
+		%		Column 3: timestamp (in seconds)
+		%		Column 4: PCA1 weight
+		%		Column 5: PCA2 weight
+		%		Column 6: PCA3 weight
+		%		Column 7-end : waveform
+		
+			% convert Timestamps to seconds (need to do conversion 
+			% to double from uint32
+			ts_sec = double(obj.P.SpikeChannels(channel).Timestamps) / ...
+								double(obj.P.ADFrequency);
+			% unit #
+			unit = double(obj.P.SpikeChannels(channel).Units);
+			% AD channel
+			ADchannel = double(obj.getADChannel(channel))*ones(size(ts_sec));
+			% dummy data for PCA 
+			PCA = zeros(length(ts_sec), 3);
+			% need to convert waves from int16 to double and scale
+			snips = double(obj.P.SpikeChannels(channel).Waves') / ...
+												double(obj.P.SpikeMaxMagnitudeMV);
+			% glue everything together
+			val = [ADchannel unit ts_sec PCA snips];
 		end
 		%------------------------------------------------------------------------
 		

@@ -68,6 +68,6 @@ ts_sec = double(P.SpikeChannels(c).Timestamps) / double(P.ADFrequency);
 unit = double(P.SpikeChannels(c).Units);
 channel = 4*ones(size(ts_sec));
 PCA = zeros(length(ts_sec), 3);
-snips = double(P.SpikeChannels(c).Waves') / double(P.SpikeMaxMagnitudeMV));
-[channel unit ts_sec PCA]
+snips = double(P.SpikeChannels(c).Waves') / double(P.SpikeMaxMagnitudeMV);
+[channel unit ts_sec PCA snips]
 
