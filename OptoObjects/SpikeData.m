@@ -79,6 +79,28 @@ classdef SpikeData
 			end
 		end
 		
+		function obj = addPlexonSpikesFromPLXObj(obj, Pobj)
+			plxSpikes = Pobj.export_as_mat('sort_by_timestamp');
+			[~, nc] = size(plxSpikes);
+			CHAN_COL = 1;
+			UNIT_COL = 2;
+			TS_COL = 3;
+			PCA_COL = 4:6;
+			WAV_COL = 7:nc;
+			% convert matrix to table, store as Spikes property
+			% define variable names
+			vNames = {'Channel', 'Unit', 'TS', 'PCA', 'Wave'};
+			vUnits = {'', '', 'seconds', '', 'mV'};
+			obj.Spikes = table(	plxSpikes(:, CHAN_COL), ...
+										plxSpikes(:, UNIT_COL), ...
+										plxSpikes(:, TS_COL), ...
+										plxSpikes(:, PCA_COL), ...
+										plxSpikes(:, WAV_COL), ...
+										'VariableNames', vNames );			
+			obj.Spikes.Properties.VariableUnits = vUnits;			
+		end
+		
+		
 		%-------------------------------------------------------
 		% assign plexon information obj (SpikeInfo obj) 
 		%-------------------------------------------------------
