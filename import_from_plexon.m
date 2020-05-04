@@ -155,21 +155,7 @@ for f = 1:S.Info.nFiles
 end
 
 %% N next step: assign spike times to appropriate sweeps/stimuli
-
-% ORIG
-% store spikes for each file in spikes ByStim
-sbs = cell(S.Info.nFiles, 1);
-% loop through files
-for f = 1:S.Info.nFiles
-	sbs{f} = assign_spikes_to_sweeps(spikesByFile{f}, ...
-												S.Info.sweepStartBin{f}, ...
-												S.Info.sweepEndBin{f}, ...
-												1, ...
-												S.Info.Fs, ...
-												'sweep');
-end
-
-%% OBJ - by unit
+% OBJ - by unit
 unitID = S.listUnits;
 nunits = S.nUnits;
 % store spikes for each file in spikes ByStim, all units
