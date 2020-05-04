@@ -129,6 +129,56 @@ classdef PLXData
 		end
 		%------------------------------------------------------------------------
 
+		
+		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
+		% get A/D channel number from the Channel name
+		%------------------------------------------------------------------------
+		function val = getADChannel(obj, varargin)
+			% get all channel ids if channel is not provided
+			if isempty(varargin)
+				val = zeros(obj.P.NumSpikeChannels, 1);
+				for c = 1:obj.P.NumSpikeChannels
+					val(c) = obj.getADChannel(c);
+				end
+				return
+			else
+				cNumber = varargin{1};
+			end
+			% if requested number is out of bounds, throw error
+			if (cNumber < 1) || (cNumber > obj.P.NumSpikeChannels)
+				error('PLXData.getADChannel: requested channel # out of bounds');
+			end
+			% need to extract number from the P.SpikeChannels.name string
+			val = sscanf(obj.P.SpikeChannels(cNumber).Name, 'spikechan_%d');
+			% warning if val is empty
+			if isempty(val)
+				warning( ['PLXData.getADChannel: channel not found' ...
+								'or misformed channel name in plx file']);
+			end
+		end
+		%------------------------------------------------------------------------
+
+		
+		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
+		% export data in OFS mat format
+		%------------------------------------------------------------------------
+		function val = export_as_mat(obj)
+			% get channels
+			nChannels = obj.P.NumSpikeChannels;
+			% create cell array
+			Carr = cell(nChannels, 1);
+			% loop through channels
+			for c = 1:nChannels
+				P
+				
+			end
+		end
+		%------------------------------------------------------------------------
+		
+		
+		
 		%------------------------------------------------------------------------
 		%------------------------------------------------------------------------
 		% get/set access for dependent properties

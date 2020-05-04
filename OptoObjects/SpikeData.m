@@ -41,8 +41,8 @@ classdef SpikeData
 		%	plxSpikes is nspikes X ??? matrix exported from Plexon Offline
 		%	Sorter (OFS)
 		%
-		%	optional plxvar is a string from the matfile indicating the adc
-		%	channel
+		%	optional plxvar is a string(s) from the matfile indicating the adc
+		%	channel(s)
 		%
 		
 		% Define some handy values for indexing into plxSpikes 
