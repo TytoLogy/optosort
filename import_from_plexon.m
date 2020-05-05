@@ -25,8 +25,8 @@
 
 %% path to readPXFileC
 
-if ~exist('readPLXFileC')
-	fprintf('adding readPLXFile to path\n');
+if ~exist('readPLXFileC', 'file')
+	fprintf('import_from_plexon: adding readPLXFile to path\n');
 	addpath('/Users/sshanbhag/Work/Code/Matlab/stable/Toolbox/Plexon/readPLXFileC');
 end
 
@@ -53,11 +53,10 @@ nexFile = '1407_20200309_03_01_1350_BBN.nex';
 
 % plx file
 plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
-%------------------------------------------------------------------------
-% Setup
-%------------------------------------------------------------------------
+
 fprintf('\n%s\n', sepstr);
 fprintf('import_from_plexon running...\n');
+fprintf('File: %s\n', plxFile);
 fprintf('%s\n', sepstr);
 
 %------------------------------------------------------------------------
