@@ -198,16 +198,40 @@ classdef SpikeData
 		%-------------------------------------------------------
 		
 
-		function tbl = spikesForChannel(obj, chanNum)
-			% check inputs
-			tbl = obj.check_channels(chanNum);
+		%-------------------------------------------------------
+		%-------------------------------------------------------
+		function tbl = spikesForChannel(obj, chanNum, varargin)
+		%-------------------------------------------------------
+		% tbl = spikesForChannel(channelNum, <unitNum>)
+		% get table of spikes for a specific unit and channel
+		%-------------------------------------------------------
+		% check inputs
+			if length(chanNum) ~= 1
+				error(['SpikeData.spikesForChannel: requires single,' ...
+							'valid channel number']);
+			elseif obj.check_channels(chanNum) == -1
+				error('SpikeData.spikesForChannel: invalid channel %d', ...
+								chanNum);
+			end
+			% spikes for the desired channel
+			tbl = obj.Spikes(obj.Spikes.Channel == chanNum, :);
 			
+			% if no unit number provided, we're done
+			if isempty(varargin)
+				return
+			else
+				unitNum = varargin{1};
+			end
+			
+			% otherwise, get spikes for given unit number
+			tbl = tbl( (tbl.Unit == unitNum), :);
 		end
+		%-------------------------------------------------------
 		
 		
 		%-------------------------------------------------------
 		%-------------------------------------------------------
-		function tbl = spikesForUnit(obj, unitNum, varargin)
+		function tbl = spikesForChannelAndUnit(obj, varargin)
 		%-------------------------------------------------------
 		% get table of spikes for a specific unit and channel
 		%
@@ -512,8 +536,8 @@ classdef SpikeData
 				cchk = ismember(clist, obj.listChannels);
 				if ~all(cchk)
 					for c = 1:length(clist)
-						if cck(c) == false
-							warning('unknown channel: %d\n', clist)
+						if cchk(c) == false
+							warning('unknown channel: %d\n', clist(c))
 							clist(c) = -1;
 						end
 					end
