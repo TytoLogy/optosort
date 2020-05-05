@@ -159,19 +159,8 @@ classdef SpikeData
 		% stored in a cell array
 		%	if no channel provided, all channels used
 		%-------------------------------------------------------
-			% check inputs
+			% check inputs (channels)
 			[clist, nchan] = obj.check_channels(varargin);
-			%{
-			if isempty(varargin)
-				% if no channels provided, use all existing channels
-				clist = obj.listChannels;
-			else
-				% otherwise, use provided channels
-				clist = varargin{1};
-			end
-			% number of channels
-			nchan = length(clist);
-			%}
 			
 			% allocate val cell array
 			val = cell(nchan, 1);
@@ -191,17 +180,30 @@ classdef SpikeData
 
 		%-------------------------------------------------------
 		%-------------------------------------------------------
-		function val = nUnits(obj)
+		function val = nUnits(obj, varargin)
 		%-------------------------------------------------------
-		% return # of unique units for a channel
-		%	if no channel provided, this is acrosss 
-		%	ALL channels... which is a bit weird
+		% [# units] = SpikeData.nUnits([channel numbers])
+		% return # of unique units for each channel
+		%	if no channel(s) provided, list for all channels
 		%-------------------------------------------------------
-			val = length(obj.listUnits);
+			% check inputs (channels)
+			[clist, nchan] = obj.check_channels(varargin);
+
+			val = zeros(nchan, 1);
+			for c = 1:nchan
+				tmplist = obj.listUnits(clist(c));
+				val(c) = length(tmplist{1});
+			end
 		end
 		%-------------------------------------------------------
 		
 
+		function tbl = spikesForChannel(obj, chanNum)
+			% check inputs
+			tbl = obj.check_channels(chanNum);
+			
+		end
+		
 		
 		%-------------------------------------------------------
 		%-------------------------------------------------------
@@ -507,8 +509,14 @@ classdef SpikeData
 					clist = channel_arg;
 				end
 				% check channels existence
-				if ~all(ismember(clist, obj.listChannels))
-					warning('unknown channel: %d\n', clist)
+				cchk = ismember(clist, obj.listChannels);
+				if ~all(cchk)
+					for c = 1:length(clist)
+						if cck(c) == false
+							warning('unknown channel: %d\n', clist)
+							clist(c) = -1;
+						end
+					end
 				end
 			end
 			% number of channels
