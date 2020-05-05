@@ -153,7 +153,7 @@ classdef SpikeData
 		%-------------------------------------------------------
 		% get table of spikes for a specific unit
 		%-------------------------------------------------------
-		function tbl = spikesForUnit(obj, unitNum)
+		function tbl = spikesForUnit(obj, unitNum, varargin)
 			% check unit_num
 			if ~any(unitNum == obj.listUnits)
 				warning('unit %d not in Spikes table', unitNum);
