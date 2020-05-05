@@ -228,45 +228,6 @@ classdef SpikeData
 		end
 		%-------------------------------------------------------
 		
-		
-		%-------------------------------------------------------
-		%-------------------------------------------------------
-		function tbl = spikesForChannelAndUnit(obj, varargin)
-		%-------------------------------------------------------
-		% get table of spikes for a specific unit and channel
-		%
-		% If channel is not provided, use lowest channel number
-		% as default!
-		%-------------------------------------------------------
-			% process varargin
-			if isempty(varargin)
-				channel = min(obj.listChannels);
-				fprintf('SpikeData.spikesForUnit: using lowest channel (%d)', ...
-								channel);
-			else
-				if length(varargin{1}) > 1
-					error(['SpikeData.spikesForUnit: only works for one channel'
-								'at a time!']);
-				elseif ~any(varargin{1} == obj.listChannels)
-					error('SpikeData.spikesForUnit: channel %d not found', ...
-								varargin{1});
-				else
-					channel = varargin{1};
-				end
-			end
-			
-			% get data for channel
-% 			chantbl = 
-			if ~any(unitNum == obj.listUnits)
-				warning('unit %d not in Spikes table', unitNum);
-				tbl = [];
-			else
-				unit_rows = (obj.Spikes.Unit == unitNum);
-				tbl = obj.Spikes(unit_rows, :);
-			end
-		end
-		%-------------------------------------------------------
-		
 		%-------------------------------------------------------
 		% get table of spikes for a specific file
 		%-------------------------------------------------------
@@ -363,8 +324,7 @@ classdef SpikeData
 			end
 		end
 		
-		
-		
+
 		%-------------------------------------------------------
 		% get table of spikes for a specific file, unit and by sweep
 		%-------------------------------------------------------
