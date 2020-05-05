@@ -49,7 +49,10 @@ classdef SpikeData
 			end
 		end
 		
+		%-------------------------------------------------------
+		%-------------------------------------------------------
 		function obj = addPlexonSpikesFromMat(obj, plxSpikes, varargin)
+		%-------------------------------------------------------
 		% addPlexonSpikes(plxSpikes, (optional) plxvar)
 		%	plxSpikes is nspikes X ??? matrix exported from Plexon Offline
 		%	Sorter (OFS)
@@ -57,6 +60,7 @@ classdef SpikeData
 		%	optional plxvar is a string(s) from the matfile indicating the adc
 		%	channel(s)
 		%
+		%-------------------------------------------------------
 		
 		% Define some handy values for indexing into plxSpikes 
 		% and similar arrays
@@ -91,7 +95,10 @@ classdef SpikeData
 				obj.plxvar = varargin{1};
 			end
 		end
+		%-------------------------------------------------------
 		
+		%-------------------------------------------------------
+		%-------------------------------------------------------
 		function obj = addPlexonSpikesFromPLXObj(obj, Pobj)
 			plxSpikes = Pobj.export_as_mat('sort_by_timestamp');
 			[~, nc] = size(plxSpikes);
@@ -112,49 +119,118 @@ classdef SpikeData
 										'VariableNames', vNames );			
 			obj.Spikes.Properties.VariableUnits = vUnits;			
 		end
+		%-------------------------------------------------------
 		
 		
+		%-------------------------------------------------------
+		%-------------------------------------------------------
+		function obj = addPlexonInfo(obj, plxInfo)
 		%-------------------------------------------------------
 		% assign plexon information obj (SpikeInfo obj) 
 		%-------------------------------------------------------
-		function obj = addPlexonInfo(obj, plxInfo)
 			if ~isstruct(plxInfo)
 				error('need struct as input');
 			end
 			% initialize info object
 			obj.Info = plxInfo;
 		end
+		%-------------------------------------------------------
 		
 		%-------------------------------------------------------
-		% return a list of unique channels in the Spikes Table
 		%-------------------------------------------------------
 		function val = listChannels(obj)
-			% two ways to do this:
-			%	val = unique(obj.Spikes{:, 'Channel'});
-			% or
-			%	val = unique(obj.Spikes.Channel);
+		%-------------------------------------------------------
+		% return a list of unique channels in the Spikes Table
+		%
+		% two ways to do this:
+		%	val = unique(obj.Spikes{:, 'Channel'});
+		% or
+		%	val = unique(obj.Spikes.Channel);
+		%-------------------------------------------------------
 			val = unique(obj.Spikes.Channel);
 		end
+		%-------------------------------------------------------
 		
 		%-------------------------------------------------------
-		% return vector of unique unit numbers
 		%-------------------------------------------------------
-		function val = listUnits(obj)
-			val = unique(obj.Spikes.Unit);
+		function val = listUnits(obj, varargin)
+		%-------------------------------------------------------
+		% return vector of unique unit numbers for each channel
+		% stored in a cell array
+		%	if no channel provided, all channels used
+		%-------------------------------------------------------
+			% check inputs
+			[clist, nchan] = obj.check_channels(varargin);
+			%{
+			if isempty(varargin)
+				% if no channels provided, use all existing channels
+				clist = obj.listChannels;
+			else
+				% otherwise, use provided channels
+				clist = varargin{1};
+			end
+			% number of channels
+			nchan = length(clist);
+			%}
+			
+			% allocate val cell array
+			val = cell(nchan, 1);
+			% find units on each channel. do this by 
+			%	(1) getting indices of current channel in loop:
+			%		obj.Spikes.Channel == clist(c)
+			%	(2) getting the units for this channel:
+			%		obj.Spikes.Unit(obj.Spikes.Channel == clist(c))
+			%	(3) finding unique values
+			%		unique(obj.Spikes.Unit(obj.Spikes.Channel == clist(c)));
+			for c = 1:nchan
+				val{c} = unique(obj.Spikes.Unit(obj.Spikes.Channel == clist(c)));
+			end
 		end
+		%-------------------------------------------------------
+		
+
+		%-------------------------------------------------------
+		%-------------------------------------------------------
 		function val = nUnits(obj)
+		%-------------------------------------------------------
+		% return # of unique units for a channel
+		%	if no channel provided, this is acrosss 
+		%	ALL channels... which is a bit weird
+		%-------------------------------------------------------
 			val = length(obj.listUnits);
 		end
+		%-------------------------------------------------------
 		
-		function tbl = get.Spikes(obj)
-			tbl = obj.Spikes;
-		end
+
 		
 		%-------------------------------------------------------
-		% get table of spikes for a specific unit
 		%-------------------------------------------------------
 		function tbl = spikesForUnit(obj, unitNum, varargin)
-			% check unit_num
+		%-------------------------------------------------------
+		% get table of spikes for a specific unit and channel
+		%
+		% If channel is not provided, use lowest channel number
+		% as default!
+		%-------------------------------------------------------
+			% process varargin
+			if isempty(varargin)
+				channel = min(obj.listChannels);
+				fprintf('SpikeData.spikesForUnit: using lowest channel (%d)', ...
+								channel);
+			else
+				if length(varargin{1}) > 1
+					error(['SpikeData.spikesForUnit: only works for one channel'
+								'at a time!']);
+				elseif ~any(varargin{1} == obj.listChannels)
+					error('SpikeData.spikesForUnit: channel %d not found', ...
+								varargin{1});
+				else
+					channel = varargin{1};
+				end
+			end
+			
+			% get data for channel
+% 			chantbl = 
 			if ~any(unitNum == obj.listUnits)
 				warning('unit %d not in Spikes table', unitNum);
 				tbl = [];
@@ -163,6 +239,7 @@ classdef SpikeData
 				tbl = obj.Spikes(unit_rows, :);
 			end
 		end
+		%-------------------------------------------------------
 		
 		%-------------------------------------------------------
 		% get table of spikes for a specific file
@@ -393,7 +470,55 @@ classdef SpikeData
 			
 		end
 		
+		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
+		% get/set access for dependent properties
+		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
+
+		% returns spikes table
+		function tbl = get.Spikes(obj)
+			tbl = obj.Spikes;
+		end
 		
+	end	% END OF METHODS (general)
+	%------------------------------------------------------------------------
+	%------------------------------------------------------------------------
+	%------------------------------------------------------------------------
+	%------------------------------------------------------------------------
+	
+	%------------------------------------------------------------------------
+	%------------------------------------------------------------------------
+	%------------------------------------------------------------------------
+	%------------------------------------------------------------------------
+	methods (Access = protected)
+		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
+		function [clist, varargout] = check_channels(obj, channel_arg)
+			if isempty(channel_arg)
+				% if no channels provided, use all existing channels
+				clist = obj.listChannels;
+			else
+				% otherwise, use provided channels
+				% note that channel_arg might be a cell
+				if iscell(channel_arg)
+					clist = channel_arg{1};
+				else
+					clist = channel_arg;
+				end
+				% check channels existence
+				if ~all(ismember(clist, obj.listChannels))
+					warning('unknown channel: %d\n', clist)
+				end
+			end
+			% number of channels
+			varargout{1} = length(clist);
+		end
+		%------------------------------------------------------------------------
+	end	% END METHODS (PROTECTED)
+	%------------------------------------------------------------------------
+	%------------------------------------------------------------------------
+	%------------------------------------------------------------------------
+	%------------------------------------------------------------------------
 		
-	end
-end
+end	% END OF CLASS DEF
