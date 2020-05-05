@@ -129,25 +129,6 @@ save(fullfile(nexPath, sfile), '-MAT', 'S');
 
 
 %% break up spiketimes by data file
-% use file Start/End time to do this
-[~, nc] = size(spikesAll);
-CHAN_COL = 1;
-UNIT_COL = 2;
-TS_COL = 3;
-PCA_COL = 4:6;
-WAV_COL = 7:nc;
-
-sbf = cell(S.Info.nFiles, 1);
-
-for f = 1:S.Info.nFiles
-	% could use between() function, but using something explicit here for
-	% clarity
-	valid_ts = (spikesAll(:, TS_COL) >= S.Info.fileStartTime(f)) & ...
-					(spikesAll(:, TS_COL) <= S.Info.fileEndTime(f));
-	sbf{f} = spikesAll(valid_ts, :);
-end
-
-%% try with object
 spikesByFile = cell(S.Info.nFiles, 1);
 for f = 1:S.Info.nFiles
 	spikesByFile{f} = S.spikesForFile(f);

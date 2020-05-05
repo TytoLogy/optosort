@@ -2,6 +2,19 @@ classdef SpikeData
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:opto...
 %------------------------------------------------------------------------
+% Info		SpikeInfo object
+% Spikes		sorted spikes in table object
+% 				Table Variable Names:
+% 					Channel		AD channel
+% 					Unit			Unit ID (for given channel! note that units might
+% 									 not have unique IDs across channels)
+% 					TS				timestamp (seconds)
+% 					PCA			PCA values (not valid for data imported 
+% 									 directly from plx file
+% 					Wave			Wave snippet data					
+% plxvar		variable names from Plexon 
+% 					(used when imported exported MAT)
+%------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
 %  Sharad J. Shanbhag
@@ -16,9 +29,9 @@ classdef SpikeData
 %------------------------------------------------------------------------
 
 	properties
-		% Info		SpikeInfo object
-		% Spikes		sorted spikes in table object
-		% plxvar		variable names from Plexon
+	% Info		SpikeInfo object
+	% Spikes		sorted spikes in table object
+	% plxvar		variable names from Plexon
 		Info
 		Spikes
 		plxvar
