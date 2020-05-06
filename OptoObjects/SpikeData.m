@@ -326,7 +326,6 @@ classdef SpikeData
 			%--------------------------------------
 			% select valid timestamps/table entries
 			%--------------------------------------
-
 			tmpS = obj.spikesForFile(fileNum);
 			% get indices for channel and unit
 			channel_rows = tmpS.Channel == channelNum;
@@ -373,8 +372,6 @@ classdef SpikeData
 			for s = 1:nsweeps
 				% find the valid time stamps (between sweepStartTimes and
 				% sweepEndTimes)
-% 				valid_rows = (vS(:, 'TS') >= obj.Info.sweepStartTime{fileNum}(s)) ...
-% 								& (vS(:, 'TS') < obj.Info.sweepEndTime{fileNum}(s));
 				valid_rows = (vS.TS >= obj.Info.sweepStartTime{fileNum}(s)) ...
 								& (vS.TS < obj.Info.sweepEndTime{fileNum}(s));
 				spikesBySweep{s} = vS(valid_rows, :);
@@ -454,8 +451,6 @@ classdef SpikeData
 			% allocate cell to store spike info for each sweep
 			spikesBySweep = cell(nsweeps, 1);
 			
-			% tmp2{:, 'TS'} = tmp{:, 'TS'} * 2
-
 			% loop through sweeps
 			for s = 1:nsweeps
 				% find the valid time stamps (between sweepStartTimes and
@@ -470,7 +465,6 @@ classdef SpikeData
 		end
 		%-------------------------------------------------------
 		
-		
 		%-------------------------------------------------------
 		function arr = spikesAsMatrix(obj)
 		%-------------------------------------------------------
@@ -483,23 +477,34 @@ classdef SpikeData
 		
 		%-------------------------------------------------------
 		%-------------------------------------------------------
-		function H = plotUnitWaveforms(obj, unitList)
+		function H = plotUnitWaveforms(obj, channel, varargin)
 		%-------------------------------------------------------
-		% Plot sorted waveforms for each identified unit
+		% Plot sorted waveforms for each identified unit for a given channel
 		%-------------------------------------------------------
-			% check units
-			nU = length(unitList);
-			if nU == 0
-				unitList = obj.listUnits;
-				nU = obj.nUnits;
+			% check channel provided
+			cchk = obj.check_channels(channel);
+			if cchk == -1
+				error('SpikeData.plotUnitWaveforms: invalid channel %d', channel);
+			end
+			if isempty(varargin)
+				tmp = obj.listUnits(channel);
+				unitList = tmp{1};
+				nU = length(unitList);
 			else
-				for u = 1:nU
-					if ~any(unitList(u) == obj.listUnits)
-						error('unit %d not found', unitList(u));
+				unitList = varargin{1};
+				% check units
+				nU = length(unitList);
+				if nU == 0
+					error('SpikeData.plotUnitWaveforms: no units for channel %d', ...
+												channel);
+				else
+					for u = 1:nU
+						if ~any(unitList(u) == obj.listUnits)
+							error('unit %d not found', unitList(u));
+						end
 					end
 				end
-			end
-			
+			end			
 			% allocate gobjects array to hold figure handles
 			H = gobjects(nU, 1);
 			% loop through units
