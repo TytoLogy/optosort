@@ -244,10 +244,123 @@ classdef SpikeData
 		end
 
 		%-------------------------------------------------------
+		%-------------------------------------------------------		
+		function [channelNum, unitNum] = get_default_channel_and_unit(obj)
+		%-------------------------------------------------------
+		% [channelNum, unitNum] = SpikeData.get_default_channel_and_unit
+		%	looks for first non-zero unit within lowest channel number
+		%	returns empty value ([]) if channel and/or unit is not found.
+		%-------------------------------------------------------
+			% setup: set channel and unit to empty
+			channelNum = [];
+			unitNum = [];
+			% get list of channels and units
+			channelList = obj.listChannels;
+			unitList = obj.listUnits;
+			% check lists
+			if isempty(channelList)
+				error('No channels in SpikeData object');
+			end
+			if isempty(unitList)
+				error('No units in SpikeDataObject');
+			end
+			% loop through channels to find first non-zero unit in lowest
+			% channel number
+			cI = 1;
+			while isempty(channelNum) && cI <= length(channelList)
+				% check if unitList is empty for current channel
+				if ~isempty(unitList{cI})
+					% nonzero units?
+					nz = unitList{cI}(unitList{cI} ~= 0);
+					if ~isempty(nz)
+						% if there is a non-zero unit in this channel, we're done
+						channelNum = channelList(cI);
+						unitNum = nz(1);
+					else
+						% no non-zero unit, so go to next channel
+						cI = cI + 1;
+					end
+				else
+					% no units thos channel, go to next one
+					cI = cI + 1;
+				end
+			end
+			% raise alerts if needed
+			if isempty(channelNum)
+				warning('No channel found')
+			elseif isempty(unitNum)
+				warning('No unit found');
+			end
+		end
+		
+		function channelNum = get_default_channel(obj)
+			% setup: set channel and unit to empty
+			channelNum = [];
+			% get list of channels and units
+			channelList = obj.listChannels;
+			unitList = obj.listUnits;
+			% check lists
+			if isempty(channelList)
+				error('No channels in SpikeData object');
+			end
+			if isempty(unitList)
+				error('No units in SpikeDataObject');
+			end
+			% loop through channels to find first non-zero unit in lowest
+			% channel number
+			cI = 1;
+			while isempty(channelNum) && cI <= length(channelList)
+				% check if unitList is empty for current channel
+				if ~isempty(unitList{cI})
+					% nonzero units?
+					nz = unitList{cI}(unitList{cI} ~= 0);
+					if ~isempty(nz)
+						% if there is a non-zero unit in this channel, we're done
+						channelNum = channelList(cI);
+					else
+						% no non-zero unit, so go to next channel
+						cI = cI + 1;
+					end
+				else
+					% no units thos channel, go to next one
+					cI = cI + 1;
+				end
+			end
+		end
+		
+		function unitNum = get_default_unit(obj, channelNum)
+			% setup: set unit to empty
+			unitNum = [];
+			% need index of channel in channelList
+			cI = find(channelNum == obj.listChannels);
+			% nonzero units?
+			unitList = obj.listUnits;
+			nz = unitList{cI}(unitList{cI} ~= 0);
+			if ~isempty(nz)
+				unitNum = nz(1);
+			end
+		end
+		
+		%-------------------------------------------------------
+		%-------------------------------------------------------
+		function spikesBySweep = spikesForAnalysis(obj, fileNum, varargin)
+		%-------------------------------------------------------
 		% get table of spikes for a specific file aligned to file start,
 		% sweep, or as-is (original)
 		%-------------------------------------------------------
-		function spikesBySweep = spikesForAnalysis(obj, fileNum, varargin)
+			%--------------------------------------
+			% set defaults
+			%--------------------------------------
+			% default is no shift
+			ALIGN = 'original';
+			% set channel and unit to empty
+			channelNum = [];
+			unitNum = [];
+			
+			% get list of channels and units
+			channelList = obj.listChannels;
+			unitList = obj.listUnits;
+			
 			%--------------------------------------
 			% process options and inputs
 			%--------------------------------------
@@ -256,28 +369,74 @@ classdef SpikeData
 				error('requested file %d out of range [1 %d]', ...
 										fileNum, obj.Info.nFiles);
 			end
-			% check alignment mode
-			if isempty(varargin)
-				% default is no shift
-				ALIGN = 'original';
-			else
-				if ~any(strcmpi(varargin{1}, {'original', 'file', 'sweep'}))
-					% unknown mode
-					error('%s: unknown align option %s', varargin{1})
-				else
-				ALIGN = lower(varargin{1});
+			
+			% process options
+			argI = 1;
+			while argI <= length(varargin)
+				switch upper(varargin{argI})
+					case 'ALIGN'
+						% check alignment mode
+						if ~any(strcmpi(varargin{argI+1}, ...
+										{'original', 'file', 'sweep'}))
+							% unknown mode
+							error(['SpikeData.spikesForAnalysis:' ...
+										'unknown align option %s'], varargin{argI+1});
+						else
+							ALIGN = lower(varargin{argI});
+						end
+						argI = argI + 2;
+					case 'CHANNEL'
+						channelNum = varargin{argI + 1};
+						argI = argI + 1;
+					case 'UNIT'
+						unitNum = varargin{argI + 1};
+						argI = argI + 1;
+					otherwise
+						% unknown mode
+						error(['SpikeData.spikesForAnalysis:' ...
+										'unknown option %s'], varargin{argI});
 				end
 			end
-			
+
+			% if channelNum is empty, get default channel and unit
+			if isempty(channelNum)
+				fprintf(['SpikeData.spikesForAnalysis:' ...
+									'using default channel & unit\n']);
+				[channelNum, unitNum] = obj.get_default_channel_and_unit;
+				if any(isempty([channelNum unitNum]))
+					error(['SpikeData.spikesForAnalysis:' ...
+									'no valid default channel & unit\n']);
+				end
+			end
+			% if unitNum is empty, locate first valid unit
+			if isempty(unitNum)
+				unitNum = obj.get_default_unit(channelNum);
+				if isempty(unitNum)
+					error(['SpikeData.spikesForAnalysis:' ...
+									'no valid default unit for channel %d\n'], ...
+									channelNum);
+				end					
+			end
+						
 			%--------------------------------------
-			% process data
+			% select valid timestamps/table entries
 			%--------------------------------------
 			% get valid rows for file
 			file_rows = (obj.Spikes.TS >= obj.Info.fileStartTime(fileNum)) & ...
 									(obj.Spikes.TS <= obj.Info.fileEndTime(fileNum));
 			% get reduced table
-			vS = obj.Spikes( file_rows, :);
+			tmpS = obj.Spikes( file_rows, :);
+			% get indices for channel and unit
+			channel_rows = obj.Spikes.Channel == channelNum;
+			unit_rows = obj.Spikes.Unit == unitNum;
+			% reduce table to valid channel and unit
+			vS = tmpS( (channel_rows && unit_rows), :);
+			% clear tmpS
+			clear tmpS
 			
+			%--------------------------------------
+			% process sweeps
+			%--------------------------------------
 			% number of sweeps for this file
 			nsweeps = length(obj.Info.sweepStartTime{fileNum});
 			% some checks
@@ -323,13 +482,16 @@ classdef SpikeData
 				spikesBySweep{s}{:, 'TS'} = spikesBySweep{s}{:, 'TS'} - alignval(s);
 			end
 		end
+		%-------------------------------------------------------
 		
 
 		%-------------------------------------------------------
-		% get table of spikes for a specific file, unit and by sweep
 		%-------------------------------------------------------
 		function spikesBySweep = spikesForAnalysisByUnit(obj, fileNum, ...
 																			unitNum, varargin)
+		%-------------------------------------------------------
+		% get table of spikes for a specific file, unit and by sweep
+		%-------------------------------------------------------
 			%--------------------------------------
 			% process options and inputs
 			%--------------------------------------
