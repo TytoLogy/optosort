@@ -326,20 +326,7 @@ classdef SpikeData
 			%--------------------------------------
 			% select valid timestamps/table entries
 			%--------------------------------------
-%{
-			% get valid rows for file
-			file_rows = (obj.Spikes.TS >= obj.Info.fileStartTime(fileNum)) & ...
-									(obj.Spikes.TS <= obj.Info.fileEndTime(fileNum));
-			% get reduced table
-			tmpS = obj.Spikes( file_rows, :);
-			% get indices for channel and unit
-			channel_rows = obj.Spikes.Channel == channelNum;
-			unit_rows = obj.Spikes.Unit == unitNum;
-			% reduce table to valid channel and unit
-			vS = tmpS( (channel_rows & unit_rows), :);
-			% clear tmpS
-			clear tmpS
-%}
+
 			tmpS = obj.spikesForFile(fileNum);
 			% get indices for channel and unit
 			channel_rows = tmpS.Channel == channelNum;

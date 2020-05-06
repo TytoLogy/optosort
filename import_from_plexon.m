@@ -178,33 +178,3 @@ extractTimeStamps
 
 S.plotUnitWaveforms(S.listUnits);
 
-
-%% need to adjust spike times to start of each sweep
-%{
-for f = 1:nexInfo.nFiles
-	% shift spike times to correspond to start of each data file
-	
-	% get offset to apply to timestamps (in seconds)
-	ts_offset = nexInfo.fileStartTime(f);
-	
-	for 
-	% make a local copy...
-	tmpS = spikesByFile{f}(:, TS_COL);
-	% ...and subtract fileStartTime in seconds from all time stamps
-	tmpS = tmpS - nexInfo.fileStartTime(f);
-	% put back into spikes ByFile
-	spikesByFile{f}(:, TS_COL) = tmpS;
-end
-%}
-
-%% convert spikes to table
-% 
-% Channel = spikesAll(:, CHAN_COL);
-% Unit = spikesAll(:, UNIT_COL);
-% TS = spikesAll(:, TS_COL);
-% PCAmat = spikesAll(:, PCA_COL);
-% WAVmat = spikesAll(:, WAV_COL);
-% PCA = num2cell(PCAmat, 2);
-% WAV = num2cell(WAVmat, 2);
-% 
-% T = table(Channel, Unit, TS, PCA, WAV)
