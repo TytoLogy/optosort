@@ -40,19 +40,27 @@ sepstr = '----------------------------------------------------';
 % sortedPath = '~/Work/Data/TestData/MT';
 % rawPath = sortedPath;
 % nexPath = sortedPath;
+% nexFile = '1382_20191212_02_02_3200_MERGE.nex';
+
+%------------------------------------------------------------------------
+%{
 sortedPath = '/Users/sshanbhag/Work/Data/TestData/MT/1407';
 rawPath = sortedPath;
 nexPath = sortedPath;
-
-% nexinfo file
 nexInfoFile = '1407_20200309_03_01_1350_BBN_nexinfo.mat';
-
-% nex file
-% nexFile = '1382_20191212_02_02_3200_MERGE.nex';
 nexFile = '1407_20200309_03_01_1350_BBN.nex';
-
-% plx file
 plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
+%}
+%------------------------------------------------------------------------
+
+%------------------------------------------------------------------------
+sortedPath = '/Users/sshanbhag/Work/Data/TestData/MT/1408';
+rawPath = sortedPath;
+nexPath = sortedPath;
+nexInfoFile = '1408_20200319_02_01_950_WAV_nexinfo-ch1,2,5,12,15.mat';
+nexFile = '1408_20200319_02_01_950_WAV-ch1,2,5,12,15.nex';
+plxFile = '1408_20200319_02_01_950_WAV-ch1,2,5,12,15-01-KmeansScan.plx';
+%------------------------------------------------------------------------
 
 fprintf('\n%s\n', sepstr);
 fprintf('import_from_plexon running...\n');
