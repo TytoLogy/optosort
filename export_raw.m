@@ -229,7 +229,7 @@ if isempty(RawFileName)
 	if nFiles > 1
 		% append MERGE to filename
 		RawFileName = [	F(1).fileWithoutOther '_' ...
-								'MERGE.nex'];
+								'MERGE.bin'];
 	else
 		RawFileName = [	F(1).base '.bin'];
 	end

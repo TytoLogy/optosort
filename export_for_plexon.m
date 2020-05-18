@@ -120,7 +120,7 @@ function varargout = export_for_plexon(varargin)
 %------------------------------------------------------------------------
 sepstr = '----------------------------------------------------';
 NEX_UTIL_PATH = ['~/Work/Code/Matlab/stable/Toolbox/NeuroExplorer' ...
-					'/HowToReadAndWriteNexAndNex5FilesInMatlab'];
+					'/NexTools'];
 % filter info
 defaultFilter = [];
 
@@ -232,29 +232,21 @@ for f = 1:nFiles
 end
 fprintf('Animal: %s\n', F(1).animal);
 
-%------------------------------------------------------------------------
-% If not provided, create output .nex file name - adjust depending on # of files
-%	assume data from first file is consistent with others!!!!!!!!!
-%------------------------------------------------------------------------
-if isempty(NexFileName)
-	if nFiles > 1
-		% append MERGE to filename
-		NexFileName = [	F(1).fileWithoutOther '_' ...
-								'MERGE.nex'];
-	else
-		NexFileName = [	F(1).base '.nex'];
-	end
-end
 
+%------------------------------------------------------------------------
+% get the data and information from the raw files
+%------------------------------------------------------------------------
+[cSweeps, nexInfo] = read_data_for_export(F, Channels, BPfilt);
+
+%{
 %------------------------------------------------------------------------
 % create nexInfo object (SpikeInfo) to hold sweep/file bin and time data
 %------------------------------------------------------------------------
 nexInfo = SpikeInfo();
 nexInfo.FileName = fullfile(NexFilePath, NexFileName);
 % create output _nexinfo.mat file name - base is same as .nex file
-[~, nibase] = fileparts(nexInfo.FileName);
-nexInfo.InfoFileName = fullfile(NexFilePath, [nibase '_nexinfo.mat']);
-clear nibase
+[~, baseName] = fileparts(nexInfo.FileName);
+nexInfo.InfoFileName = fullfile(NexFilePath, [baseName '_nexinfo.mat']);
 % store channel information
 nexInfo.ADchannel = Channels;
 
@@ -411,6 +403,27 @@ for f = 1:nFiles
 	nexInfo.stimStartBin{f} = nexInfo.fileStartBin(f) + cInfo{f}.stimStartBin;
 	nexInfo.stimEndBin{f} = nexInfo.fileStartBin(f) + cInfo{f}.stimEndBin;
 end
+%}
+
+
+%------------------------------------------------------------------------
+% If not provided, create output .nex file name - adjust depending on # of files
+%	assume data from first file is consistent with others!!!!!!!!!
+%------------------------------------------------------------------------
+if isempty(NexFileName)
+	if nFiles > 1
+		% append MERGE to filename
+		NexFileName = [	F(1).fileWithoutOther '_' ...
+								'MERGE.nex'];
+	else
+		NexFileName = [	F(1).base '.nex'];
+	end
+end
+nexInfo.FileName = fullfile(NexFilePath, NexFileName);
+% create output _nexinfo.mat file name - base is same as .nex file
+[~, baseName] = fileparts(nexInfo.FileName);
+nexInfo.InfoFileName = fullfile(NexFilePath, [baseName '_nexinfo.mat']);
+
 
 %------------------------------------------------------------------------
 % convert (concatenate) cSweeps to vector for each channel, 
@@ -424,7 +437,7 @@ sendmsg('Adding continuous and event data to nex struct:');
 fprintf('Exporting data to %s\n', nexInfo.FileName);
 
 % start new nex file data struct
-nD = nexCreateFileData(Fs);
+nD = nexCreateFileData(nexInfo.Fs);
 
 % loop through channels
 for c = 1:nChannels
@@ -440,7 +453,7 @@ for c = 1:nChannels
 	%	tmpVector = cell2mat(tmp);
 	%  add to nex struct:
 	%	[nexFile] = nexAddContinuous( nexFile, startTime, adFreq, values, name)
-	nD = nexAddContinuous(nD, nexInfo.fileStartTime(1), Fs, ...
+	nD = nexAddContinuous(nD, nexInfo.fileStartTime(1), nexInfo.Fs, ...
 									cell2mat([cVector{:}]), ...
 									sprintf('spikechan_%d', Channels(c)));
 	% clear cVector to save memory
@@ -478,83 +491,10 @@ if nargout
 	varargout{1} = nD;
 	if nargout > 1
 		varargout{2} = nexInfo;
-		varargout{3} = cInfo;
+% 		varargout{3} = cInfo;
 	end
 end
 %------------------------------------------------------------------------
 % END OF MAIN FUNCTION DEFINITION
 %------------------------------------------------------------------------
-end
 
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-% NESTED FUNCTIONS
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-function varargout = defineSampleData(varargin)
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-% defineSampleData.m
-%------------------------------------------------------------------------
-% defines path to sample data for testing
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-	Channels = [];
-	
-	% check inputs 
-	if nargin == 0
-		% do something to get data files from user !!!!
-		DataPath = {};
-		DataFile = {};
-		TestFile = {};
-		Channels = [];
-	elseif nargin == 3
-		% assign values to DataPath, DataFile and TestFile
-		DataPath = varargin{1};
-		DataFile = varargin{2};
-		TestFile = varargin{3};
-	else
-		error('%s->defineSampleData: invalid inputs', mfilename)
-	end
-
-	% loop through # of data files, create file objects
-	for f = 1:length(DataFile)
-		if length(DataPath) == 1
-			% only 1 element in DataPath so assume all data files are on this
-			% path
-			F(f) = OptoFileName(fullfile(DataPath{1}, DataFile{f})); %#ok<AGROW>
-		else
-			F(f) = OptoFileName(fullfile(DataPath{f}, DataFile{f})); %#ok<AGROW>
-		end
-		F(f).testfile = TestFile{f};  %#ok<AGROW>
-	end	
-	
-	% assign outputs
-	varargout{1} = F;
-	if nargout == 2
-		varargout{2} = Channels;
-	end
-	
-end
-
-
-
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-function sendmsg(msgstr)
-%------------------------------------------------------------------------
-% sendmsg(msgstr)
-%------------------------------------------------------------------------
-% displays message between two separation strings of dashes
-%------------------------------------------------------------------------
-% Input Arguments:
-% 	msgstr		string to display
-% Output Arguments:
-% 	none
-%------------------------------------------------------------------------
-	sepstr = '----------------------------------------------------';
-	fprintf('%s\n%s\n%s\n', sepstr, msgstr, sepstr);
-end
