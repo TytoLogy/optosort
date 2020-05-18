@@ -1,6 +1,6 @@
 function varargout = export_raw(varargin)
 %------------------------------------------------------------------------
-% [nD, nexInfo] = export_raw(exportInfo)
+% [nD, expInfo] = export_raw(exportInfo)
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
@@ -74,7 +74,7 @@ function varargout = export_raw(varargin)
 %
 % Output Arguments:
 % 	nD		NeuroExplorer nex data struct written to output file
-%	nexInfo	SpikeInfo object
+%	expInfo	SpikeInfo object
 
 % OLD:
 %     nexInfo struct with information about data written to .nex file:
@@ -109,7 +109,9 @@ function varargout = export_raw(varargin)
 sepstr = '----------------------------------------------------';
 % filter info
 defaultFilter = [];
-
+% valid output formats (binary)
+ValidFormats =	{	'int16', 'uint16', 'int8', ...
+						'float32', 'float64', 'single', 'double'};
 %------------------------------------------------------------------------
 % Setup
 %------------------------------------------------------------------------
@@ -155,6 +157,16 @@ if nargin == 1
 	else
 		Channels = tmp.Channels;
 	end
+	% check output format
+	if isfield(tmp, 'format')
+		if ~any(strcmpi(tmp.OutputFormat, ValidFormats))
+			error('%s: invalid output format %s\n', mfilename, tmp.OutputFormat);
+		else
+			OutputFormat = tmp.OutputFormat;
+		end
+	else
+		OutputFormat = 'float32';
+	end
 	% filter options
 	if isfield(tmp, 'BPfilt')
 		BPfilt = tmp.BPfilt;
@@ -173,10 +185,10 @@ if nargin == 1
 				error('%s: output directory %s not found', mfilename, tmp.OutputPath);
 			end
 		end
-		NexFilePath = tmp.OutputPath;
+		OutputPath = tmp.OutputPath;
 	else
 		% create empty field
-		NexFilePath = '';
+		OutputPath = '';
 	end
 	
 	if isfield(tmp, 'OutputFile')
@@ -193,6 +205,8 @@ else
 	% for now use default filter - probably want to have UI for user to
 	% specify
 	BPfilt = defaultFilter;
+	% default output format is 32 bit floating point
+	OutputFormat = 'float32';
 end
 
 % # channel(s) of data to obtain
@@ -224,27 +238,26 @@ end
 %------------------------------------------------------------------------
 % create nexInfo object (SpikeInfo) to hold sweep/file bin and time data
 %------------------------------------------------------------------------
-nexInfo = SpikeInfo();
-nexInfo.FileName = fullfile(NexFilePath, RawFileName);
+expInfo = SpikeInfo();
+expInfo.FileName = fullfile(OutputPath, RawFileName);
 % create output _nexinfo.mat file name - base is same as .nex file
-[~, nibase] = fileparts(nexInfo.FileName);
-nexInfo.InfoFileName = fullfile(NexFilePath, [nibase '_nexinfo.mat']);
-clear nibase
+[~, baseName] = fileparts(expInfo.FileName);
+expInfo.InfoFileName = fullfile(OutputPath, [baseName '_info.mat']);
 % store channel information
-nexInfo.ADchannel = Channels;
+expInfo.ADchannel = Channels;
 
 %------------------------------------------------------------------------
 % pre-allocate some things
 %------------------------------------------------------------------------
 % bins for start and end of each file's data
-nexInfo.fileStartBin = zeros(1, nFiles);
-nexInfo.fileEndBin = zeros(1, nFiles);
+expInfo.fileStartBin = zeros(1, nFiles);
+expInfo.fileEndBin = zeros(1, nFiles);
 % bins for all sweep starts and ends
-nexInfo.sweepStartBin = cell(1, nFiles);
-nexInfo.sweepEndBin = cell(1, nFiles);
+expInfo.sweepStartBin = cell(1, nFiles);
+expInfo.sweepEndBin = cell(1, nFiles);
 % bins for stim onset, offset
-nexInfo.stimStartBin = cell(1, nFiles);
-nexInfo.stimEndBin = cell(1, nFiles);
+expInfo.stimStartBin = cell(1, nFiles);
+expInfo.stimEndBin = cell(1, nFiles);
 
 % each file's sampling rate for neural data
 tmpFs = zeros(nFiles, 1);
@@ -334,12 +347,12 @@ for f = 1:nFiles
 	
 	% calculate overall start and end bins for each file's data
 	if f == 1
-		nexInfo.fileStartBin(f) = cInfo{f}.fileStartBin;
-		nexInfo.fileEndBin(f) = cInfo{f}.fileEndBin;
+		expInfo.fileStartBin(f) = cInfo{f}.fileStartBin;
+		expInfo.fileEndBin(f) = cInfo{f}.fileEndBin;
 	else
 		% add 1 to prior end bin for start
-		nexInfo.fileStartBin(f) = nexInfo.fileEndBin(f-1) + 1;
-		nexInfo.fileEndBin(f) = nexInfo.fileStartBin(f) + cInfo{f}.fileEndBin - 1;
+		expInfo.fileStartBin(f) = expInfo.fileEndBin(f-1) + 1;
+		expInfo.fileEndBin(f) = expInfo.fileStartBin(f) + cInfo{f}.fileEndBin - 1;
 	end
 	
 	% compute stimulus onset/offset bins for this file
@@ -347,10 +360,10 @@ for f = 1:nFiles
 		
 end
 
-% assign cInfo to nexInfo.FileData
-nexInfo.FileInfo = cInfo;
+% assign cInfo to expInfo.FileData
+expInfo.FileInfo = cInfo;
 % store filter info
-nexInfo.dataFilter = BPfilt;
+expInfo.dataFilter = BPfilt;
 
 sendmsg('Checking sample rates across files');
 % check sampling rates
@@ -359,7 +372,7 @@ if ~all(tmpFs(1) == tmpFs)
 else
 	% store overall sample rate
 	Fs = tmpFs(1);
-	nexInfo.Fs = Fs;
+	expInfo.Fs = Fs;
 	sendmsg(sprintf('Neural A/D Fs = %.4f', Fs));
 end
 
@@ -371,42 +384,59 @@ sendmsg('Building start and end sweep indices:');
 for f = 1:nFiles
 	% calculate start and end sweep bins for each file's data
 	if f == 1
-		nexInfo.sweepStartBin{f} = cInfo{f}.startSweepBin{1};
-		nexInfo.sweepEndBin{f} = cInfo{f}.endSweepBin{1};
+		expInfo.sweepStartBin{f} = cInfo{f}.startSweepBin{1};
+		expInfo.sweepEndBin{f} = cInfo{f}.endSweepBin{1};
 	else
 		% add previous file's final endSweepBin value as offset
-		nexInfo.sweepStartBin{f} = cInfo{f}.startSweepBin{1} + ...
-												nexInfo.sweepEndBin{f-1}(end);
-		nexInfo.sweepEndBin{f} = cInfo{f}.endSweepBin{1} + ...
-												nexInfo.sweepEndBin{f-1}(end);
+		expInfo.sweepStartBin{f} = cInfo{f}.startSweepBin{1} + ...
+												expInfo.sweepEndBin{f-1}(end);
+		expInfo.sweepEndBin{f} = cInfo{f}.endSweepBin{1} + ...
+												expInfo.sweepEndBin{f-1}(end);
 	end
 	
 	% for stim onset/offset, align to file start bin *** would this work for
 	% the sweep start and end computation above???? need to test!!!!!
-	nexInfo.stimStartBin{f} = nexInfo.fileStartBin(f) + cInfo{f}.stimStartBin;
-	nexInfo.stimEndBin{f} = nexInfo.fileStartBin(f) + cInfo{f}.stimEndBin;
+	expInfo.stimStartBin{f} = expInfo.fileStartBin(f) + cInfo{f}.stimStartBin;
+	expInfo.stimEndBin{f} = expInfo.fileStartBin(f) + cInfo{f}.stimEndBin;
 end
 
 %------------------------------------------------------------------------
-% convert (concatenate) cSweeps to vector for each channel, 
-% add to nex struct, create event times, add to nex struct, write to 
-% .nex file
+% create spyking params file
 %------------------------------------------------------------------------
-% to save on memory requirements, clear channel data after adding to nex
-% data struct.
+% get default params struct
+% filename is <output path>/<filename>.params
+params = default_spyking_params(fullfile(OutputPath, [baseName '.params']));
+params.Fs = Fs;
+params.OutputFormat = 'float32';
+params.nChannels = nChannels;
+params.DataOffset = 0;
+params.DataOffsetFormat = 'auto';
+params.Gain = 1;
+
 %------------------------------------------------------------------------
-sendmsg(sprintf('Exporting data to %s', nexInfo.FileName));
+% need to write parameters to config file
+%------------------------------------------------------------------------
+sendmsg(sprintf('Writing configuration data to %s', params.Filename));
+write_spyking_params(params);
+
+%------------------------------------------------------------------------
+% convert (concatenate) cSweeps to [nchannels, nsamples] matrix and write
+% to binary output file
+%------------------------------------------------------------------------
+sendmsg(sprintf('Exporting raw binary data to %s', expInfo.FileName));
 
 % open raw file
-fp = fopen(nexInfo.InfoFileName, 'wb');
+fp = fopen(expInfo.FileName, 'wb');
 
 % loop through files
 for f = 1:nFiles
+	fprintf('Writing data for %s\n', F(f).file);
 	% write data for this file
-	fwrite(fp, cell2mat([cSweeps{f}]), 'float64')
+	nw = fwrite(fp, cell2mat([cSweeps{f}]), OutputFormat);
 	% could also:
 	%	concatenate: tmp = [cVector{:}];
 	%	fwrite(fp, cell2mat(tmp), 'float64');
+	fprintf('\t%d values written\n', nw);
 end
 fclose(fp);
 
@@ -415,8 +445,8 @@ fclose(fp);
 %------------------------------------------------------------------------
 % save to matfile
 sendmsg(sprintf('Writing _nexinfo.mat file %s:', ...
-											nexInfo.InfoFileName));
-save(nexInfo.InfoFileName, 'nexInfo', '-MAT');
+											expInfo.InfoFileName));
+save(expInfo.InfoFileName, 'expInfo', '-MAT');
 
 %------------------------------------------------------------------------
 % output
@@ -424,7 +454,7 @@ save(nexInfo.InfoFileName, 'nexInfo', '-MAT');
 if nargout
 	varargout{1} = cSweeps;
 	if nargout > 1
-		varargout{2} = nexInfo;
+		varargout{2} = expInfo;
 		varargout{3} = cInfo;
 	end
 end
@@ -487,21 +517,82 @@ function varargout = defineSampleData(varargin)
 	
 end
 
-
-
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
-function sendmsg(msgstr)
+function varargout = write_spyking_params(varargin)
 %------------------------------------------------------------------------
-% sendmsg(msgstr)
 %------------------------------------------------------------------------
-% displays message between two separation strings of dashes
+% write_spyking_params
 %------------------------------------------------------------------------
-% Input Arguments:
-% 	msgstr		string to display
-% Output Arguments:
-% 	none
+% writes params file for Spyking Circus sorting
+% RAW_BINARY (read/parallel write)
+% 
+% | The parameters for RAW_BINARY file format are:
+% |
+% | -- sampling_rate -- <type 'float'> [** mandatory **]
+% | -- data_dtype -- <type 'str'> [** mandatory **]
+% | -- nb_channels -- <type 'int'> [** mandatory **]
+% |
+% | -- data_offset -- <type 'int'> [default is 0]
+% | -- dtype_offset -- <type 'str'> [default is auto]
+% | -- gain -- <type 'int'> [default is 1]
 %------------------------------------------------------------------------
-	sepstr = '----------------------------------------------------';
-	fprintf('%s\n%s\n%s\n', sepstr, msgstr, sepstr);
+%------------------------------------------------------------------------
+	if isempty(varargin)
+		params = default_spyking_params;
+	elseif isstruct(varargin{1})
+		params = varargin{1};
+	else
+		error('%s: input to write_spyking_params must be a struct or empty', ...
+					mfilename);
+	end
+	if isempty(params.Filename)
+		% write to stdout
+		fp = 1;
+	else
+		fp = fopen(params.Filename, 'w');
+	end
+	
+	fprintf(fp, '[data]\n');
+	fprintf(fp, 'file_format   = raw_binary\n');
+	% samples/second
+	fprintf(fp, 'sampling_rate = %.4f\n', params.Fs);
+	% should be int16,uint16,float32,...
+	fprintf(fp, 'data_dtype    = %s\n', params.OutputFormat);
+	% # of channels of output data (for demux the data)
+	fprintf(fp, 'nb_channels   = %d\n', params.nChannels);
+	% Optional, if a header with a fixed size is present
+	fprintf(fp, 'data_offset   = %d\n', params.DataOffset);
+	% Optional, if a header with a fixed size is present
+	fprintf(fp, 'dtype_offset  = %s\n', params.DataOffsetFormat);
+	% Optional, if you want a non unitary gain for the channels
+	fprintf(fp, 'gain          = %d\n', params.Gain);
+	if fp ~= 1
+		fclose(fp);
+	end
+	varargout{1} = params;
 end
+
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+function params = default_spyking_params(varargin)
+%------------------------------------------------------------------------
+% params = default_spyking_params(varargin)
+%------------------------------------------------------------------------
+% create default params file for Spyking Circus sorting
+%------------------------------------------------------------------------
+% Input: (optional) params filename
+%------------------------------------------------------------------------
+	if isempty(varargin)
+		params.Filename = 'config_default.params';
+	else
+		params.Filename = varargin{1};
+	end
+	params.Fs = 48828.1250;
+	params.OutputFormat = 'float32';
+	params.nChannels = 16;
+	params.DataOffset = 0;
+	params.DataOffsetFormat = 'auto';
+	params.Gain = 1;
+end
+
