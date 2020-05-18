@@ -221,6 +221,12 @@ for f = 1:nFiles
 end
 fprintf('Animal: %s\n', F(1).animal);
 
+
+%------------------------------------------------------------------------
+% get the data and information from the raw files
+%------------------------------------------------------------------------
+[cSweeps, expInfo] = read_data_for_export(F, Channels, BPfilt);
+
 %------------------------------------------------------------------------
 % If not provided, create output .nex file name - adjust depending on # of files
 %	assume data from first file is consistent with others!!!!!!!!!
@@ -234,18 +240,12 @@ if isempty(RawFileName)
 		RawFileName = [	F(1).base '.bin'];
 	end
 end
-
-%------------------------------------------------------------------------
-% create nexInfo object (SpikeInfo) to hold sweep/file bin and time data
-%------------------------------------------------------------------------
-expInfo = SpikeInfo();
 expInfo.FileName = fullfile(OutputPath, RawFileName);
 % create output _nexinfo.mat file name - base is same as .nex file
 [~, baseName] = fileparts(expInfo.FileName);
 expInfo.InfoFileName = fullfile(OutputPath, [baseName '_info.mat']);
-% store channel information
-expInfo.ADchannel = Channels;
 
+%{
 %------------------------------------------------------------------------
 % pre-allocate some things
 %------------------------------------------------------------------------
@@ -399,6 +399,8 @@ for f = 1:nFiles
 	expInfo.stimStartBin{f} = expInfo.fileStartBin(f) + cInfo{f}.stimStartBin;
 	expInfo.stimEndBin{f} = expInfo.fileStartBin(f) + cInfo{f}.stimEndBin;
 end
+%}
+
 
 %------------------------------------------------------------------------
 % create spyking params file
@@ -406,7 +408,7 @@ end
 % get default params struct
 % filename is <output path>/<filename>.params
 params = default_spyking_params(fullfile(OutputPath, [baseName '.params']));
-params.Fs = Fs;
+params.Fs = expInfo.Fs;
 params.OutputFormat = 'float32';
 params.nChannels = nChannels;
 params.DataOffset = 0;
@@ -455,7 +457,6 @@ if nargout
 	varargout{1} = cSweeps;
 	if nargout > 1
 		varargout{2} = expInfo;
-		varargout{3} = cInfo;
 	end
 end
 %------------------------------------------------------------------------
@@ -468,54 +469,6 @@ end
 % NESTED FUNCTIONS
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
-
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-function varargout = defineSampleData(varargin)
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-% defineSampleData.m
-%------------------------------------------------------------------------
-% defines path to sample data for testing
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-	Channels = [];
-	
-	% check inputs 
-	if nargin == 0
-		% do something to get data files from user !!!!
-		DataPath = {};
-		DataFile = {};
-		TestFile = {};
-		Channels = [];
-	elseif nargin == 3
-		% assign values to DataPath, DataFile and TestFile
-		DataPath = varargin{1};
-		DataFile = varargin{2};
-		TestFile = varargin{3};
-	else
-		error('%s->defineSampleData: invalid inputs', mfilename)
-	end
-
-	% loop through # of data files, create file objects
-	for f = 1:length(DataFile)
-		if length(DataPath) == 1
-			% only 1 element in DataPath so assume all data files are on this
-			% path
-			F(f) = OptoFileName(fullfile(DataPath{1}, DataFile{f})); %#ok<AGROW>
-		else
-			F(f) = OptoFileName(fullfile(DataPath{f}, DataFile{f})); %#ok<AGROW>
-		end
-		F(f).testfile = TestFile{f};  %#ok<AGROW>
-	end	
-	
-	% assign outputs
-	varargout{1} = F;
-	if nargout == 2
-		varargout{2} = Channels;
-	end
-	
-end
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
