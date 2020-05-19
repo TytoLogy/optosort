@@ -279,7 +279,8 @@ for c = 1:nChannels
 	for f = 1:nFiles
 		cVector{1, f} = cSweeps{f}(c, :);
 	end
-	% concatenate cell array, convert to vector, add to nex struct
+	% for each channels's data, concatenate cell array, convert to vector, 
+	% add to nex struct
 	% steps:
 	%	concatenate: tmp = [cVector{:}];
 	%	tmpVector = cell2mat(tmp);

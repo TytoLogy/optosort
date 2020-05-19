@@ -144,9 +144,18 @@ classdef SpikeInfo
 					val.(charfields{f}) = char(val.(charfields{f}));
 				end
 			end
-				
-				
 		end
+		
+		
+		%-------------------------------------------------
+		% Stimulus Onset/offset by type
+		%-------------------------------------------------
+% 		function val = getStimOnOffByType(obj)
+% 			
+% 			
+% 		end
+		
+		
 		%-------------------------------------------------
 		%-------------------------------------------------
 		% access for dependent properties
