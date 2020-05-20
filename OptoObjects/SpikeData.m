@@ -304,16 +304,16 @@ classdef SpikeData
 			end
 
 			% if channelNum is empty, get default channel and unit
-			if isempty(channelNum)
+			if isempty(channelNum) % CHANGE TO ALL CHANNELS
 				fprintf(['SpikeData.spikesForAnalysis:' ...
-									'using default channel & unit\n']);
+									'using all channels and units\n']);
 				[channelNum, unitNum] = obj.get_default_channel_and_unit;
 				if any(isempty([channelNum unitNum]))
 					error(['SpikeData.spikesForAnalysis:' ...
 									'no valid default channel & unit\n']);
 				end
 			end
-			% if unitNum is empty, locate first valid unit
+			% if unitNum is empty, locate first valid unit CHANGE TO ALL UNITS
 			if isempty(unitNum)
 				unitNum = obj.get_default_unit(channelNum);
 				if isempty(unitNum)
