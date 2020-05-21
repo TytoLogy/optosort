@@ -178,7 +178,21 @@ for f = 1:S.Info.nFiles
 	end
 end
 
-extractTimeStamps
+%% extract timestamps for use in analysis, raster plots, etc., separated by channel
+% convert to timestamps
+spikesForAnalysis = cell(S.Info.nFiles, S.Info.nChannels);
+
+% loop through files
+for f = 1:S.Info.nFiles
+	% loop through channels
+	for c = 1:S.Info.nChannels
+		fprintf('Getting spikes for file %d, channel %d\n', f, c);
+	
+		% extract timestamp data from each table, store in cell matrix
+		spikesForAnalysis{f, c} = S.spikesForAnalysis(f, 'Channel', c, 'align', 'sweep');
+	end
+end
+
 
 
 

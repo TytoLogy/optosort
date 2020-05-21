@@ -236,6 +236,7 @@ classdef SpikeData
 		%-------------------------------------------------------
 		
 		%-------------------------------------------------------
+		%-------------------------------------------------------
 		% get table of spikes for a specific file
 		%-------------------------------------------------------
 		function tbl = spikesForFile(obj, fileNum)
@@ -251,6 +252,7 @@ classdef SpikeData
 		end
 		%-------------------------------------------------------
 
+		%-------------------------------------------------------
 		%-------------------------------------------------------
 		function spikesBySweep = spikesForAnalysis(obj, fileNum, varargin)
 		%-------------------------------------------------------
@@ -303,33 +305,32 @@ classdef SpikeData
 				end
 			end
 
-			% if channelNum is empty, get default channel and unit
-			if isempty(channelNum) % CHANGE TO ALL CHANNELS
-				fprintf(['SpikeData.spikesForAnalysis:' ...
-									'using all channels and units\n']);
-				[channelNum, unitNum] = obj.get_default_channel_and_unit;
-				if any(isempty([channelNum unitNum]))
-					error(['SpikeData.spikesForAnalysis:' ...
-									'no valid default channel & unit\n']);
-				end
-			end
-			% if unitNum is empty, locate first valid unit CHANGE TO ALL UNITS
-			if isempty(unitNum)
-				unitNum = obj.get_default_unit(channelNum);
-				if isempty(unitNum)
-					error(['SpikeData.spikesForAnalysis:' ...
-									'no valid default unit for channel %d\n'], ...
-									channelNum);
-				end					
-			end
-						
 			%--------------------------------------
 			% select valid timestamps/table entries
 			%--------------------------------------
 			tmpS = obj.spikesForFile(fileNum);
-			% get indices for channel and unit
-			channel_rows = tmpS.Channel == channelNum;
-			unit_rows = tmpS.Unit == unitNum;
+			
+			% if channelNum is empty, get default channel and unit
+			if isempty(channelNum) % CHANGE TO ALL CHANNELS
+				fprintf(['SpikeData.spikesForAnalysis:' ...
+									'using all channels and units\n']);
+				channel_rows = true(size(tmpS.Channel));
+				unit_rows = true(size(tmpS.Channel));
+				channelNum = -1;
+				unitNum = -1;
+			else
+				% get indices for channel
+				channel_rows = tmpS.Channel == channelNum;
+			end
+			% if unitNum is empty, locate first valid unit CHANGE TO ALL UNITS
+			if isempty(unitNum)
+				fprintf(['SpikeData.spikesForAnalysis:' ...
+									'using all units for channel %d\n'], channelNum);
+				unit_rows = true(size(tmpS.Channel));
+			else
+				% get indices for unit
+				unit_rows = tmpS.Unit == unitNum;				
+			end
 			% reduce table to valid channel and unit
 			vS = tmpS( (channel_rows & unit_rows), :);
 			% clear tmpS

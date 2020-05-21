@@ -70,6 +70,8 @@ classdef CurveInfo
 		sweepLen
 		fileStartBin
 		fileEndBin
+		% validSweep = true(0); NOT SURE WHERE THIS SHOULD LIVE - or at what
+		% level....???????
 	end	% END properties (main)
 	properties (Dependent)
 		testtype
