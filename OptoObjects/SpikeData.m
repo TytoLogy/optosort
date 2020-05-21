@@ -310,22 +310,33 @@ classdef SpikeData
 			%--------------------------------------
 			tmpS = obj.spikesForFile(fileNum);
 			
-			% if channelNum is empty, get default channel and unit
-			if isempty(channelNum) % CHANGE TO ALL CHANNELS
+			% if channelNum is empty, use all channels and units
+			if isempty(channelNum)
 				fprintf(['SpikeData.spikesForAnalysis:' ...
 									'using all channels and units\n']);
 				channel_rows = true(size(tmpS.Channel));
-				unit_rows = true(size(tmpS.Channel));
+				unit_rows = true(size(tmpS.Channel)); %#ok<PREALL>
 				channelNum = -1;
 				unitNum = -1;
 			else
-				% get indices for channel
-				channel_rows = tmpS.Channel == channelNum;
+				% check channel provided
+				cchk = obj.check_channels(channelNum);
+				if any(cchk == -1)
+					fprintf('SpikeData.spikesForAnalysis: invalid channelNum %d\n', ...
+									channelNum(cchk == -1));
+					error('SpikeData.spikesForAnalysis: invalid channel');
+				end
+				% get indices for channel(s)
+				channel_rows = false(size(tmpS.Channel));
+				for c = 1:length(channelNum)
+					channel_rows = channel_rows | (tmpS.Channel == channelNum(c));
+				end
 			end
-			% if unitNum is empty, locate first valid unit CHANGE TO ALL UNITS
+			% if unitNum is empty, find all units
 			if isempty(unitNum)
 				fprintf(['SpikeData.spikesForAnalysis:' ...
 									'using all units for channel %d\n'], channelNum);
+				% set unit_rows to ones, size of tmpS.Channel
 				unit_rows = true(size(tmpS.Channel));
 			else
 				% get indices for unit
@@ -353,16 +364,19 @@ classdef SpikeData
 			switch ALIGN
 				case 'original'
 					% don't modify time stamp values
+					fprintf('SpikeData:spikesForAnalysis: no timestamp realignment\n');
 					alignval = zeros(nsweeps, 1);
 				case 'file'
 					% adjust timestamp value by first sweep start time for each
 					% file in the overall merged file used for sorting
+					fprintf('SpikeData:spikesForAnalysis: align timestamp to file start\n');
 					alignval = obj.Info.sweepStartTime{fileNum}(1) ...
 										* ones(nsweeps, 1);
 				case 'sweep'
 					% adjust timestamp value by each sweep start time - this is
 					% most useful when doing things like analysis and plots of
 					% data 
+					fprintf('SpikeData:spikesForAnalysis: align timestamp to sweep start\n');
 					alignval = obj.Info.sweepStartTime{fileNum};
 			end
 			

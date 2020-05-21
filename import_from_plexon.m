@@ -129,7 +129,7 @@ S = S.addPlexonSpikesFromPLXObj(P);
 
 %% save Sobject in file
 % get base from one of the file objects in S.Info
-sfile = [S.Info.FileData(1).F.fileWithoutOther '_Sobj.mat'];
+sfile = [S.Info.FileInfo{1}.F.fileWithoutOther '_Sobj.mat'];
 fprintf('\n%s\n', sepstr);
 fprintf('writing Sobj to file\n\t%s\n', fullfile(nexPath, sfile));
 fprintf('%s\n', sepstr);
@@ -162,20 +162,7 @@ end
 spikesBySweep = cell(S.Info.nFiles, 1);
 % loop through files
 for f = 1:S.Info.nFiles
-		spikesBySweep{f} = S.spikesForAnalysis(f, 'sweep');
-end
-
-%% extract timestamps for use in analysis, raster plots, etc., separated by channel
-% convert to timestamps
-spikesForAnalysis = cell(S.Info.nFiles, S.Info.nChannels);
-
-% loop through files
-for f = 1:S.Info.nFiles
-	% loop through channels
-	for c = 1:S.Info.nChannels
-		% extract timestamp data from each table, store in cell matrix
-		spikesForAnalysis{f, c} = S.spikesForAnalysis(f, 'Channel', c, 'align', 'sweep');
-	end
+		spikesBySweep{f} = S.spikesForAnalysis(f, 'align', 'sweep');
 end
 
 %% extract timestamps for use in analysis, raster plots, etc., separated by channel
@@ -193,10 +180,24 @@ for f = 1:S.Info.nFiles
 	end
 end
 
-
+%%
+tmp = S.spikesForAnalysis(f, 'Channel', S.Info.ADchannel, 'align', 'sweep');
 
 
 %% plot waveforms
 
 S.plotUnitWaveforms(S.listUnits);
+
+
+%%
+
+tmpS = S.spikesForFile(1);
+channel_rows = false(size(tmpS.Channel));
+for c = 3:5
+	channel_rows = channel_rows | (tmpS.Channel == S.Info.ADchannel(c));
+	cm(:, c) = channel_rows;
+end
+unique(tmpS.Channel(channel_rows, :))
+
+
 
