@@ -30,6 +30,7 @@ classdef PLXData
 		P
 	end
 	properties (Dependent)
+		hasContinuousData
 		plxfile
 	end
 	
@@ -40,9 +41,14 @@ classdef PLXData
 		% Constructor
 		%------------------------------------------------------------------------
 		function obj = PLXData(varargin)
-		% inputs:
-		%	PLXFile		path and filename	
-			% if no inputs, we're done
+		% PLXDataObject = PLXData()
+		% 	with no input args, creates empty PLXData object
+		% PLXDataObject = PLXData(plx_file_name, <options>)
+		% 	given a plx filename, data from the plx file will be read using 
+		% 	readPLXFileC and stored	in the P as a struct. options to be passed
+		% 	to readPLXFileC can be given after the filename
+		% PLXDataObject = PLXData(struct_from_readPLXFileC)
+		% 	assigns the input data to P
 			if isempty(varargin)
 				return;
 			end
@@ -72,7 +78,6 @@ classdef PLXData
 					% use provided options
 					obj.P = obj.read_plx_file(obj.plxfile, varargin{2:end});
 				end
-					
 				
 			elseif isstruct(varargin{1})
 				% if struct, assume it is output from readPLXFileC
@@ -213,6 +218,34 @@ classdef PLXData
 		end
 		%------------------------------------------------------------------------
 		
+		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
+		% returns PLXstruct.ContinuousChannels struct
+		%------------------------------------------------------------------------
+		function val = getContinuousData(obj)
+		%------------------------------------------------------------------------
+		% val = getContinuousData
+		%------------------------------------------------------------------------
+		% returns ContinuousChannls struct array (if loaded from plx file),
+		% otherwise returns empty array
+		%	ContinuousChannels struct fields:
+		% 		Name: 'spikechan_4'
+		% 		Channel: 0
+		% 		SpikeChannel: 1
+		% 		SourceID: 101
+		% 		ChannelID: 0
+		% 		Comment: ''
+		% 		Enabled: 1
+		% 		ADFrequency: 48828
+		% 		ADGain: 580
+		% 		PreAmpGain: 1
+		%------------------------------------------------------------------------
+			if obj.hasContinuousData
+				val = obj.P.ContinuousChannels;
+			else
+				val = [];
+			end
+		end
 		
 		
 		%------------------------------------------------------------------------
@@ -241,6 +274,14 @@ classdef PLXData
 		end			
 		%------------------------------------------------------------------------
 
+		function val = get.hasContinuousData(obj)
+			if any(obj.P.ContSampleCounts > 0)
+				val = true;
+			else
+				val = false;
+			end
+		end
+		
 	end % END OF METHODS (general)
 	
 	methods (Static)

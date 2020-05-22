@@ -59,7 +59,10 @@ rawPath = sortedPath;
 nexPath = sortedPath;
 nexInfoFile = '1408_20200319_02_01_950_WAV_nexinfo-ch1,2,5,12,15.mat';
 nexFile = '1408_20200319_02_01_950_WAV-ch1,2,5,12,15.nex';
-plxFile = '1408_20200319_02_01_950_WAV-ch1,2,5,12,15-01-KmeansScan.plx';
+% file without continuous data
+% plxFile = '1408_20200319_02_01_950_WAV-ch1,2,5,12,15-01-KmeansScan.plx';
+% file with continuous data
+plxFile = '1408_20200319_950_WAV_ch1,2,5,12,15-01-SORTEDContKmeansScan.plx';
 %------------------------------------------------------------------------
 
 fprintf('\n%s\n', sepstr);
@@ -115,17 +118,20 @@ nexInfo.fData.F
 
 %% create SpikeData object
 S = SpikeData();
-fprintf('\n%s\n', sepstr);
-fprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexPath, nexInfoFile));
-fprintf('%s\n', sepstr);
+sendmsg(sprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexPath, nexInfoFile)));
 % read nexinfo from file
 S.Info = SpikeInfo('file', fullfile(nexPath, nexInfoFile));
-
 % get plx data
-P = PLXData(fullfile(sortedPath, plxFile));
+Plx = PLXData(fullfile(sortedPath, plxFile), 'all', 'continuous');
 
-% add spikes
-S = S.addPlexonSpikesFromPLXObj(P);
+
+%% add spikes
+S = S.addPlexonSpikesFromPLXObj(Plx);
+% add Continuous Data
+if Plx.hasContinuousData
+	sendmsg('Adding ContinuousChannels data to SpikeData');
+	S = S.addContinuousDataFromPLXObj(Plx);
+end
 
 %% save Sobject in file
 % get base from one of the file objects in S.Info
@@ -159,15 +165,15 @@ end
 
 %% OBJ - don't separate by unit - can do posthoc
 % store spikes for each file in spikes ByStim, all units
-spikesBySweep = cell(S.Info.nFiles, 1);
+spikesByFile = cell(S.Info.nFiles, 1);
 % loop through files
 for f = 1:S.Info.nFiles
-		spikesBySweep{f} = S.spikesForAnalysis(f, 'align', 'sweep');
+		spikesByFile{f} = S.spikesForAnalysis(f, 'align', 'sweep');
 end
 
 %% extract timestamps for use in analysis, raster plots, etc., separated by channel
 % convert to timestamps
-spikesForAnalysis = cell(S.Info.nFiles, S.Info.nChannels);
+spikesByFileChannelSweep = cell(S.Info.nFiles, S.Info.nChannels);
 
 % loop through files
 for f = 1:S.Info.nFiles
@@ -181,7 +187,7 @@ for f = 1:S.Info.nFiles
 end
 
 %%
-tmp = S.spikesForAnalysis(f, 'Channel', S.Info.ADchannel, 'align', 'sweep');
+spikesBySweep = S.spikesForAnalysis(f, 'Channel', S.Info.ADchannel, 'align', 'sweep');
 
 
 %% plot waveforms

@@ -11,9 +11,10 @@ classdef SpikeData
 % 					TS				timestamp (seconds)
 % 					PCA			PCA values (not valid for data imported 
 % 									 directly from plx file
-% 					Wave			Wave snippet data					
+% 					Wave			Wave snippet data
+% Continuous	Continuous Data
 % plxvar		variable names from Plexon 
-% 					(used when imported exported MAT)
+% 					(used when imported exported MAT from OfflineSorter)
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -24,30 +25,49 @@ classdef SpikeData
 %
 % Revisions:
 %	30 Apr 2020 (SJS): changing addPlexonSpikes to addPlexonSpikesFromMat
+%	various dates (SJS): altered spikesforanalysis method
+%	22 May, 2020 (SJS): added Continuous to hold continuous data
 %------------------------------------------------------------------------
 % TO DO: how to handle multiple channels?????
 %------------------------------------------------------------------------
 
 	properties
-	% Info		SpikeInfo object
-	% Spikes		sorted spikes in table object
-	% plxvar		variable names from Plexon
+	% Info			SpikeInfo object
+	% Spikes			sorted spikes in table object
+	% Continuous	Continuous Data
+	% plxvar			variable names from Plexon
 		Info
 		Spikes
+		Continuous
 		plxvar
+	end
+	properties (Dependent)
+		hasContinuousData
 	end
 	
 	methods
+		
+		%-------------------------------------------------------
+		%-------------------------------------------------------
+		% Constructor
+		%-------------------------------------------------------
+		% [SpikeDataObj] = SpikeData(SpikeInfo, SpikesTable, ContinuousData,
+		%																			plxvars)
+		%-------------------------------------------------------
 		function obj = SpikeData(varargin)
 			if length(varargin) ~= 2
 				return;
 			end
 			obj.Info = varargin{1};
 			obj.Spikes = varargin{2};
-			if length(varargin) == 3
-				plxvars = varargin{3}; %#ok<NASGU>
+			if length(varargin) > 2;
+				obj.Continuous = varargin{3};
+			end
+			if length(varargin) == 4
+				obj.plxvar = varargin{4};
 			end
 		end
+		%-------------------------------------------------------
 		
 		%-------------------------------------------------------
 		%-------------------------------------------------------
@@ -128,18 +148,35 @@ classdef SpikeData
 			obj.Spikes.Properties.VariableUnits = vUnits;			
 		end
 		%-------------------------------------------------------
+		
+		%-------------------------------------------------------
+		%-------------------------------------------------------
+		function obj = addContinuousDataFromPLXObj(obj, Pobj)
+		%-------------------------------------------------------
+		% adds continuousChannels data from Pobj to SpikeData.Continuous
+		%-------------------------------------------------------
+			if Pobj.hasContinuousData
+				obj.Continuous = Pobj.P.ContinuousChannels;
+			else
+				warning(['SpikeData.addContinuousDataFromPLXObj: ' ...
+								'Pobj has no continupis channel data'])
+				obj.Continuous = [];
+			end
+		end
+		%-------------------------------------------------------
+		
 				
 		%-------------------------------------------------------
 		%-------------------------------------------------------
-		function obj = addPlexonInfo(obj, plxInfo)
+		function obj = addPlexonInfo(obj, SpikeInfo)
 		%-------------------------------------------------------
 		% assign plexon information obj (SpikeInfo obj) 
 		%-------------------------------------------------------
-			if ~isstruct(plxInfo)
+			if ~isstruct(SpikeInfo)
 				error('need struct as input');
 			end
 			% initialize info object
-			obj.Info = plxInfo;
+			obj.Info = SpikeInfo;
 		end
 		%-------------------------------------------------------
 		
@@ -652,17 +689,17 @@ classdef SpikeData
 		% get/set access for dependent properties
 		%------------------------------------------------------------------------
 		%------------------------------------------------------------------------
-
-% 		% returns spikes table
-% 		function tbl = get.Spikes(obj)
-% 			tbl = obj.Spikes;
-% 		end
+		% continuous data?
+		function val = get.hasContinuousData(obj)
+			val = ~isempty(obj.Continuous);
+		end
 		
 	end	% END OF METHODS (general)
 	%------------------------------------------------------------------------
 	%------------------------------------------------------------------------
 	%------------------------------------------------------------------------
 	%------------------------------------------------------------------------
+
 	
 	%------------------------------------------------------------------------
 	%------------------------------------------------------------------------
