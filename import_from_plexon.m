@@ -36,24 +36,29 @@ end
 % string used to separate text 
 sepstr = '----------------------------------------------------';
 
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 % data locations
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+
 % sortedPath = '~/Work/Data/TestData/MT';
 % rawPath = sortedPath;
 % nexPath = sortedPath;
 % nexFile = '1382_20191212_02_02_3200_MERGE.nex';
 
 %------------------------------------------------------------------------
-%{
+
 sortedPath = '/Users/sshanbhag/Work/Data/TestData/MT/1407';
 rawPath = sortedPath;
 nexPath = sortedPath;
 nexInfoFile = '1407_20200309_03_01_1350_BBN_nexinfo.mat';
 nexFile = '1407_20200309_03_01_1350_BBN.nex';
 plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
-%}
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
+%{
 sortedPath = '/Users/sshanbhag/Work/Data/TestData/MT/1408';
 rawPath = sortedPath;
 nexPath = sortedPath;
@@ -63,6 +68,9 @@ nexFile = '1408_20200319_02_01_950_WAV-ch1,2,5,12,15.nex';
 % plxFile = '1408_20200319_02_01_950_WAV-ch1,2,5,12,15-01-KmeansScan.plx';
 % file with continuous data
 plxFile = '1408_20200319_950_WAV_ch1,2,5,12,15-01-SORTEDContKmeansScan.plx';
+%}
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
 fprintf('\n%s\n', sepstr);
@@ -173,16 +181,16 @@ end
 
 %% extract timestamps for use in analysis, raster plots, etc., separated by channel
 % convert to timestamps
-spikesByFileChannelSweep = cell(S.Info.nFiles, S.Info.nChannels);
+spikesForAnalysis = cell(S.Info.nFiles, S.Info.nChannels);
 
 % loop through files
 for f = 1:S.Info.nFiles
 	% loop through channels
 	for c = 1:S.Info.nChannels
-		fprintf('Getting spikes for file %d, channel %d\n', f, c);
-	
+		fprintf('Getting spikes for file %d, channel %d\n', f, S.Info.ADchannel(c));
 		% extract timestamp data from each table, store in cell matrix
-		spikesForAnalysis{f, c} = S.spikesForAnalysis(f, 'Channel', c, 'align', 'sweep');
+		spikesForAnalysis{f, c} = S.spikesForAnalysis(f, ...
+									'Channel', S.Info.ADchannel(c), 'align', 'sweep');
 	end
 end
 

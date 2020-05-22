@@ -25,6 +25,9 @@ classdef CurveInfo
 % fileStartBin		sample for start of file in merged file
 % fileEndBin		sample for end of file in merged data file
 % 
+% validSweep		logical vector [nsweeps, 1], true for sweeps with valid
+%						(no artifact, etc) data
+%
 % Dependent properties:
 % 	testtype
 % 	testname
@@ -71,7 +74,8 @@ classdef CurveInfo
 		fileStartBin
 		fileEndBin
 		% validSweep = true(0); NOT SURE WHERE THIS SHOULD LIVE - or at what
-		% level....???????
+		% level....??????? try here for now
+		validSweep = true(0);
 	end	% END properties (main)
 	properties (Dependent)
 		testtype
@@ -108,8 +112,12 @@ classdef CurveInfo
 				return
 			end
 			if isstruct(varargin{1})
+				% save Dinf
 				obj.Dinf = varargin{1};
+				% extract filename, convert to optofilename object
 				obj.F = OptoFileName(obj.Dinf.filename);
+				% initialize validSweep
+				obj.validSweep = true(obj.Dinf.nread, 1);
 				% if necessary, convert stimtype and curvetype to strings
 				% not all tests (WAV) have stimcache...
 				if isfield(obj.Dinf.test, 'stimcache')
