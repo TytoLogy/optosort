@@ -71,6 +71,13 @@ fprintf('p = %.2f\nq = %.2f\n', p, q);
 fprintf('Error abs( (p/q)*Fs_old - Fs_new): %.12f\n', abs( (p/q)*Fs_old - Fs_new));
 
 x = D{1}.datatrace;
+% length (# rows) of matrix
+Lx = size(D{1}.datatrace, 1);
+
+% get filter
+hh = getMatrixFIR(p, q, Lx, N, bta);
+
+%%
 
 pqmax = max(p,q);
 % design filter
