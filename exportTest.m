@@ -208,7 +208,7 @@ exportOpts.OutputFile = 'FRA.nex';
 
 % 1407 multichannel
 exportOpts.DataPath = '/Users/sshanbhag/Work/Data/TestData/MT/1407';
-exportOpts.OutputPath = '/Users/sshanbhag/Work/Data/TestData/MT/1407';
+exportOpts.OutputPath = '/Users/sshanbhag/Work/Data/TestData/working';
 exportOpts.DataFile = '1407_20200309_03_01_1350_BBN.dat';
 exportOpts.OutputFile = '1407_20200309_03_01_1350_BBN.nex';
 exportOpts.TestFile = '1407_20200309_03_01_1350_BBN_testdata.mat';
@@ -237,7 +237,7 @@ exportOpts.BPfilt.type = 'butter';
 %------------------------------------------------------------------------
 % resample data to nearest lower integer value?
 %------------------------------------------------------------------------
-exportOpts.resampleData = true;
+exportOpts.resampleData = 48820;
 
 %------------------------------------------------------------------------
 % run!

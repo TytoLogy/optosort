@@ -75,31 +75,17 @@ function varargout = export_for_plexon(varargin)
 %		 exportOpts.BPfilet.type = 'bessel';
 % 
 %	exportInfo.resampleData
-% 		resample data to nearest-lower integer value?
-%		Default: true
+% 		change data sampling rate to resampleData rate (samples/second)
+%		Default: no resampling
 % 		For exporting to many software packages for sorting, integer values are
 % 		needed.
-% 		if true, A/D data will be resampled so that sampling rate is an integer
-% 		value. i.e., 48828.125 will be converted to 48828 samples/second
-% 		if false, no change will be made to sampling rate.
+% 		if value is provided, A/D data will be resampled i.e., original
+%		rate of 48828.125 samples/second will be converted to resampleData value 
+% 		if empty or not specified, no change will be made to sampling rate.
 % 
-%
 % Output Arguments:
 % 	nD		NeuroExplorer nex data struct written to output file
 %	nexInfo	SpikeInfo object
-
-% OLD:
-%     nexInfo struct with information about data written to .nex file:
-% 		NexFileName			name of _nexinfo.mat file
-% 		fData					array of CurveInfo objects with info about data files
-% 		sweepStartBin		sample index for sweep start
-% 		sweepEndBin			sample index for sweep end
-% 		fileStartBin		sample index for data start for each data file
-% 		fileEndBin			sample index for data end for each data file
-% 		startTimes			start times (seconds) for each sweep
-% 		endTimes				end times (seconds) for each sweep
-% 		fileStartTime		start times (seconds) for data from each file
-% 		fileEndTime			end times (seconds) for data from each file
 %------------------------------------------------------------------------
 % See also: SpikeInfo, CurveInfo, WAVInfo classes
 %------------------------------------------------------------------------
@@ -133,8 +119,8 @@ NEX_UTIL_PATH = ['~/Work/Code/Matlab/stable/Toolbox/NeuroExplorer' ...
 					'/NexTools'];
 % filter info
 defaultFilter = [];
-% resample data? default is true
-resampleData = true;
+% resample data? default is no
+defaultResampleRate = [];
 
 %------------------------------------------------------------------------
 % Setup
@@ -202,7 +188,10 @@ if nargin == 1
 	% resample?
 	if isfield(tmp, 'resampleData')
 		resampleData = tmp.resampleData;
+	else
+		resampleData = defaultResampleRate;
 	end
+	
 	% define path to data file and data file for testing
 	F = defineSampleData(tmp.DataPath, tmp.DataFile, tmp.TestFile);
 	

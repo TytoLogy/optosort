@@ -62,13 +62,15 @@ dData = double(S.Continuous(cIndx).Values) / double(Plx.P.ContMaxMagnitudeMV);
 
 % specify sample rates
 Fs_old = S.Info.Fs;
-Fs_new = floor(Fs_old);
+Fs_new = 48820;
 fprintf('Original Sample Rate: %.4f\n', Fs_old);
 fprintf('Resampled SampleRate: %.4f\n', Fs_new);
 
 % determine ratio via closest rational approximation
 [p, q] = rat(Fs_new/Fs_old, 1e-9)
-fprintf('Error: %.12f\n', abs( (p/q)*Fs_old - Fs_new))
+fprintf('New Ratio:\n');
+fprintf('p = %.2f\nq = %.2f\n', p, q);
+fprintf('Error abs( (p/q)*Fs_old - Fs_new): %.12f\n', abs( (p/q)*Fs_old - Fs_new));
 cData = resample(dData, p, q);
 
 %------------------------------------------------------------------------
