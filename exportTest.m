@@ -214,7 +214,6 @@ exportOpts.OutputFile = '1407_20200309_03_01_1350_BBN.nex';
 exportOpts.TestFile = '1407_20200309_03_01_1350_BBN_testdata.mat';
 exportOpts.Channels = [4, 5, 7, 15];
 
-
 %---------------------------------------
 %---------------------------------------
 
@@ -234,6 +233,11 @@ exportOpts.BPfilt.ramp = 1;
 % as bessel is low-pass only and we need to remove low frequency crap from
 % the raw data
 exportOpts.BPfilt.type = 'butter';
+
+%------------------------------------------------------------------------
+% resample data to nearest lower integer value?
+%------------------------------------------------------------------------
+exportOpts.resampleData = true;
 
 %------------------------------------------------------------------------
 % run!

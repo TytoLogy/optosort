@@ -62,7 +62,7 @@ dData = double(S.Continuous(cIndx).Values) / double(Plx.P.ContMaxMagnitudeMV);
 
 % specify sample rates
 Fs_old = S.Info.Fs;
-Fs_new = 48800;
+Fs_new = floor(Fs_old);
 fprintf('Original Sample Rate: %.4f\n', Fs_old);
 fprintf('Resampled SampleRate: %.4f\n', Fs_new);
 

@@ -71,7 +71,15 @@ function varargout = export_raw(varargin)
 %		filter type is either 'bessel' or 'butter' (butterworth)
 %		 exportOpts.BPfilet.type = 'bessel';
 % 
-%
+%	exportInfo.resampleData
+% 		resample data to nearest-lower integer value?
+%		Default: true
+% 		For exporting to many software packages for sorting, integer values are
+% 		needed.
+% 		if true, A/D data will be resampled so that sampling rate is an integer
+% 		value. i.e., 48828.125 will be converted to 48828 samples/second
+% 		if false, no change will be made to sampling rate.
+% 
 % Output Arguments:
 % 	nD		NeuroExplorer nex data struct written to output file
 %	expInfo	SpikeInfo object
@@ -99,6 +107,7 @@ function varargout = export_raw(varargin)
 % Created: 14 May, 2020  from export_for_plexon (SJS)
 %
 % Revisions:
+% 9 June 2020 (SJS): added resampleData field to exportOptions
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -109,6 +118,9 @@ function varargout = export_raw(varargin)
 sepstr = '----------------------------------------------------';
 % filter info
 defaultFilter = [];
+% resample data to nearest lower integer? default is true
+resampleData = true;
+
 % valid output formats (binary)
 ValidFormats =	{	'int16', 'uint16', 'int8', ...
 						'float32', 'float64', 'single', 'double'};
@@ -174,6 +186,10 @@ if nargin == 1
 		% use default
 		BPfilt = defaultFilter;
 	end
+	% resample?
+	if isfield(tmp, 'resampleData')
+		resampleData = tmp.resampleData;
+	end
 	% define path to data file and data file for testing
 	F = defineSampleData(tmp.DataPath, tmp.DataFile, tmp.TestFile);
 	
@@ -225,7 +241,7 @@ fprintf('Animal: %s\n', F(1).animal);
 %------------------------------------------------------------------------
 % get the data and information from the raw files
 %------------------------------------------------------------------------
-[cSweeps, expInfo] = read_data_for_export(F, Channels, BPfilt);
+[cSweeps, expInfo] = read_data_for_export(F, Channels, BPfilt, resampleData);
 
 %------------------------------------------------------------------------
 % If not provided, create output .nex file name - adjust depending on # of files

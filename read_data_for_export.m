@@ -1,6 +1,6 @@
-function [cSweeps, sInfo] = read_data_for_export(F, Channels, BPfilt)
+function [cSweeps, sInfo] = read_data_for_export(F, Channels, BPfilt, resampleData)
 %------------------------------------------------------------------------
-% [cSweeps, sInfo] = read_data_for_export(F, Channels, BPfilt)
+% [cSweeps, sInfo] = read_data_for_export(F, Channels, BPfilt, resampleData)
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
@@ -35,6 +35,10 @@ function [cSweeps, sInfo] = read_data_for_export(F, Channels, BPfilt)
 % 		 BPfilt.ramp = 1;
 %		filter type is either 'bessel' or 'butter' (butterworth, default)
 %		 BPfilet.type = 'bessel';
+%
+%	resampleData:
+% 		resample data to nearest lower integer value?
+% 		logical value (true/false)
 % 
 % Output Arguments:
 % 	cSweeps	{nfiles, 1} cell array of sweep data
@@ -52,6 +56,7 @@ function [cSweeps, sInfo] = read_data_for_export(F, Channels, BPfilt)
 % Created: 18 May, 2020 (extracted from export_for_plexon) (SJS)
 %
 % Revisions:
+%	9 June, 2020 (SJS): added resampleData input
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -74,7 +79,6 @@ sInfo.InfoFileName = fullfile(NexFilePath, [baseName '_nexinfo.mat']);
 %}
 % store channel information
 sInfo.ADchannel = Channels;
-
 
 %------------------------------------------------------------------------
 % pre-allocate some things
@@ -120,6 +124,10 @@ for f = 1:nFiles
 	[D, tmpDinf] = readOptoData(fullfile(F(f).path, F(f).file));
 	% Fix test info
 	tmpDinf = correctTestType(tmpDinf);
+	% resample data?
+	if resampleData
+		[D, tmpDinf] = resample_to_integer_rate(D, tmpDinf);
+	end
 	
 	% CurveInfo (or WavInfo) to hold everything for each file
 	switch(upper(tmpDinf.test.Type))
