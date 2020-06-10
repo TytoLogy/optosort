@@ -56,6 +56,7 @@ classdef CurveInfo
 %		export_for_plexon.m function to avoid future duplications and
 %		streamline curve/test information handling
 %	9 Apr 2020 (SJS): adding stimStartBin, stimEndBin.
+%	9 Jun 2020 (SJS): modifying to create test data for checking timing
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -551,6 +552,9 @@ classdef CurveInfo
 		%-------------------------------------------------
 		% get data  and sweep info for each channel
 		[obj, varargout] = buildChannelData(obj, Channels, BPfilt, ...
+															D, varargin)
+		% create dummy/test data  and sweep info for each channel
+		[obj, varargout] = buildTimingTestData(obj, Channels, BPfilt, ...
 															D, varargin)
 		% builds vector of stimulus onset and offset bins referenced to start
 		% of file
