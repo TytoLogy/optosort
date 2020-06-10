@@ -23,11 +23,12 @@ fprintf('Original Sample Rate: %.4f\n', Fs_old);
 fprintf('Resampled SampleRate: %.4f\n', Fs_new);
 
 % determine ratio via closest rational approximation
-[p, q] = rat(Fs_new/Fs_old, 1e-12);
+[p, q] = rat(Fs_new/Fs_old, 1e-9);
 fprintf('New Ratio:\n');
 fprintf('p = %.2f\nq = %.2f\n', p, q);
 fprintf('Error abs( (p/q)*Fs_old - Fs_new): %.12f\n', abs( (p/q)*Fs_old - Fs_new));
 
+%{
 % allocate output
 reD = D;
 stime = zeros(size(D));
@@ -48,24 +49,14 @@ for c = 1:numel(D)
 		fprintf('Run %d took\t\t%.2f\n', c, stime(c));
 	end
 end
+%}
+
+x = D{1}.datatrace;
 
 %% try using upfirdn
 % code adapted from the uniformResample function in the matlab resample()
 % function
 
-Fs_old = Dinf.indev.Fs;
-fprintf('Original Sample Rate: %.4f\n', Fs_old);
-fprintf('Resampled SampleRate: %.4f\n', Fs_new);
-
-% determine ratio via closest rational approximation
-[p, q] = rat(Fs_new/Fs_old, 1e-9);
-fprintf('New Ratio:\n');
-fprintf('p = %.2f\nq = %.2f\n', p, q);
-fprintf('Error abs( (p/q)*Fs_old - Fs_new): %.12f\n', abs( (p/q)*Fs_old - Fs_new));
-
-x = D{2}.datatrace;
-
-%% new functions
 % beta value for kaiser window (default)
 bta = 5;
 % antialiasing filter will be order 2 X n X max(p, q)
@@ -158,10 +149,18 @@ y2out = y;
 tic
 [y3out, h3] = resample(x, p, q);
 t3 = toc
+
+
+%%
+tic
+[tmpD, tmpDinf] = resample_data(D, Dinf, Fs_new);
+toc
+y4out = tmpD{1}.datatrace;
 %%
 figure(4)
 plot(y1out(:, 1), '.')
 hold on
 plot(y2out(:, 1), '.')
 plot(y3out(:, 1), '.')
+plot(y4out(:, 1), '.')
 hold off

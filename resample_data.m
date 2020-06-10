@@ -54,15 +54,36 @@ fprintf('New Ratio:\n');
 fprintf('p = %.2f\nq = %.2f\n', p, q);
 fprintf('Error abs( (p/q)*Fs_old - Fs_new): %.12f\n', abs( (p/q)*Fs_old - Fs_new));
 
+% beta value for kaiser window (default)
+bta = 5;
+% antialiasing filter will be order 2 X n X max(p, q)
+% default for N is 10
+N = 10;
+
+% length (# rows) of datatrace matrix (assume all are same for this file)
+Lx = size(D{1}.datatrace, 1);
+
+% build filter
+% get filter
+[h, delay] = getMatrixFIR(p, q, Lx, N, bta);
+
+% to get rid of trailing and leading data so input and output signals line up
+% temporally:
+Ly = ceil(Lx*p/q);  % output length
+
 % allocate output
-reD = cell(size(D));
+reD = D;
 % assign new value for Fs
 reDinf = Dinf;
 reDinf.indev.Fs = Fs_new;
 
+
 % loop through sweeps, resample
 for c = 1:numel(D)
-	reD{c}.datatrace = resample(D{c}.datatrace, p, q);
+	y = upfirdn(D{c}.datatrace, h, p, q);
+	y(1:delay,:) = [];
+	y(Ly+1:end,:) = [];
+	reD{c}.datatrace = stripZeros(y, p, q, Lx, delay);
 end
 
 
