@@ -53,13 +53,6 @@ end
 % code adapted from the uniformResample function in the matlab resample()
 % function
 
-tic
-% beta value for kaiser window (default)
-bta = 5;
-% antialiasing filter will be order 2 X n X max(p, q)
-% default for N is 10
-N = 10;
-
 Fs_old = Dinf.indev.Fs;
 fprintf('Original Sample Rate: %.4f\n', Fs_old);
 fprintf('Resampled SampleRate: %.4f\n', Fs_new);
@@ -70,14 +63,36 @@ fprintf('New Ratio:\n');
 fprintf('p = %.2f\nq = %.2f\n', p, q);
 fprintf('Error abs( (p/q)*Fs_old - Fs_new): %.12f\n', abs( (p/q)*Fs_old - Fs_new));
 
-x = D{1}.datatrace;
+x = D{2}.datatrace;
+
+%% new functions
+% beta value for kaiser window (default)
+bta = 5;
+% antialiasing filter will be order 2 X n X max(p, q)
+% default for N is 10
+N = 10;
+
 % length (# rows) of matrix
-Lx = size(D{1}.datatrace, 1);
+Lx = size(x, 1);
 
 % get filter
-hh = getMatrixFIR(p, q, Lx, N, bta);
+[h1, delay] = getMatrixFIR(p, q, Lx, N, bta);
 
+tic
+% ----  HERE'S THE CALL TO UPFIRDN  ----------------------------
+y1 = upfirdn(x, h1, p, q);
+
+y1out = stripZeros(y1, p, q, Lx, delay);
+t1 = toc
 %%
+
+tic
+
+% beta value for kaiser window (default)
+bta = 5;
+% antialiasing filter will be order 2 X n X max(p, q)
+% default for N is 10
+N = 10;
 
 pqmax = max(p,q);
 % design filter
@@ -115,7 +130,7 @@ nz1 = 0;
 while ceil( ((Lx-1)*p+length(h)+nz1 )/q ) - delay < ceil(Lx*p/q)
     nz1 = nz1+1;
 end
-h = [h zeros(1,nz1)];
+h2 = [h zeros(1,nz1)];
 
 % ----  HERE'S THE CALL TO UPFIRDN  ----------------------------
 y = upfirdn(x,h,p,q);
@@ -133,7 +148,20 @@ else
     y(Ly+1:end,:) = [];
 end
 
-h([1:nz (end-nz1+1):end]) = [];  % get rid of leading and trailing zeros 
-                                 % in case filter is output
+t2 = toc
 
-toc
+y2out = y;
+% h([1:nz (end-nz1+1):end]) = [];  % get rid of leading and trailing zeros 
+                                 % in case filter is output
+%% use resample
+
+tic
+[y3out, h3] = resample(x, p, q);
+t3 = toc
+%%
+figure(4)
+plot(y1out(:, 1), '.')
+hold on
+plot(y2out(:, 1), '.')
+plot(y3out(:, 1), '.')
+hold off

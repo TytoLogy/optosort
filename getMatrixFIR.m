@@ -1,4 +1,4 @@
-function h = getMatrixFIR(p, q, Lx, N, bta)
+function [h, delay] = getMatrixFIR(p, q, Lx, N, bta)
 % p, q	numerator, denominator of rational approximation to Fs_new/Fs_old
 % Lx		num rows in matrix to be filtered
 % N		order for antialiasing filter will be  2 X n X max(p, q)
