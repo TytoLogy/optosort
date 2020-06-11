@@ -173,10 +173,10 @@ for f = 1:nFiles
 	% build into sweeps by channel format
 	fprintf('Test type: %s\n', cInfo{f}.testtype);
 	% original call to build data for channels
-% 	[cInfo{f}, cSweeps{f}] = cInfo{f}.buildChannelData(Channels, BPfilt, D);
-	% use buildTimingTestData
-	[cInfo{f}, cSweeps{f}] = cInfo{f}.buildTimingTestData(Channels, BPfilt, ...
-												D, 'plot_sweeps', 'y');
+	[cInfo{f}, cSweeps{f}] = cInfo{f}.buildChannelData(Channels, BPfilt, D);
+% 	% use buildTimingTestData
+% 	[cInfo{f}, cSweeps{f}] = cInfo{f}.buildTimingTestData(Channels, BPfilt, ...
+% 												D, 'plot_sweeps', 'y');
 	
 	% store sample for start of this file (should be 1); use channel 1 value
 	 cInfo{f}.fileStartBin = cInfo{f}.startSweepBin{1}(1);
