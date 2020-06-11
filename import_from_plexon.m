@@ -48,7 +48,6 @@ sepstr = '----------------------------------------------------';
 % nexFile = '1382_20191212_02_02_3200_MERGE.nex';
 
 %------------------------------------------------------------------------
-
 sortedPath = '/Users/sshanbhag/Work/Data/TestData/MT/1407';
 rawPath = sortedPath;
 nexPath = sortedPath;
@@ -56,6 +55,19 @@ nexInfoFile = '1407_20200309_03_01_1350_BBN_nexinfo.mat';
 nexFile = '1407_20200309_03_01_1350_BBN.nex';
 plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
 %------------------------------------------------------------------------
+
+%{
+%------------------------------------------------------------------------
+% "fake" data for testing sampling rate/timing in OFS .plx file
+%------------------------------------------------------------------------
+sortedPath = '/Users/sshanbhag/Work/Data/TestData/working/FakeData';
+rawPath = sortedPath;
+nexPath = sortedPath;
+nexInfoFile = '1407_20200309_03_01_1350_TIMETESTDATA_nexinfo.mat';
+nexFile = '1407_20200309_03_01_1350_TIMETESTDATA.nex';
+plxFile = '1407_20200309_03_01_1350_TIMETESTDATA-02.plx';
+%------------------------------------------------------------------------
+%}
 
 %------------------------------------------------------------------------
 %{

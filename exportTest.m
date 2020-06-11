@@ -206,14 +206,15 @@ exportOpts.TestFile = {	'1382_20191212_02_02_3200_FRA_testdata.mat'};
 exportOpts.OutputFile = 'FRA.nex';
 %}
 
-% 1407 multichannel
+% 1407 multichannel, write to D drive on PETROL for testing with Plexon OFS
 exportOpts.DataPath = '/Users/sshanbhag/Work/Data/TestData/MT/1407';
-exportOpts.OutputPath = '/Users/sshanbhag/Work/Data/TestData/working';
-exportOpts.DataFile = '1407_20200309_03_01_1350_BBN.dat';
-exportOpts.OutputFile = '1407_20200309_03_01_1350_BBN.nex';
-exportOpts.TestFile = '1407_20200309_03_01_1350_BBN_testdata.mat';
+exportOpts.OutputPath = '/Volumes/D/1407';
+exportOpts.DataFile = {	'1407_20200309_03_01_1350_BBN.dat', ...
+								'1407_20200309_03_01_1350_FREQ_TUNING.dat'};
+exportOpts.TestFile = { '1407_20200309_03_01_1350_BBN_testdata.mat', ...
+								'1407_20200309_03_01_1350_FREQ_TUNING_testdata.mat'};
+exportOpts.OutputFile = '1407_20200309_03_01_1350_MERGE.nex';
 exportOpts.Channels = [4, 5, 7, 15];
-
 %---------------------------------------
 %---------------------------------------
 
@@ -222,7 +223,7 @@ exportOpts.Channels = [4, 5, 7, 15];
 % filter parameters for raw neural data
 %------------------------------------------------------------------------
 % [highpass lowpass] cutoff frequencies in Hz
-exportOpts.BPfilt.Fc = [300 4000];
+exportOpts.BPfilt.Fc = [250 4000];
 % order of filter. note that the filtfilt() function in MATLAB is used,
 % so the effective order is doubled. typically use 5
 exportOpts.BPfilt.forder = 5;

@@ -303,10 +303,17 @@ end
 % events must be in column format...?
 nD = nexAddEvent(nD, force_col(nexInfo.startTimeVector), 'startsweep');
 % add end sweep time stamps as event - assume consistent across channels!
+% this is technically redundant, as startsweep event should be 1 sample or
+% time interval greater than endsweep. there is little overhead involved in
+% adding it so for now keep it here
 nD = nexAddEvent(nD, force_col(nexInfo.endTimeVector), 'endsweep');
-% add file times
+% add file start/end times as single event type
 nD = nexAddEvent(nD, force_col(nexInfo.fileStartTime), 'filestart');
 nD = nexAddEvent(nD, force_col(nexInfo.fileEndTime), 'fileend');
+% Add individual event for each file with filename as event name
+for f = 1:nFiles
+	nD = nexAddEvent(nD, nexInfo.fileStartTime(f), nexInfo.FileInfo{f}.F.base);
+end
 % add stimulus onset and offset times
 nD = nexAddEvent(nD, force_col(nexInfo.stimStartTimeVector), 'stimstart');
 nD = nexAddEvent(nD, force_col(nexInfo.stimEndTimeVector), 'stimend');
