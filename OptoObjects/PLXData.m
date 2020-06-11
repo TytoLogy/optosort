@@ -247,6 +247,24 @@ classdef PLXData
 			end
 		end
 		
+		function val = getScaledContinousChannel(obj, varargin)
+			if obj.hasContinuousData
+				if isempty(varargin)
+					channelList = 1:obj.P.NumContChannels;
+				else
+					channelList = varargin{1};
+				end
+				nchannels = length(channelList);
+				val = cell(1, nchannels);
+				for c = 1:nchannels
+					val{c} = double(obj.P.ContinuousChannels(channelList(c)).Values) / ...
+											obj.P.ContMaxMagnitudeMV;
+				end
+			else
+				val = [];
+			end
+		end
+		
 		
 		%------------------------------------------------------------------------
 		%------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-% function varargout = import_from_plexon(varargin)
+function varargout = import_from_plexon(varargin)
 %------------------------------------------------------------------------
 % import_from_plexon.m
 %------------------------------------------------------------------------
@@ -19,16 +19,9 @@
 % Revisions:
 %------------------------------------------------------------------------
 % TO DO:
+% - need to have input option to load/not load continuous data OR
+%   maybe have way to specify what to load...
 %------------------------------------------------------------------------
-% Initial things to define
-%------------------------------------------------------------------------
-
-%% path to readPXFileC
-
-if ~exist('readPLXFileC', 'file')
-	fprintf('import_from_plexon: adding readPLXFile to path\n');
-	addpath('/Users/sshanbhag/Work/Code/Matlab/stable/Toolbox/Plexon/readPLXFileC');
-end
 
 %------------------------------------------------------------------------
 % Definitions
@@ -37,57 +30,63 @@ end
 sepstr = '----------------------------------------------------';
 
 %------------------------------------------------------------------------
+% path to readPXFileC
 %------------------------------------------------------------------------
-% data locations
+if ~exist('readPLXFileC', 'file')
+	try
+		fprintf('import_from_plexon: adding readPLXFile to path\n');	
+		addpath('/Users/sshanbhag/Work/Code/Matlab/stable/Toolbox/Plexon/readPLXFileC');
+	catch
+		error('import_from_plexon: function readPLXFileC not in path');		
+	end
+end
+
+%------------------------------------------------------------------------
+% process args
+%------------------------------------------------------------------------
+if isempty(varargin)
+	[plxFile, plxPath] = uigetfile({	'*.plx', 'Plexon file (*.plx)'; ...
+												'*.*', 'All Files (*.*)' }, ...
+												'Select .plx file');
+	% return if cancelled
+	if plxFile == 0
+		fprintf('cancelled\n');
+		varargout{nargout} = [];
+		return
+	end
+	% assign name to OptoFileName object to assist name generation
+	tmpf = OptoFileName(fullfile(plxPath, plxFile));
+	% build nexinfo name skeleton to search for
+	nexinfoFile = [tmpf.fileWithoutOther '*_nexinfo.mat'];
+	% get neinfofile and path
+	[nexinfoFile, nexinfoPath] = uigetfile(fullfile(plxPath, nexinfoFile), ...
+														'Select nexinfo.mat file');
+	if nexinfoFile == 0
+		fprintf('cancelled\n');
+		varargout{1} = [];
+		return
+	end
+elseif nargin == 2
+	[plxPath, plxFile, ext] = fileparts(varargin{1});
+	plxFile = [plxFile ext];
+	[nexinfoPath, nexinfoFile, ext] = fileparts(varargin{2});
+	nexinfoFile = [nexinfoFile ext];
+else
+	error('%s: input arg error', mfilename);
+end
+
+
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
-% sortedPath = '~/Work/Data/TestData/MT';
-% rawPath = sortedPath;
-% nexPath = sortedPath;
-% nexFile = '1382_20191212_02_02_3200_MERGE.nex';
-
-%------------------------------------------------------------------------
-sortedPath = '/Users/sshanbhag/Work/Data/TestData/MT/1407';
-rawPath = sortedPath;
-nexPath = sortedPath;
-nexInfoFile = '1407_20200309_03_01_1350_BBN_nexinfo.mat';
-nexFile = '1407_20200309_03_01_1350_BBN.nex';
-plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
-%------------------------------------------------------------------------
-
-%{
-%------------------------------------------------------------------------
-% "fake" data for testing sampling rate/timing in OFS .plx file
-%------------------------------------------------------------------------
-sortedPath = '/Users/sshanbhag/Work/Data/TestData/working/FakeData';
-rawPath = sortedPath;
-nexPath = sortedPath;
-nexInfoFile = '1407_20200309_03_01_1350_TIMETESTDATA_nexinfo.mat';
-nexFile = '1407_20200309_03_01_1350_TIMETESTDATA.nex';
-plxFile = '1407_20200309_03_01_1350_TIMETESTDATA-02.plx';
-%------------------------------------------------------------------------
-%}
-
-%------------------------------------------------------------------------
-%{
-sortedPath = '/Users/sshanbhag/Work/Data/TestData/MT/1408';
-rawPath = sortedPath;
-nexPath = sortedPath;
-nexInfoFile = '1408_20200319_02_01_950_WAV_nexinfo-ch1,2,5,12,15.mat';
-nexFile = '1408_20200319_02_01_950_WAV-ch1,2,5,12,15.nex';
-% file without continuous data
-% plxFile = '1408_20200319_02_01_950_WAV-ch1,2,5,12,15-01-KmeansScan.plx';
-% file with continuous data
-plxFile = '1408_20200319_950_WAV_ch1,2,5,12,15-01-SORTEDContKmeansScan.plx';
-%}
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
 fprintf('\n%s\n', sepstr);
 fprintf('import_from_plexon running...\n');
-fprintf('File: %s\n', plxFile);
+fprintf('PLX File: %s\n', plxFile);
+fprintf('nexinfo File: %s\n', nexinfoFile);
 fprintf('%s\n', sepstr);
 
 %------------------------------------------------------------------------
@@ -133,97 +132,36 @@ nexInfo.fData.F
 %}
 
 %------------------------------------------------------------------------
-%% load data
+%------------------------------------------------------------------------
+% load data
+%------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
-%% create SpikeData object
+%------------------------------------------------------------------------
+% create SpikeData object that will be used to hold and access data
+%------------------------------------------------------------------------
 S = SpikeData();
-sendmsg(sprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexPath, nexInfoFile)));
+sendmsg(sprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexinfoPath, nexinfoFile)));
 % read nexinfo from file
-S.Info = SpikeInfo('file', fullfile(nexPath, nexInfoFile));
+S.Info = SpikeInfo('file', fullfile(nexinfoPath, nexinfoFile));
 % get plx data
-Plx = PLXData(fullfile(sortedPath, plxFile), 'all', 'continuous');
+Plx = PLXData(fullfile(plxPath, plxFile), 'all', 'continuous');
 
-
-%% add spikes
+%------------------------------------------------------------------------
+% add spikes from PLX data to SpikeData object (S)
+%------------------------------------------------------------------------
 S = S.addPlexonSpikesFromPLXObj(Plx);
-% add Continuous Data
+% add Continuous Data (if present)
 if Plx.hasContinuousData
 	sendmsg('Adding ContinuousChannels data to SpikeData');
 	S = S.addContinuousDataFromPLXObj(Plx);
 end
 
-%% save Sobject in file
-% get base from one of the file objects in S.Info
-sfile = [S.Info.FileInfo{1}.F.fileWithoutOther '_Sobj.mat'];
-fprintf('\n%s\n', sepstr);
-fprintf('writing Sobj to file\n\t%s\n', fullfile(nexPath, sfile));
-fprintf('%s\n', sepstr);
-save(fullfile(nexPath, sfile), '-MAT', 'S');
+%------------------------------------------------------------------------
+% assign outputs
+%------------------------------------------------------------------------
+varargout{1} = S;
 
-
-%% break up spiketimes by data file
-spikesByFile = cell(S.Info.nFiles, 1);
-for f = 1:S.Info.nFiles
-	spikesByFile{f} = S.spikesForFile(f);
-end
-
-%% N next step: assign spike times to appropriate sweeps/stimuli
-% OBJ - by unit
-unitID = S.listUnits;
-nunits = S.nUnits;
-% store spikes for each file in spikes ByStim, all units
-spikesBySweepAndUnit = cell(S.Info.nFiles, nunits);
-% loop through files
-for f = 1:S.Info.nFiles
-	% loop through units
-	for u = 1:nunits
-		% get spikes (as a table) for each file (rows) and unit (columns)
-		spikesBySweepAndUnit{f, u} = S.spikesForAnalysisByUnit(f, unitID(u), 'sweep');
-	end
-end
-
-%% OBJ - don't separate by unit - can do posthoc
-% store spikes for each file in spikes ByStim, all units
-spikesByFile = cell(S.Info.nFiles, 1);
-% loop through files
-for f = 1:S.Info.nFiles
-		spikesByFile{f} = S.spikesForAnalysis(f, 'align', 'sweep');
-end
-
-%% extract timestamps for use in analysis, raster plots, etc., separated by channel
-% convert to timestamps
-spikesForAnalysis = cell(S.Info.nFiles, S.Info.nChannels);
-
-% loop through files
-for f = 1:S.Info.nFiles
-	% loop through channels
-	for c = 1:S.Info.nChannels
-		fprintf('Getting spikes for file %d, channel %d\n', f, S.Info.ADchannel(c));
-		% extract timestamp data from each table, store in cell matrix
-		spikesForAnalysis{f, c} = S.spikesForAnalysis(f, ...
-									'Channel', S.Info.ADchannel(c), 'align', 'sweep');
-	end
-end
-
-%%
-spikesBySweep = S.spikesForAnalysis(f, 'Channel', S.Info.ADchannel, 'align', 'sweep');
-
-
-%% plot waveforms
-
-S.plotUnitWaveforms(S.listUnits);
-
-
-%%
-
-tmpS = S.spikesForFile(1);
-channel_rows = false(size(tmpS.Channel));
-for c = 3:5
-	channel_rows = channel_rows | (tmpS.Channel == S.Info.ADchannel(c));
-	cm(:, c) = channel_rows;
-end
-unique(tmpS.Channel(channel_rows, :))
 
 
 

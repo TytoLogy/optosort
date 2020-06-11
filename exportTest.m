@@ -206,9 +206,12 @@ exportOpts.TestFile = {	'1382_20191212_02_02_3200_FRA_testdata.mat'};
 exportOpts.OutputFile = 'FRA.nex';
 %}
 
-% 1407 multichannel, write to D drive on PETROL for testing with Plexon OFS
+% 1407 multichannel
 exportOpts.DataPath = '/Users/sshanbhag/Work/Data/TestData/MT/1407';
-exportOpts.OutputPath = '/Volumes/D/1407';
+% write to D drive on PETROL for testing with Plexon OFS
+% exportOpts.OutputPath = '/Volumes/D/1407';
+% local working dir
+exportOpts.OutputPath = '/Users/sshanbhag/Work/Data/TestData/working';
 exportOpts.DataFile = {	'1407_20200309_03_01_1350_BBN.dat', ...
 								'1407_20200309_03_01_1350_FREQ_TUNING.dat'};
 exportOpts.TestFile = { '1407_20200309_03_01_1350_BBN_testdata.mat', ...
@@ -238,7 +241,7 @@ exportOpts.BPfilt.type = 'butter';
 %------------------------------------------------------------------------
 % resample data to nearest lower integer value?
 %------------------------------------------------------------------------
-exportOpts.resampleData = [];
+% exportOpts.resampleData = [];
 
 %------------------------------------------------------------------------
 % run!

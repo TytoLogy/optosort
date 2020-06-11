@@ -27,6 +27,7 @@ classdef SpikeData
 %	30 Apr 2020 (SJS): changing addPlexonSpikes to addPlexonSpikesFromMat
 %	various dates (SJS): altered spikesforanalysis method
 %	22 May, 2020 (SJS): added Continuous to hold continuous data
+%	11 Jun 2020 (SJS): scaling continuous data
 %------------------------------------------------------------------------
 % TO DO: how to handle multiple channels?????
 %------------------------------------------------------------------------
@@ -155,13 +156,14 @@ classdef SpikeData
 		%-------------------------------------------------------
 		% adds continuousChannels data from Pobj to SpikeData.Continuous
 		%-------------------------------------------------------
-			if Pobj.hasContinuousData
-				obj.Continuous = Pobj.P.ContinuousChannels;
-			else
-				warning(['SpikeData.addContinuousDataFromPLXObj: ' ...
-								'Pobj has no continupis channel data'])
-				obj.Continuous = [];
-			end
+% 			if Pobj.hasContinuousData
+% 				obj.Continuous = Pobj.P.ContinuousChannels;
+% 			else
+% 				warning(['SpikeData.addContinuousDataFromPLXObj: ' ...
+% 								'Pobj has no continupis channel data'])
+% 				obj.Continuous = [];
+% 			end
+			obj.Continuous = Pobj.getContinuousData;
 		end
 		%-------------------------------------------------------
 		
