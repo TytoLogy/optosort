@@ -148,6 +148,17 @@ function [obj, varargout] = buildTimingTestData(obj, Channels, ~, D, varargin)
 	end
 
 	%------------------------------------------------------------------------
+	% specify spike waveform
+	%------------------------------------------------------------------------
+	% create a fake spike to convolve with spike time delta funciton(s)
+	spike.duration = ms2bin(1, obj.Dinf.indev.Fs);
+	spike.center = ms2bin(0.5, obj.Dinf.indev.Fs);
+	spike.amplitude = 2;
+	spike.waveform = zeros(1, spike.duration);
+	spike.waveform(2:(spike.center - 1)) = spike.amplitude;
+	spike.waveform((spike.center+1):(spike.duration-1)) = -1 * spike.amplitude;
+	
+	%------------------------------------------------------------------------
 	% process data: get start and end of sweeps
 	%------------------------------------------------------------------------
 	% initialize cD to a store sweeps for each channel
@@ -186,7 +197,10 @@ function [obj, varargout] = buildTimingTestData(obj, Channels, ~, D, varargin)
 			%}
 
 			% assign test data matrix to cD cell array
-			cD{c, s} = genTestData(size(D{s}.datatrace(:, channel)'));
+			% single spike at stimulus onset
+			cD{c, s} = genTestData(size(D{s}.datatrace(:, channel)'), ...
+									ms2bin(obj.Dinf.audio.Delay, obj.Dinf.indev.Fs), ...
+									spike);
 
 			% store length of sweep
 			obj.sweepLen(c, s) = length(cD{c, s});
