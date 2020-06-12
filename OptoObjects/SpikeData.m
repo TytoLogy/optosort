@@ -164,6 +164,11 @@ classdef SpikeData
 % 				obj.Continuous = [];
 % 			end
 			obj.Continuous = Pobj.getContinuousData;
+			% scale Continuous data
+			for c = 1:length(obj.Continuous)
+				obj.Continuous(c).Values = double(obj.Continuous(c).Values) / ...
+											Pobj.P.ContMaxMagnitudeMV;
+			end
 		end
 		%-------------------------------------------------------
 		

@@ -246,8 +246,19 @@ classdef PLXData
 				val = [];
 			end
 		end
-		
+
+		%------------------------------------------------------------------------
 		function val = getScaledContinousChannel(obj, varargin)
+		%------------------------------------------------------------------------
+		% val = getScaledContinousChannel(obj, <channels to get>)
+		%------------------------------------------------------------------------
+		% returns cell array of scaled continuous data
+		% if channels are provided, only data from those channels (indexed as
+		% by PLX data - not by A/D channel!) from specified channels will be
+		% retrieved. 
+		%
+		% Data are scaled by PLXData.P.ContMaxMAgnitudeMV
+		%------------------------------------------------------------------------
 			if obj.hasContinuousData
 				if isempty(varargin)
 					channelList = 1:obj.P.NumContChannels;

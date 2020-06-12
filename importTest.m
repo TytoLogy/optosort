@@ -56,12 +56,38 @@ nexFile = '1382_20191212_02_02_3200_MERGE.nex';
 %}
 
 %------------------------------------------------------------------------
+% sorted data locations
+%------------------------------------------------------------------------
 sortedPath = '/Users/sshanbhag/Work/Data/TestData/MT/1407';
 rawPath = sortedPath;
 nexPath = sortedPath;
 nexInfoFile = '1407_20200309_03_01_1350_BBN_nexinfo.mat';
 nexFile = '1407_20200309_03_01_1350_BBN.nex';
 plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
+%------------------------------------------------------------------------
+% raw data locations
+%------------------------------------------------------------------------
+exportOpts.DataPath = {'/Users/sshanbhag/Work/Data/TestData/MT/1407'};
+% write to D drive on PETROL for testing with Plexon OFS
+% exportOpts.OutputPath = '/Volumes/D/1407';
+% local working dir
+exportOpts.OutputPath = '/Users/sshanbhag/Work/Data/TestData/working';
+exportOpts.DataFile = {	'1407_20200309_03_01_1350_BBN.dat', ...
+								'1407_20200309_03_01_1350_FREQ_TUNING.dat'};
+exportOpts.TestFile = { '1407_20200309_03_01_1350_BBN_testdata.mat', ...
+								'1407_20200309_03_01_1350_FREQ_TUNING_testdata.mat'};
+exportOpts.OutputFile = '1407_20200309_03_01_1350_MERGE.nex';
+exportOpts.Channels = [4, 5, 7, 15];
+% filter parameters for raw neural data
+exportOpts.BPfilt.Fc = [250 4000];
+exportOpts.BPfilt.forder = 5;
+exportOpts.BPfilt.ramp = 1;
+exportOpts.BPfilt.type = 'butter';
+
+%------------------------------------------------------------------------
+% resample data to nearest lower integer value?
+%------------------------------------------------------------------------
+% exportOpts.resampleData = [];
 %------------------------------------------------------------------------
 
 %{
@@ -142,11 +168,50 @@ nexInfo.fData.F
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
-%% load data
+%% load sorted data
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 S = import_from_plexon(fullfile(sortedPath, plxFile), ...
 									fullfile(nexPath, nexInfoFile));
+
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%% load raw data
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+F  = defineSampleData(exportOpts.DataPath, ...
+											exportOpts.DataFile, exportOpts.TestFile);
+% storage for raw data
+D = cell(length(exportOpts.DataFile), 1);
+N = cell(length(exportOpts.DataFile), 1);
+
+for f = 1:length(F)
+	[tmp, N{f}] = read_data_for_export(F(f), exportOpts.Channels, exportOpts.BPfilt, []);
+	D{f} = tmp{1};
+end
+
+%% compare data from raw and sorted continuous data
+
+% file (index into cell) to plot
+fnum = 1;
+% channel (index into channel list) to plot
+chan = 1;
+% sweep to plot
+sweep = 3;
+
+figure(1)
+subplot(211)
+rawD = D{fnum}{chan, sweep};
+nD = length(rawD);
+plxStart = (1 + (sweep-1)*nD)
+plxD = S.Continuous(chan).Values(plxStart:(plxStart+nD));
+plot(rawD)
+title({F(1).file; sprintf('Channel %d Sweep %d', chan, sweep)}, 'Interpreter', 'none');
+subplot(212)
+plot(plxD)
+
+figure(2)
+plot(xcorr(rawD, plxD))
 
 %------------------------------------------------------------------------
 %% save Sobject in file
