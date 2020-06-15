@@ -57,6 +57,8 @@ classdef CurveInfo
 %		streamline curve/test information handling
 %	9 Apr 2020 (SJS): adding stimStartBin, stimEndBin.
 %	9 Jun 2020 (SJS): modifying to create test data for checking timing
+%	15 Jun 2020 (SJS): fixed issue with trying to directly index into 
+%							varied_values dependent property
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -153,7 +155,7 @@ classdef CurveInfo
 						end
 					end
 				end
-			else
+				elsesda
 				error('Unknown input type %s', varargin{1});
 			end
 		end
@@ -176,15 +178,16 @@ classdef CurveInfo
 			switch upper(obj.testtype)
 				case 'FREQ'
 					fprintf('\t%s test, finding indices\n', obj.testtype);
-					% list of frequencies, and # of freqs tested
+					% list of frequencies, freqs and # of freqs tested
 					freqlist = cell2mat(obj.freqs_bysweep);
+					freqs = obj.varied_values;
 					nfreqs = length(obj.varied_values);
 					% locate where trials for each frequency are located in the
 					% stimulus cache list - this will be used to pull out trials of
 					% same frequency
 					stimindex = cell(nfreqs, 1);
 					for f = 1:nfreqs
-						stimindex{f} = find(obj.varied_values(f) == freqlist);
+						stimindex{f} = find(freqs(f) == freqlist);
 					end
 					% assign outputs
 					varargout{1} = stimindex;
@@ -193,15 +196,16 @@ classdef CurveInfo
 			% for LEVEL test, find indices of stimuli with same level (dB SPL)
 				case 'LEVEL'
 					fprintf('\t%s test, finding indices\n', obj.testtype);
-					% list of levels, and # of levels tested
+					% list of levels by sweep, levels and # of levels tested
 					levellist = obj.levels_bysweep;
-					nlevels = length(obj.varied_values);
+					levels = obj.varied_values;
+					nlevels = length(levels);
 					% locate where trials for each frequency are located in the
 					% stimulus cache list - this will be used to pull out trials of
 					% same frequency
 					stimindex = cell(nlevels, 1);
 					for l = 1:nlevels
-						stimindex{l} = find(obj.varied_values(l) == levellist);
+						stimindex{l} = find(levels(l) == levellist);
 					end
 					% assign outputs
 					varargout{1} = stimindex;

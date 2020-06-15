@@ -170,13 +170,20 @@ nexInfo.fData.F
 %------------------------------------------------------------------------
 %% load sorted data
 %------------------------------------------------------------------------
+% How to use:
+% import_from_plexon(<plx file name>, <nexinfo file name>)
+%
+% will return a SpikeData object containing data from plx file:
+%	spike times/unit information if sorted
+%	continuous data, if saved in plx file
+%	stimulus info
 %------------------------------------------------------------------------
 S = import_from_plexon(fullfile(sortedPath, plxFile), ...
 									fullfile(nexPath, nexInfoFile));
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
-%% load raw data
+%% load raw data in order to compare with plx data
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 F  = defineSampleData(exportOpts.DataPath, ...
@@ -190,7 +197,11 @@ for f = 1:length(F)
 	D{f} = tmp{1};
 end
 
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 %% compare data from raw and sorted continuous data
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 
 % file (index into cell) to plot
 fnum = 1;
@@ -223,13 +234,17 @@ fprintf('writing Sobj to file\n\t%s\n', fullfile(nexPath, sfile));
 fprintf('%s\n', sepstr);
 save(fullfile(nexPath, sfile), '-MAT', 'S');
 
+%------------------------------------------------------------------------
 %% break up spiketimes by data file
+%------------------------------------------------------------------------
 spikesByFile = cell(S.Info.nFiles, 1);
 for f = 1:S.Info.nFiles
 	spikesByFile{f} = S.spikesForFile(f);
 end
 
+%------------------------------------------------------------------------
 %% N next step: assign spike times to appropriate sweeps/stimuli
+%------------------------------------------------------------------------
 % OBJ - by unit
 unitID = S.listUnits;
 nunits = S.nUnits;
@@ -244,7 +259,9 @@ for f = 1:S.Info.nFiles
 	end
 end
 
+%------------------------------------------------------------------------
 %% OBJ - don't separate by unit - can do posthoc
+%------------------------------------------------------------------------
 % store spikes for each file in spikes ByStim, all units
 spikesByFile = cell(S.Info.nFiles, 1);
 % loop through files
@@ -252,9 +269,14 @@ for f = 1:S.Info.nFiles
 		spikesByFile{f} = S.spikesForAnalysis(f, 'align', 'sweep');
 end
 
-%% extract timestamps for use in analysis, raster plots, etc., separated by channel
+%------------------------------------------------------------------------
+%% extract timestamps for use in analysis, raster plots, etc.
+% in this case, organize data by file and channel in the spikesFC array
+% data will be returned in a MATLAB table data structure.
+% for more about accessing data in a table, please see matlab docs
+%------------------------------------------------------------------------
 % convert to timestamps
-spikesForAnalysis = cell(S.Info.nFiles, S.Info.nChannels);
+spikesFC = cell(S.Info.nFiles, S.Info.nChannels);
 
 % loop through files
 for f = 1:S.Info.nFiles
@@ -262,21 +284,37 @@ for f = 1:S.Info.nFiles
 	for c = 1:S.Info.nChannels
 		fprintf('Getting spikes for file %d, channel %d\n', f, S.Info.ADchannel(c));
 		% extract timestamp data from each table, store in cell matrix
-		spikesForAnalysis{f, c} = S.spikesForAnalysis(f, ...
+		spikesFC{f, c} = S.spikesForAnalysis(f, ...
 									'Channel', S.Info.ADchannel(c), 'align', 'sweep');
 	end
 end
 
-%%
+%------------------------------------------------------------------------
+%% plot rlf for bbn data
+%------------------------------------------------------------------------
+
+% if computeRLF (from OptoAnalysis) is going to be used, spikeTimes 
+% needs to be in format:
+% 		spikeTimes{nLevels, 1}
+% 			spikeTimes{n} = {nTrials, 1}
+% 				spikeTimes{n}{t} = [spike1_ms spike2_ms spike3ms ...]
+
+
+
+
+%% Get spike data for a specific file aligned by sweep for given channels
+% get data for first file
+fNum = 1;
 spikesBySweep = S.spikesForAnalysis(f, 'Channel', S.Info.ADchannel, 'align', 'sweep');
 
 
 %% plot waveforms
 
 S.plotUnitWaveforms(S.listUnits);
+ 
 
 
-%%
+%% check two data files
 
 tmpS = S.spikesForFile(1);
 channel_rows = false(size(tmpS.Channel));
@@ -285,6 +323,8 @@ for c = 3:5
 	cm(:, c) = channel_rows;
 end
 unique(tmpS.Channel(channel_rows, :))
+
+
 
 
 

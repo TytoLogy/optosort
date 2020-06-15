@@ -189,9 +189,24 @@ classdef SpikeData
 		
 		%-------------------------------------------------------
 		%-------------------------------------------------------
+		function val = listFiles(obj)
+		%-------------------------------------------------------
+		% return a list of files in the source data
+		% list will be a cell array of strings
+		%-------------------------------------------------------
+			val = cell(obj.Info.nFiles, 1);
+			for f = 1:obj.Info.nFiles
+				val{f} = obj.Info.FileInfo{f}.F.file;
+			end
+		end
+		%-------------------------------------------------------
+		
+		%-------------------------------------------------------
+		%-------------------------------------------------------
 		function val = listChannels(obj)
 		%-------------------------------------------------------
 		% return a list of unique channels in the Spikes Table
+		% ¡NOTE: channels will match the AD channel from  TDT!
 		%
 		% two ways to do this:
 		%	val = unique(obj.Spikes{:, 'Channel'});
@@ -207,9 +222,21 @@ classdef SpikeData
 		function val = listUnits(obj, varargin)
 		%-------------------------------------------------------
 		% return vector of unique unit numbers for each channel
-		% stored in a cell array
-		%	if no channel provided, all channels used
+		% stored in a cell array; data are tacken from the Spikes Table
+		% ¡NOTE: channels will match the AD channel from  TDT!
+		%
+		%	val = obj.listUnits
+		%		if no channel provided, all channels used, will return
+		%		a {nchannels, 1} cell array, where each element is a 
+		%		[# units on channel, 1] vector of unit numbers
+		%	val = obj.listUnits(<channel #>)
+		%		will return a cell containing array with list of 
+		%		units for that channel
+		%	val = obj.listUnits([channels])
+		%		will return a cell vector with list of units on each of the
+		%		requested channels
 		%-------------------------------------------------------
+		
 			% check inputs (channels)
 			[clist, nchan] = obj.check_channels(varargin);
 			
@@ -236,7 +263,9 @@ classdef SpikeData
 		% [# units] = SpikeData.nUnits([channel numbers])
 		% return # of unique units for each channel
 		%	if no channel(s) provided, list for all channels
+		% ¡NOTE: channels will match the AD channel from  TDT!
 		%-------------------------------------------------------
+		
 			% check inputs (channels)
 			[clist, nchan] = obj.check_channels(varargin);
 
@@ -255,6 +284,7 @@ classdef SpikeData
 		%-------------------------------------------------------
 		% tbl = spikesForChannel(channelNum, <unitNum>)
 		% get table of spikes for a specific unit and channel
+		% ¡NOTE: channels will match the AD channel from  TDT!
 		%-------------------------------------------------------
 		% check inputs
 			if length(chanNum) ~= 1
@@ -302,6 +332,11 @@ classdef SpikeData
 		%-------------------------------------------------------
 		% get table of spikes for a specific file aligned to file start,
 		% sweep, or as-is (original)
+		%
+		%	spikesBySweep = obj.spikesForAnalysis(fileNum)
+		%
+		%	Input args:
+		%		fileNum	file index for data 
 		%-------------------------------------------------------
 			%--------------------------------------
 			% set defaults
@@ -314,13 +349,7 @@ classdef SpikeData
 					
 			%--------------------------------------
 			% process options and inputs
-			%--------------------------------------
-			% check that file is in range
-			if ~between(fileNum, 1, obj.Info.nFiles)
-				error('requested file %d out of range [1 %d]', ...
-										fileNum, obj.Info.nFiles);
-			end
-			
+			%--------------------------------------			
 			% process options
 			argI = 1;
 			while argI <= length(varargin)
@@ -337,13 +366,15 @@ classdef SpikeData
 						end
 						argI = argI + 2;
 					case 'CHANNEL'
+						% user specified channel option, so get desired list
 						channelNum = varargin{argI + 1};
 						argI = argI + 2;
 					case 'UNIT'
+						% user specified unit(s) so get them from input
 						unitNum = varargin{argI + 1};
 						argI = argI + 2;
 					otherwise
-						% unknown mode
+						% unknown option provided by user
 						error(['SpikeData.spikesForAnalysis:' ...
 										'unknown option %s'], varargin{argI});
 				end
@@ -352,6 +383,13 @@ classdef SpikeData
 			%--------------------------------------
 			% select valid timestamps/table entries
 			%--------------------------------------
+			% check that file is in range
+			if ~between(fileNum, 1, obj.Info.nFiles)
+				error('requested file %d out of range [1 %d]', ...
+										fileNum, obj.Info.nFiles);
+			end
+			
+			% create temp table of data for desired file
 			tmpS = obj.spikesForFile(fileNum);
 			
 			% if channelNum is empty, use all channels and units
@@ -447,6 +485,7 @@ classdef SpikeData
 																			unitNum, varargin)
 		%-------------------------------------------------------
 		% get table of spikes for a specific file, unit and by sweep
+		% this should be deprecated since it doesn't account for channel
 		%-------------------------------------------------------
 			%--------------------------------------
 			% process options and inputs
@@ -538,7 +577,10 @@ classdef SpikeData
 		%-------------------------------------------------------
 		function H = plotUnitWaveforms(obj, channel, varargin)
 		%-------------------------------------------------------
+		% [plot handles] = obj.plotUnitWaveforms([channels], 
 		% Plot sorted waveforms for each identified unit for a given channel
+		% This will work for individual channels and either all units for the
+		% channel (if unit list is not provided) or a specified unit(s)
 		%-------------------------------------------------------
 			% check channel provided
 			cchk = obj.check_channels(channel);
@@ -585,7 +627,6 @@ classdef SpikeData
 				grid on
 				H(u).Name = sprintf('%s_unit%d', fstr, unitList(u));
 			end
-			
 		end
 		%-------------------------------------------------------
 
