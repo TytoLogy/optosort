@@ -68,8 +68,6 @@ nexInfoFile = '1407_20200309_03_01_1350_BBN_nexinfo.mat';
 nexFile = '1407_20200309_03_01_1350_BBN.nex';
 plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
 
-
-
 %------------------------------------------------------------------------
 %% load S object from file
 %------------------------------------------------------------------------
@@ -81,11 +79,13 @@ fprintf('loading Sobj from file\n\t%s\n', fullfile(nexPath, sfile));
 fprintf('%s\n', sepstr);
 load(fullfile(nexPath, sfile));
 
-
 %% get stim indices, varlist
 fnum = 1;
 
 [stimindex, stimvar] = S.Info.FileInfo{fnum}.getStimulusIndices;
+
+% get the spikes for this file as a table
+spikeTable = S.spikesForAnalysis(fnum, 'Channel', 7, 'align', 'sweep');
 
 
 %%
