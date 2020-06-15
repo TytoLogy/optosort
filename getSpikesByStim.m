@@ -82,11 +82,83 @@ load(fullfile(nexPath, sfile));
 %% get stim indices, varlist
 fnum = 1;
 
+% get list of stimuli and indices into sweep arrays
 [stimindex, stimvar] = S.Info.FileInfo{fnum}.getStimulusIndices;
+unique_stim = unique(stimvar);
+nstim = length(unique_stim);
 
 % get the spikes for this file as a table
 % spikeTable = S.spikesForAnalysis(fnum, 'Channel', 7, 'align', 'sweep');
-spikeTable = S.spikesForAnalysis(fnum, 'Channel', 7, 'align', 'sweep');
+% spikeTable = S.spikesForAnalysis(fnum, 'align', 'sweep');
+channelList = S.listChannels;
+nchan = length(channelList);
+unitList = S.listUnits;
+nUnits = S.nUnits;
+
+dataByChannel = repmat(struct(	'dataByUnit', [], ...
+											'channel', []), ...
+								nchan, 1 );
+							
+for c = 1:nchan
+	dataByChannel(c).channel = channelList(c);
+	dataByChannel(c).dataByUnit = ...
+						repmat( struct(	'spikeTable', {}, ...
+												'spikeTimes', {}, ...
+												'Unit', [] ), ...
+									nUnits(c), 1);
+
+% convert to proper format for computeRLF
+% 		spikeTimes{nLevels, 1}
+% 			spikeTimes{n} = {nTrials, 1}
+% 				spikeTimes{n}{t} = [spike1_ms spike2_ms spike3ms ...
+%
+
+	for u = 1:nUnits((c))
+		fprintf('getting data for Channel %d, Unit %d\n', ...
+					channelList(c), unitList{c}(u));
+		% get spike table for current channel and unit
+		dataByChannel(c).dataByUnit(u).Unit = unitList{c}(u);
+		dataByChannel(c).dataByUnit(u).spikeTable = ...
+					S.spikesForAnalysis(	fnum, ...
+												'Channel', channelList(c), ...
+												'Unit', unitList{c}(u), ...
+												'align', 'sweep');
+
+	end
+end
+
+%%
+for c = 1:nchan
+	% loop through stimuli
+	for s = 1:nstim
+		fprintf('level = %d\n', unique_stim(s));
+
+		% allocate spiketimes storage
+		dataByChannel(c).dataByUnitspikeTimes{s} = cell(length(stimindex{s}), 1);
+
+		% loop through sweeps (aka trials, reps) for this stimulus
+		for r = 1:length(stimindex{s})
+			% get the proper index into spikeTable for this stimulus and sweep
+			% combination
+			rIndx = stimindex{s}(r);
+			% get table for currrent sweep
+			tmpT = dataByChannel(c).spikeTable{rIndx};
+			% assign spike timestamps to spikeTimes, converting to milliseconds
+			dataByChannel(c).spikeTimes{s}{r} = force_row(1000 * tmpT.TS);
+		end
+	end
+end
+
+%% plot data
+Dinf = S.Info.FileInfo{fnum}.Dinf;
+analysisWindow = [Dinf.audio.Delay (Dinf.audio.Delay + Dinf.audio.Duration)];
+for c = 1:nchan
+	RLF = computeRLF(dataByChannel(c).spikeTimes, ...
+													unique_stim, analysisWindow);
+	hRLF = plotCurveAndCI(RLF, 'mean');
+	drawnow
+end
+
 
 
 %%

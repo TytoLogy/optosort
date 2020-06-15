@@ -258,7 +258,6 @@ classdef SpikeData
 		end
 		%-------------------------------------------------------
 		
-
 		%-------------------------------------------------------
 		%-------------------------------------------------------
 		function [val, varargout] = nUnits(obj, varargin)
@@ -373,10 +372,14 @@ classdef SpikeData
 					case 'CHANNEL'
 						% user specified channel option, so get desired list
 						channelNum = varargin{argI + 1};
+						fprintf('SpikeData.spikesForAnalysis: Channel %d\n', ...
+										channelNum);
 						argI = argI + 2;
 					case 'UNIT'
 						% user specified unit(s) so get them from input
 						unitNum = varargin{argI + 1};
+						fprintf('SpikeData.spikesForAnalysis: Unit %d\n', ...
+										unitNum);
 						argI = argI + 2;
 					otherwise
 						% unknown option provided by user
