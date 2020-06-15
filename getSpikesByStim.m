@@ -85,6 +85,7 @@ fnum = 1;
 [stimindex, stimvar] = S.Info.FileInfo{fnum}.getStimulusIndices;
 
 % get the spikes for this file as a table
+% spikeTable = S.spikesForAnalysis(fnum, 'Channel', 7, 'align', 'sweep');
 spikeTable = S.spikesForAnalysis(fnum, 'Channel', 7, 'align', 'sweep');
 
 

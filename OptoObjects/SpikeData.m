@@ -61,7 +61,7 @@ classdef SpikeData
 			end
 			obj.Info = varargin{1};
 			obj.Spikes = varargin{2};
-			if length(varargin) > 2;
+			if length(varargin) > 2
 				obj.Continuous = varargin{3};
 			end
 			if length(varargin) == 4
@@ -219,7 +219,7 @@ classdef SpikeData
 		
 		%-------------------------------------------------------
 		%-------------------------------------------------------
-		function val = listUnits(obj, varargin)
+		function [val, varargout] = listUnits(obj, varargin)
 		%-------------------------------------------------------
 		% return vector of unique unit numbers for each channel
 		% stored in a cell array; data are tacken from the Spikes Table
@@ -252,13 +252,16 @@ classdef SpikeData
 			for c = 1:nchan
 				val{c} = unique(obj.Spikes.Unit(obj.Spikes.Channel == clist(c)));
 			end
+			if nargout > 1
+				varargout{1} = clist;
+			end
 		end
 		%-------------------------------------------------------
 		
 
 		%-------------------------------------------------------
 		%-------------------------------------------------------
-		function val = nUnits(obj, varargin)
+		function [val, varargout] = nUnits(obj, varargin)
 		%-------------------------------------------------------
 		% [# units] = SpikeData.nUnits([channel numbers])
 		% return # of unique units for each channel
@@ -274,9 +277,11 @@ classdef SpikeData
 				tmplist = obj.listUnits(clist(c));
 				val(c) = length(tmplist{1});
 			end
+			if nargout > 1
+				varargout{1} = clist;
+			end
 		end
 		%-------------------------------------------------------
-		
 
 		%-------------------------------------------------------
 		%-------------------------------------------------------
@@ -397,8 +402,8 @@ classdef SpikeData
 				fprintf(['SpikeData.spikesForAnalysis:' ...
 									'using all channels and units\n']);
 				channel_rows = true(size(tmpS.Channel));
-				unit_rows = true(size(tmpS.Channel)); %#ok<PREALL>
-				channelNum = -1;
+				unit_rows = true(size(tmpS.Channel)); 
+% 				channelNum = -1;
 				unitNum = -1;
 			else
 				% check channel provided
@@ -420,7 +425,7 @@ classdef SpikeData
 									'using all units for channel %d\n'], channelNum);
 				% set unit_rows to ones, size of tmpS.Channel
 				unit_rows = true(size(tmpS.Channel));
-			else
+			elseif unitNum ~= -1
 				% get indices for unit
 				unit_rows = tmpS.Unit == unitNum;				
 			end
