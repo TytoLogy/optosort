@@ -400,14 +400,17 @@ classdef SpikeData
 			% create temp table of data for desired file
 			tmpS = obj.spikesForFile(fileNum);
 			
+			%--------------------------------------
+			% check channels and units
+			%--------------------------------------
 			% if channelNum is empty, use all channels and units
 			if isempty(channelNum)
 				fprintf(['SpikeData.spikesForAnalysis:' ...
 									'using all channels and units\n']);
 				channel_rows = true(size(tmpS.Channel));
 				unit_rows = true(size(tmpS.Channel)); 
-% 				channelNum = -1;
-				unitNum = -1;
+				% explicitly set unitNNum to empty
+				unitNum = [];
 			else
 				% check channel provided
 				cchk = obj.check_channels(channelNum);
@@ -418,6 +421,7 @@ classdef SpikeData
 				end
 				% get indices for channel(s)
 				channel_rows = false(size(tmpS.Channel));
+				% loop through channels and OR channel_rows with channels
 				for c = 1:length(channelNum)
 					channel_rows = channel_rows | (tmpS.Channel == channelNum(c));
 				end
@@ -749,6 +753,37 @@ classdef SpikeData
 		function val = get.hasContinuousData(obj)
 			val = ~isempty(obj.Continuous);
 		end
+
+		
+		% TEMPORARY
+		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
+		function [clist, varargout] = check_channels(obj, channel_arg)
+			if isempty(channel_arg)
+				% if no channels provided, use all existing channels
+				clist = obj.listChannels;
+			else
+				% otherwise, use provided channels
+				% note that channel_arg might be a cell
+				if iscell(channel_arg)
+					clist = channel_arg{1};
+				else
+					clist = channel_arg;
+				end
+				% check channels existence
+				cchk = ismember(clist, obj.listChannels);
+				if ~all(cchk)
+					for c = 1:length(clist)
+						if cchk(c) == false
+							warning('unknown channel: %d\n', clist(c))
+							clist(c) = -1;
+						end
+					end
+				end
+			end
+			% number of channels
+			varargout{1} = length(clist);
+		end
 		
 	end	% END OF METHODS (general)
 	%------------------------------------------------------------------------
@@ -761,6 +796,7 @@ classdef SpikeData
 	%------------------------------------------------------------------------
 	%------------------------------------------------------------------------
 	%------------------------------------------------------------------------
+	%{
 	methods (Access = protected)
 		%------------------------------------------------------------------------
 		%------------------------------------------------------------------------
@@ -792,6 +828,7 @@ classdef SpikeData
 		end
 		%------------------------------------------------------------------------
 	end	% END METHODS (PROTECTED)
+	%}
 	%------------------------------------------------------------------------
 	%------------------------------------------------------------------------
 	%------------------------------------------------------------------------
