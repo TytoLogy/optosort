@@ -772,6 +772,9 @@ classdef SpikeData
 				end
 				% check channels existence
 				cchk = ismember(clist, obj.listChannels);
+				% if all channels are not in list of channels, find mismatch
+				% and report error. set clist element for that channel to -1 to
+				% indicate error
 				if ~all(cchk)
 					for c = 1:length(clist)
 						if cchk(c) == false
@@ -784,6 +787,12 @@ classdef SpikeData
 			% number of channels
 			varargout{1} = length(clist);
 		end
+		
+ 		function [val, varagout] = check_units(obj, channels, units)
+		
+		end
+		
+		
 		
 	end	% END OF METHODS (general)
 	%------------------------------------------------------------------------
