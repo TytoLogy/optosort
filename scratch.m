@@ -12,11 +12,31 @@ plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
 obj = import_from_plexon(fullfile(sortedPath, plxFile), ...
 									fullfile(nexPath, nexInfoFile));
 
+%------------------------------------------------------------------------
+%% get data
+%------------------------------------------------------------------------
+filenum = 1;
+chan = 4;
+unit = [];
+swpS = obj.spikesForAnalysis(filenum, 'chan', chan, 'unit', unit, 'align', 'sweep')
+
+% count # of spikes
+cnt = 0;
+for s = 1:length(swpS)
+	cnt = cnt + height(swpS{s});
+end
+fprintf('found %d spikes\n', cnt);
+% another way to do this for unaligned sweeps
+fS = obj.selectSpikes(filenum, chan, unit);
+% check # of spikes found
+valid_spikes = fS( ((fS.Channel == chan) ), :)
+
 %--------------------------------------
 %% fake inputs
 %--------------------------------------
 fileNum =1;
 V = {'channel', 4, 'unit', 1}
+
 
 
 %--------------------------------------

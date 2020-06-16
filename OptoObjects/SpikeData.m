@@ -369,13 +369,13 @@ classdef SpikeData
 							ALIGN = lower(varargin{argI+1});
 						end
 						argI = argI + 2;
-					case 'CHANNEL'
+					case {'CHANNEL', 'CHAN', 'C'}
 						% user specified channel option, so get desired list
 						channelNum = varargin{argI + 1};
 						fprintf('SpikeData.spikesForAnalysis: Channel %d\n', ...
 										channelNum);
 						argI = argI + 2;
-					case 'UNIT'
+					case {'UNIT', 'UN', 'U'}
 						% user specified unit(s) so get them from input
 						unitNum = varargin{argI + 1};
 						fprintf('SpikeData.spikesForAnalysis: Unit %d\n', ...
@@ -397,6 +397,15 @@ classdef SpikeData
 										fileNum, obj.Info.nFiles);
 			end
 			
+			%--------------------------------------
+			% get spikes table for file, channel, unit combination
+			%--------------------------------------
+			vS = obj.selectSpikes(fileNum, channelNum, unitNum);
+			
+			%--------------------------------------
+			%--------------------------------------
+						%{
+			%%%%%%%%%%%%%% OLD
 			% create temp table of data for desired file
 			tmpS = obj.spikesForFile(fileNum);
 			
@@ -440,6 +449,10 @@ classdef SpikeData
 			vS = tmpS( (channel_rows & unit_rows), :);
 			% clear tmpS
 			clear tmpS
+			%}
+			%--------------------------------------
+			%--------------------------------------
+			
 			
 			%--------------------------------------
 			% process sweeps
@@ -747,7 +760,7 @@ classdef SpikeData
 		
 		%-------------------------------------------------------
 		%-------------------------------------------------------
-		function tbl = selectSpikes(fileNum, channelNum, unitNum)
+		function [tbl, varargout] = selectSpikes(obj, fileNum, channelNum, unitNum)
 		%-------------------------------------------------------
 			
 			% create temp table of data for desired file
@@ -810,7 +823,11 @@ classdef SpikeData
 			end
 
 			% reduce table to valid channel and unit
-			tbl = tmpS( (channel_rows & unit_rows), :);			
+			tbl = tmpS( (channel_rows & unit_rows), :);
+			
+			% outputs
+			varargout{1} = channel_rows;
+			varargout{2} = unit_rows;
 		end
 		%-------------------------------------------------------
 		%-------------------------------------------------------
