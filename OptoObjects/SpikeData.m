@@ -741,6 +741,82 @@ classdef SpikeData
 			end
 		end
 		%-------------------------------------------------------
+		%-------------------------------------------------------
+		
+		
+		
+		%-------------------------------------------------------
+		%-------------------------------------------------------
+		function tbl = selectSpikes(fileNum, channelNum, unitNum)
+		%-------------------------------------------------------
+			
+			% create temp table of data for desired file
+			tmpS = obj.spikesForFile(fileNum);
+
+			% check channels and units
+			% if channelNum is empty, use all channels and units
+			if isempty(channelNum)
+				fprintf(['SpikeData.selectSpikes:' ...
+									'using all channels and units\n']);
+				channel_rows = true(size(tmpS.Channel));
+			% 	unit_rows = true(size(tmpS.Channel)); 
+				% explicitly set unitNNum to empty
+				unitNum = [];
+			else
+				% check channel provided
+				cchk = obj.check_channels(channelNum);
+				if any(cchk == -1)
+					fprintf('SpikeData.selectSpikes: invalid channelNum %d\n', ...
+									channelNum(cchk == -1));
+					error('SpikeData.selectSpikes: invalid channel');
+				end
+				% get indices for channel(s)
+				channel_rows = false(size(tmpS.Channel));
+				% loop through channels and OR channel_rows with channels
+				for c = 1:length(channelNum)
+					channel_rows = channel_rows | (tmpS.Channel == channelNum(c));
+				end
+			end
+
+			% if unitNum is empty, find all units
+			if isempty(unitNum)
+				fprintf(['SpikeData.selectSpikes:' ...
+									'using all units for channel %d\n'], channelNum);
+				% set unit_rows to ones, size of tmpS.Unit
+				unit_rows = true(size(tmpS.Unit));
+			else
+				% if unit num is specified and more than one channel is provided, 
+				% throw error if unitNum is not a cell
+				if (length(channelNum) > 1) && ~iscell(unitNum)
+					error(['SpikeData.selectSpikes: if multiple channels are ' ...
+								'specified, cell vector of units to match must be' ...
+								'provided to spikesForAnalysis']);
+				else
+					% check units
+					[uchk, uchklist] = obj.check_units(channelNum, unitNum); %#ok<ASGLU>
+					if any(uchk == false)
+						error('Requested unit does not exist on channel');
+					end
+				end
+
+				% build unit_rows
+				% initialize unit_rows
+				unit_rows = false(size(tmpS.Unit));
+				% loop through units, OR unit_rows with each unit_num
+				for u = 1:length(unitNum)
+					% get indices for unit
+					unit_rows = unit_rows | (tmpS.Unit == unitNum);
+				end
+			end
+
+			% reduce table to valid channel and unit
+			tbl = tmpS( (channel_rows & unit_rows), :);			
+		end
+		%-------------------------------------------------------
+		%-------------------------------------------------------
+		
+		
+		
 		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		
 		
@@ -787,10 +863,86 @@ classdef SpikeData
 			% number of channels
 			varargout{1} = length(clist);
 		end
+		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
 		
- 		function [val, varagout] = check_units(obj, channels, units)
+ 		%------------------------------------------------------------------------
+		%------------------------------------------------------------------------
+		function [val, varargout] = check_units(obj, channels, units)
 		
-		end
+			% check channel provided
+			cchk = obj.check_channels(channels);
+			if any(cchk == -1)
+				fprintf('SpikeData.check_units: invalid channelNum %d\n', ...
+									channels(cchk == -1));
+				error('SpikeData.check_units: invalid channel');
+			end
+			% check if units is empty
+			if isempty(units)
+				error(['SpikeData.check_units: ' ...
+							'list of units to check is empty']);
+			end
+
+			% some checks depending on length of channels input
+			if length(channels) > 1
+				% if more than one channel is specified, units needs to be a
+				% cell
+				if ~iscell(units)
+					% throw error
+					error(['SpikeData.check_units: if multiple ' ...
+								'channels are specified, cell vector of units' ...
+								'to match must be provided to spikesForAnalysis']);
+				else
+					% no error - assign units cell to uCell;
+					uCell = units;
+				end
+			elseif ~iscell(units)
+				% if length channels is 1, put units into a cell to simplify
+				% search/check code
+				uCell = {units};
+			end
+
+			% check for length mismatch in channels and uCell
+			if length(channels) ~= length(uCell)
+				error(['SpikeData.check_units: mismatch in length of ' ...
+								'channels and units']);
+			end
+
+			% allocate output
+			uList = cell(size(uCell));
+			val = true(size(uCell));
+
+			% get list of units and the corresponding list of channels for the
+			% units
+			[allUnits, allChannels] = obj.listUnits;
+			% loop through channels
+			for c = 1:length(channels)
+				% get list of units for this channel
+				units_for_chan = allUnits{channels(c) == allChannels};
+				% check if input units for this channel match
+				uchk = ismember(uCell{c}, units_for_chan);
+				% add list of zeros to output uList for this channel
+				uList{c} = zeros(size(uchk));
+				if ~all(uchk)
+					% output for val for this channel is false
+					val(c) = false;
+					for u = 1:length(uCell{c})
+						% assign -1 to bad units
+						if uchk(u) == false
+							uList{c}(u) = -1;
+							warning(['SpikeData.check_units: unit %d not ' ...
+										'found for channel %d'], uCell{c}(u), ...
+										channels(c))
+						end
+					end % END u loop
+				end % END if ~all(uchk)
+			end % END c loop
+			
+			% assign output
+			if nargout > 1
+				varargout{1} = uList;
+			end
+		end % END check_units()
 		
 		
 		

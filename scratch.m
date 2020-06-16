@@ -74,6 +74,10 @@ if ~between(fileNum, 1, obj.Info.nFiles)
 							fileNum, obj.Info.nFiles);
 end
 
+
+% portion of table for this file that contains these channels and units
+vS = obj.selectSpikes(fileNum, channelNum, unitNum)
+
 % create temp table of data for desired file
 tmpS = obj.spikesForFile(fileNum);
 
@@ -104,8 +108,6 @@ else
 	end
 end
 
-%%
-
 % if unitNum is empty, find all units
 if isempty(unitNum)
 	fprintf(['SpikeData.spikesForAnalysis:' ...
@@ -113,7 +115,6 @@ if isempty(unitNum)
 	% set unit_rows to ones, size of tmpS.Unit
 	unit_rows = true(size(tmpS.Unit));
 else
-	
 	% if unit num is specified and more than one channel is provided, 
 	% throw error if unitNum is not a cell
 	if (length(channelNum) > 1) && ~iscell(unitNum)
@@ -121,18 +122,16 @@ else
 					'specified, cell vector of units to match must be' ...
 					'provided to spikesForAnalysis']);
 	else
-		
+		% check units
+		[uchk, uchklist] = obj.check_units(channelNum, unitNum); %#ok<ASGLU>
+		if any(uchk == false)
+			error('Requested unit does not exist on channel');
+		end
 	end
-	
-	
-	
-	
-	
-	
-	% check unit(s) for given channel
-	
+
+	% build unit_rows
 	% initialize unit_rows
-	unit_rows = false(size(tmpS.Unit), 1);
+	unit_rows = false(size(tmpS.Unit));
 	% loop through units, OR unit_rows with each unit_num
 	for u = 1:length(unitNum)
 		% get indices for unit
@@ -147,7 +146,14 @@ vS = tmpS( (channel_rows & unit_rows), :);
 %% check units for channel(s)
 
 channels = [4 5];
-units = {[0 1], [1 2 3]};
+units = {[0 1], [1 2]};
+
+[uchk, uchklist] = obj.check_units(channels, units)
+if any(uchk == false)
+	error('Requested unit does not exist on channel');
+end
+%% code for check_units method for SpikeData (moved into spikeData.m code
+
 
 if isempty(units)
 	error('SpikeData.check_units: list of units to check is empty');
