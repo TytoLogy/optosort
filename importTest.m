@@ -23,18 +23,15 @@
 % Initial things to define
 %------------------------------------------------------------------------
 
-%% path to readPXFileC
-
+%------------------------------------------------------------------------
+%% add path to readPLXFileC if needed
+%------------------------------------------------------------------------
+% readPLXFileC is a function downloaded from MATLAB Central that allows
+% direct reading of PLX file data in Matlab
 if ~exist('readPLXFileC', 'file')
 	fprintf('import_from_plexon: adding readPLXFile to path\n');
-	addpath('/Users/sshanbhag/Work/Code/Matlab/stable/Toolbox/Plexon/readPLXFileC');
+	addpath('readPLXFileC');
 end
-
-%------------------------------------------------------------------------
-% Definitions
-%------------------------------------------------------------------------
-% string used to separate text 
-sepstr = '----------------------------------------------------';
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -64,67 +61,16 @@ nexPath = sortedPath;
 nexInfoFile = '1407_20200309_03_01_1350_BBN_nexinfo.mat';
 nexFile = '1407_20200309_03_01_1350_BBN.nex';
 plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
-%------------------------------------------------------------------------
-% raw data locations
-%------------------------------------------------------------------------
-exportOpts.DataPath = {'/Users/sshanbhag/Work/Data/TestData/MT/1407'};
-% write to D drive on PETROL for testing with Plexon OFS
-% exportOpts.OutputPath = '/Volumes/D/1407';
-% local working dir
-exportOpts.OutputPath = '/Users/sshanbhag/Work/Data/TestData/working';
-exportOpts.DataFile = {	'1407_20200309_03_01_1350_BBN.dat', ...
-								'1407_20200309_03_01_1350_FREQ_TUNING.dat'};
-exportOpts.TestFile = { '1407_20200309_03_01_1350_BBN_testdata.mat', ...
-								'1407_20200309_03_01_1350_FREQ_TUNING_testdata.mat'};
-exportOpts.OutputFile = '1407_20200309_03_01_1350_MERGE.nex';
-exportOpts.Channels = [4, 5, 7, 15];
-% filter parameters for raw neural data
-exportOpts.BPfilt.Fc = [250 4000];
-exportOpts.BPfilt.forder = 5;
-exportOpts.BPfilt.ramp = 1;
-exportOpts.BPfilt.type = 'butter';
+
 
 %------------------------------------------------------------------------
-% resample data to nearest lower integer value?
 %------------------------------------------------------------------------
-% exportOpts.resampleData = [];
 %------------------------------------------------------------------------
-
-%{
-%------------------------------------------------------------------------
-% "fake" data for testing sampling rate/timing in OFS .plx file
-%------------------------------------------------------------------------
-sortedPath = '/Users/sshanbhag/Work/Data/TestData/working/FakeData';
-rawPath = sortedPath;
-nexPath = sortedPath;
-nexInfoFile = '1407_20200309_03_01_1350_TIMETESTDATA_nexinfo.mat';
-nexFile = '1407_20200309_03_01_1350_TIMETESTDATA.nex';
-plxFile = '1407_20200309_03_01_1350_TIMETESTDATA-02.plx';
-%------------------------------------------------------------------------
-%}
+sendmsg('import_from_plexon running...\n');
+sendmsg(sprintf('File: %s', plxFile));
 
 %------------------------------------------------------------------------
-%{
-sortedPath = '/Users/sshanbhag/Work/Data/TestData/MT/1408';
-rawPath = sortedPath;
-nexPath = sortedPath;
-nexInfoFile = '1408_20200319_02_01_950_WAV_nexinfo-ch1,2,5,12,15.mat';
-nexFile = '1408_20200319_02_01_950_WAV-ch1,2,5,12,15.nex';
-% file without continuous data
-% plxFile = '1408_20200319_02_01_950_WAV-ch1,2,5,12,15-01-KmeansScan.plx';
-% file with continuous data
-plxFile = '1408_20200319_950_WAV_ch1,2,5,12,15-01-SORTEDContKmeansScan.plx';
-%}
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-
-fprintf('\n%s\n', sepstr);
-fprintf('import_from_plexon running...\n');
-fprintf('File: %s\n', plxFile);
-fprintf('%s\n', sepstr);
-
-%------------------------------------------------------------------------
+% What is in nexInfo struct:
 %{
 nexInfo:
 	NexFileName: '1382_20191212_02_02_3200_test.nex'
@@ -180,59 +126,6 @@ nexInfo.fData.F
 %------------------------------------------------------------------------
 S = import_from_plexon(fullfile(sortedPath, plxFile), ...
 									fullfile(nexPath, nexInfoFile));
-
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-%% load raw data in order to compare with plx data
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-F  = defineSampleData(exportOpts.DataPath, ...
-											exportOpts.DataFile, exportOpts.TestFile);
-% storage for raw data
-D = cell(length(exportOpts.DataFile), 1);
-N = cell(length(exportOpts.DataFile), 1);
-
-for f = 1:length(F)
-	[tmp, N{f}] = read_data_for_export(F(f), exportOpts.Channels, exportOpts.BPfilt, []);
-	D{f} = tmp{1};
-end
-
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-%% compare data from raw and sorted continuous data
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-
-% file (index into cell) to plot
-fnum = 1;
-% channel (index into channel list) to plot
-chan = 1;
-% sweep to plot
-sweep = 3;
-
-figure(1)
-subplot(211)
-rawD = D{fnum}{chan, sweep};
-nD = length(rawD);
-plxStart = (1 + (sweep-1)*nD)
-plxD = S.Continuous(chan).Values(plxStart:(plxStart+nD));
-plot(rawD)
-title({F(1).file; sprintf('Channel %d Sweep %d', chan, sweep)}, 'Interpreter', 'none');
-subplot(212)
-plot(plxD)
-
-figure(2)
-plot(xcorr(rawD, plxD))
-
-%------------------------------------------------------------------------
-%% save Sobject in file
-%------------------------------------------------------------------------
-% get base from one of the file objects in S.Info
-sfile = [S.Info.FileInfo{1}.F.fileWithoutOther '_Sobj.mat'];
-fprintf('\n%s\n', sepstr);
-fprintf('writing Sobj to file\n\t%s\n', fullfile(nexPath, sfile));
-fprintf('%s\n', sepstr);
-save(fullfile(nexPath, sfile), '-MAT', 'S');
 
 %------------------------------------------------------------------------
 %% break up spiketimes by data file
@@ -314,15 +207,6 @@ S.plotUnitWaveforms(S.listUnits);
  
 
 
-%% check two data files
-
-tmpS = S.spikesForFile(1);
-channel_rows = false(size(tmpS.Channel));
-for c = 3:5
-	channel_rows = channel_rows | (tmpS.Channel == S.Info.ADchannel(c));
-	cm(:, c) = channel_rows;
-end
-unique(tmpS.Channel(channel_rows, :))
 
 
 

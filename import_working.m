@@ -1,6 +1,5 @@
-% function varargout = import_from_plexon(varargin)
 %------------------------------------------------------------------------
-% import_from_plexon.m
+% import_working.m
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
@@ -14,27 +13,22 @@
 %  Sharad J. Shanbhag
 %	sshadnbhag@neomed.edu
 %------------------------------------------------------------------------
-% Created: 12 February, 2020 (SJS)
-%	- adapted from import_from_plexon_nonObj
+% Created: 16 June, 2020(SJS)
+%	- split off from importTest.m
 % Revisions:
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
-% Initial things to define
+
 %------------------------------------------------------------------------
-
-%% path to readPXFileC
-
+%% add path to readPLXFileC if needed
+%------------------------------------------------------------------------
+% readPLXFileC is a function downloaded from MATLAB Central that allows
+% direct reading of PLX file data in Matlab
 if ~exist('readPLXFileC', 'file')
 	fprintf('import_from_plexon: adding readPLXFile to path\n');
-	addpath('/Users/sshanbhag/Work/Code/Matlab/stable/Toolbox/Plexon/readPLXFileC');
+	addpath('readPLXFileC');
 end
-
-%------------------------------------------------------------------------
-% Definitions
-%------------------------------------------------------------------------
-% string used to separate text 
-sepstr = '----------------------------------------------------';
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
