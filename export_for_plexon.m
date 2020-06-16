@@ -83,6 +83,10 @@ function varargout = export_for_plexon(varargin)
 %		rate of 48828.125 samples/second will be converted to resampleData value 
 % 		if empty or not specified, no change will be made to sampling rate.
 % 
+%	exportInfo.testData
+% 		true	fake data will be created
+% 		false	no fake data!
+% 		if not defined, no fake data!
 % Output Arguments:
 % 	nD		NeuroExplorer nex data struct written to output file
 %	nexInfo	SpikeInfo object
@@ -107,6 +111,7 @@ function varargout = export_for_plexon(varargin)
 %	(which is subclass of CurveInfo) to be included in the array. will need
 %	to update downstream code.
 % 9 June 2020 (SJS): added resampleData field to exportOptions
+% 16 Jun 2020 (SJS): added testData as option to build test data for plx
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -121,6 +126,8 @@ NEX_UTIL_PATH = ['~/Work/Code/Matlab/stable/Toolbox/NeuroExplorer' ...
 defaultFilter = [];
 % resample data? default is no
 defaultResampleRate = [];
+% build test data?
+testData = false;
 
 %------------------------------------------------------------------------
 % Setup
@@ -191,6 +198,12 @@ if nargin == 1
 	else
 		resampleData = defaultResampleRate;
 	end
+	% test data?
+	if isfield(tmp, 'testData')
+		testData = tmp.testData;
+	else
+		testData = false;
+	end
 	
 	% define path to data file and data file for testing
 	F = defineSampleData(tmp.DataPath, tmp.DataFile, tmp.TestFile);
@@ -241,7 +254,11 @@ fprintf('Animal: %s\n', F(1).animal);
 %------------------------------------------------------------------------
 % get the data and information from the raw files
 %------------------------------------------------------------------------
-[cSweeps, nexInfo] = read_data_for_export(F, Channels, BPfilt, resampleData);
+if testData == false
+	[cSweeps, nexInfo] = read_data_for_export(F, Channels, BPfilt, resampleData);
+else
+	[cSweeps, nexInfo] = test_data_for_export(F, Channels, BPfilt, resampleData);
+end
 
 %------------------------------------------------------------------------
 % If not provided, create output .nex file name - adjust depending on # of files
@@ -260,7 +277,6 @@ nexInfo.FileName = fullfile(NexFilePath, NexFileName);
 % create output _nexinfo.mat file name - base is same as .nex file
 [~, baseName] = fileparts(nexInfo.FileName);
 nexInfo.InfoFileName = fullfile(NexFilePath, [baseName '_nexinfo.mat']);
-
 
 %------------------------------------------------------------------------
 % convert (concatenate) cSweeps to vector for each channel, 

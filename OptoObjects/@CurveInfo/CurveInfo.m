@@ -155,7 +155,7 @@ classdef CurveInfo
 						end
 					end
 				end
-				elsesda
+			else
 				error('Unknown input type %s', varargin{1});
 			end
 		end

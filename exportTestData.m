@@ -3,7 +3,7 @@
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
-% generates 
+% generates  test data
 % 
 %------------------------------------------------------------------------
 % See also: 
@@ -83,9 +83,9 @@ end
 exportOpts.DataPath = '/Users/sshanbhag/Work/Data/TestData/MT/1407';
 exportOpts.OutputPath = '/Users/sshanbhag/Work/Data/TestData/working';
 exportOpts.DataFile = '1407_20200309_03_01_1350_BBN.dat';
-exportOpts.OutputFile = '1407_20200309_03_01_1350_TIMETESTDATA.nex';
+exportOpts.OutputFile = '1407_20200309_03_01_1350_TESTDATA.nex';
 exportOpts.TestFile = '1407_20200309_03_01_1350_BBN_testdata.mat';
-exportOpts.Channels = 1;
+exportOpts.Channels = [4, 5, 7, 15];
 
 %---------------------------------------
 %---------------------------------------
@@ -112,6 +112,9 @@ exportOpts.BPfilt.type = 'butter';
 % resample data to nearest lower integer value?
 %------------------------------------------------------------------------
 exportOpts.resampleData = [];
+
+% fake data!
+exportOpts.testData = true;
 
 %------------------------------------------------------------------------
 % run!

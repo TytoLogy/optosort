@@ -26,6 +26,7 @@ function [obj, varargout] = buildTimingTestData(obj, Channels, ~, D, varargin)
 % 	Optional Input Args:
 % 		'REMOVE_OFFSET'	<'Y'/'N'>	remove DC offset from sweeps?
 % 		'PLOT_SWEEPS'		<'N'/'Y'>	plot sweeps?
+%		'TESTOPTS'			provide testOpts struct
 %
 % Output Arguments:
 %	obj		updated copy of object
@@ -67,7 +68,19 @@ function [obj, varargout] = buildTimingTestData(obj, Channels, ~, D, varargin)
 	plotSweeps = false;
 	filterData = true; %#ok<NASGU>
 	DEBUG = false;
+	% define test options
 
+	% set the peak firing rate per Channel to be equal to channel value
+	testOpts.FiringRate = Channels;
+	% set # of units per channel
+	testOpts.UnitsPerChannel = zeros(length(Channels), 1);
+	for c = 1:length(Channels)
+		testOpts.UnitsPerChannel = c;
+	end
+	% background rate for each unit? (unused for now)
+	testOpts.BGRate = [];
+
+	
 	if ~isempty(varargin)
 		argIndx = 1;
 		while argIndx <= length(varargin)
@@ -98,6 +111,15 @@ function [obj, varargout] = buildTimingTestData(obj, Channels, ~, D, varargin)
 						DEBUG = false;
 					end
 					argIndx = argIndx + 2;
+				case {'OPTIONS'}
+					tmpArg = varargin{argIndx+1};
+					if ~isstruct(tmpArg)
+						error(['CurveInfo.buildTimingTestData: ', ...
+									'testOpts must be a struct']);
+					else
+						testOpts = tmpArg;
+					end
+					argIndx = argIndx+2;
 
 				otherwise
 					error('%s: unknown input arg %s', mfilename, varargin{argIndx});
@@ -198,9 +220,10 @@ function [obj, varargout] = buildTimingTestData(obj, Channels, ~, D, varargin)
 
 			% assign test data matrix to cD cell array
 			% single spike at stimulus onset
-			cD{c, s} = genTestData(size(D{s}.datatrace(:, channel)'), ...
-									ms2bin(obj.Dinf.audio.Delay, obj.Dinf.indev.Fs), ...
-									spike);
+			cD{c, s} = genTestData(	size(D{s}.datatrace(:, channel)'), ...
+											spike, ...
+											testOpts(c), ...
+											obj.Dinf.indev.Fs);
 
 			% store length of sweep
 			obj.sweepLen(c, s) = length(cD{c, s});
