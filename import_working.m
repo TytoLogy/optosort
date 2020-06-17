@@ -58,6 +58,8 @@ nexPath = sortedPath;
 nexInfoFile = '1407_20200309_03_01_1350_BBN_nexinfo.mat';
 nexFile = '1407_20200309_03_01_1350_BBN.nex';
 plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
+
+%{
 %------------------------------------------------------------------------
 % raw data locations
 %------------------------------------------------------------------------
@@ -77,12 +79,9 @@ exportOpts.BPfilt.Fc = [250 4000];
 exportOpts.BPfilt.forder = 5;
 exportOpts.BPfilt.ramp = 1;
 exportOpts.BPfilt.type = 'butter';
-
-%------------------------------------------------------------------------
-% resample data to nearest lower integer value?
-%------------------------------------------------------------------------
 % exportOpts.resampleData = [];
 %------------------------------------------------------------------------
+%}
 
 %{
 %------------------------------------------------------------------------
@@ -96,6 +95,19 @@ nexFile = '1407_20200309_03_01_1350_TIMETESTDATA.nex';
 plxFile = '1407_20200309_03_01_1350_TIMETESTDATA-02.plx';
 %------------------------------------------------------------------------
 %}
+
+
+%------------------------------------------------------------------------
+% "fake" data for testing sorting OFS .plx file
+%------------------------------------------------------------------------
+sortedPath = '/Users/sshanbhag/Work/Data/TestData/working/FakeData/TestData';
+rawPath = sortedPath;
+nexPath = sortedPath;
+nexInfoFile = '1407_20200309_03_01_1350_TESTDATA_nexinfo.mat';
+nexFile = '1407_20200309_03_01_1350_TESTDATA.nex';
+plxFile = '1407_20200309_03_01_1350_TESTDATA-Sort.plx';
+%------------------------------------------------------------------------
+
 
 %------------------------------------------------------------------------
 %{
@@ -174,7 +186,7 @@ nexInfo.fData.F
 %------------------------------------------------------------------------
 S = import_from_plexon(fullfile(sortedPath, plxFile), ...
 									fullfile(nexPath, nexInfoFile));
-
+%{
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 %% load raw data in order to compare with plx data
@@ -217,7 +229,8 @@ plot(plxD)
 
 figure(2)
 plot(xcorr(rawD, plxD))
-
+%}
+									
 %------------------------------------------------------------------------
 %% save Sobject in file
 %------------------------------------------------------------------------
@@ -299,7 +312,7 @@ end
 %% Get spike data for a specific file aligned by sweep for given channels
 % get data for first file
 fNum = 1;
-spikesBySweep = S.spikesForAnalysis(f, 'Channel', S.Info.ADchannel, 'align', 'sweep');
+spikesBySweep = S.spikesForAnalysis(fNum, 'Channel', S.Info.ADchannel, 'align', 'sweep');
 
 
 %% plot waveforms
