@@ -889,6 +889,12 @@ classdef SpikeData
 			end
 			% number of channels
 			varargout{1} = length(clist);
+			% index or indices for channel(s)
+			tmp = zeros(length(clist), 1);
+			for c = 1:length(clist)
+				tmp(c) = find(clist(c) == obj.listChannels);
+			end
+			varargout{2} = tmp;
 		end
 		%------------------------------------------------------------------------
 		%------------------------------------------------------------------------

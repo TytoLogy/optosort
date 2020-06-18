@@ -1,11 +1,13 @@
-% function varargout = getSpikesByStim(varargin)
+function varargout = getSpikesByStim(obj, fIndx, chanNum, unitNum)
 %------------------------------------------------------------------------
 % [data, datainfo, tracesByStim] = viewOptoData(varargin)
 %------------------------------------------------------------------------
-% TytoLogy:Experiments:opto Application
+% TytoLogy:opto
+%--------------------------------------------------------------------------
+%	method: SpikeData.getSpikesByStim
 %--------------------------------------------------------------------------
 %
-%	should probably be a method within SpikeData object...
+%	
 %------------------------------------------------------------------------
 % Output Arguments:
 %
@@ -24,6 +26,7 @@
 %	18 Jun 2020 (SJS):
 %		- modifying to return values for a single file/test, channel and unit
 %		- using test fake data for now
+%		- moved into method for SpikeData
 %------------------------------------------------------------------------
 % TO DO:
 %   *Documentation!
@@ -57,79 +60,38 @@ output will be in format that can be passed to computeRLF, computeFRA, etc:
 --------------------------------------------------------------------------
 %}
 
-%----------------------------------------------------------------------
-%% for script, need to load data
-%----------------------------------------------------------------------
 %------------------------------------------------------------------------
-% sorted data locations
+% definitions
 %------------------------------------------------------------------------
-sortedPath = '/Users/sshanbhag/Work/Data/TestData/MT/1407';
-rawPath = sortedPath;
-nexPath = sortedPath;
-nexInfoFile = '1407_20200309_03_01_1350_BBN_nexinfo.mat';
-nexFile = '1407_20200309_03_01_1350_BBN.nex';
-plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
-
-%{
-%------------------------------------------------------------------------
-% "fake" data for testing sorting OFS .plx file
-%------------------------------------------------------------------------
-sortedPath = '/Users/sshanbhag/Work/Data/TestData/working/FakeData/TestData';
-rawPath = sortedPath;
-nexPath = sortedPath;
-nexInfoFile = '1407_20200309_03_01_13 50_TESTDATA_nexinfo.mat';
-nexFile = '1407_20200309_03_01_1350_TESTDATA.nex';
-plxFile = '1407_20200309_03_01_1350_TESTDATA-Sort.plx';
-%------------------------------------------------------------------------
-%}
+% string used in error messages
+mname = 'SpikeData.getSpikesByStim';
 
 %------------------------------------------------------------------------
-%% load S object from file
+% parse inputs
 %------------------------------------------------------------------------
-% use OptoFileName object to make this easier
-% create object using nexfile
-OFobj = OptoFileName(fullfile(nexPath, nexFile));
-% create name of mat file containing SpikeData object
-sfile = [OFobj.fileWithoutOther '_Sobj.mat'];
-sendmsg(sprintf('loading Sobj from file\n\t%s', ...
-						fullfile(nexPath, sfile)));
-% load object from mat file
-load(fullfile(nexPath, sfile));
 
-
-%------------------------------------------------------------------------
-%% specify file, channel, unit
-%------------------------------------------------------------------------
-sendmsg(sprintf('Data in file %s', sfile));
-% get and display list of files
-fList = S.listFiles;
-fprintf('Files:\n');
-fprintf('\tIndex\t\tFilename\n');
-for f = 1:S.Info.nFiles
-	fprintf('\t%d:\t\t%s\n', f, fList{f});
+if nargin < 3
+	error('%s: need file index #, channel and unit', mname);
 end
-fprintf('\n');
-% get and display list of channels...
-cList = S.listChannels;
-% ...and units
-% n.b.: could also get both using listUnits: [uList, cList] = S.listUnits
-uList = S.listUnits;
-fprintf('Channels and Unit ID #s:\n');
-fprintf('\tIndex\tChannel\tUnits\n');
-for c = 1:length(cList)
-	fprintf('\t%d:\t%d\t', c, cList(c));
-	fprintf('%d ', uList{c});
-	fprintf('\n');
-end
-fprintf('\n');
 
-% What file, channel unit to plot?
 % file index
-findx = 1;
-% select Channel (technically , index into array of channel numbers)
-cindx = 1;
-% select unit ID num
-uindx = 1;
+fIndx = varargin{1}
+% channels
+chanNum = varargin{2};
+if length(chanNum) > 1
+	error('%s: only works for single channel at a time', mname);
+elseif obj.check_channels(chanNum) == -1
+				error('SpikeData.spikesForChannel: invalid channel %d', ...
+								chanNum);
+end
+
+% unit
+unitNum = varargin{3};
+if length(unitNum)  > 1
+	error('%s: only works for single unit at a time', mname);
+else
+	
+
 
 %------------------------------------------------------------------------
 %% get stim indices, varlist

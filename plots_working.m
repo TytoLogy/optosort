@@ -143,10 +143,59 @@ sendmsg(['plots_working running for ' sprintf('File: %s\n', plxFile)]);
 S = import_from_plexon(fullfile(sortedPath, plxFile), ...
 									fullfile(nexPath, nexInfoFile));
 
+%{
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+% ALTERNATIVE
+%------------------------------------------------------------------------
+%% load S object from file
+%------------------------------------------------------------------------
+% use OptoFileName object to make this easier
+% create object using nexfile
+OFobj = OptoFileName(fullfile(nexPath, nexFile));
+% create name of mat file containing SpikeData object
+sfile = [OFobj.fileWithoutOther '_Sobj.mat'];
+sendmsg(sprintf('loading Sobj from file\n\t%s', ...
+						fullfile(nexPath, sfile)));
+% load object from mat file
+load(fullfile(nexPath, sfile));
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%}
+	
+%------------------------------------------------------------------------
+%% specify file, channel, unit
+%------------------------------------------------------------------------
+sendmsg(sprintf('Data in file %s', sfile));
+% get and display list of files
+fList = S.listFiles;
+fprintf('Files:\n');
+fprintf('\tIndex\t\tFilename\n');
+for f = 1:S.Info.nFiles
+	fprintf('\t%d:\t\t%s\n', f, fList{f});
+end
+fprintf('\n');
+% get and display list of channels...
+cList = S.listChannels;
+% ...and units
+% n.b.: could also get both using listUnits: [uList, cList] = S.listUnits
+uList = S.listUnits;
+fprintf('Channels and Unit ID #s:\n');
+fprintf('\tIndex\tChannel\tUnits\n');
+for c = 1:length(cList)
+	fprintf('\t%d:\t%d\t', c, cList(c));
+	fprintf('%d ', uList{c});
+	fprintf('\n');
+end
+fprintf('\n');
 
-%------------------------------------------------------------------------
-%% load sorted data
-%------------------------------------------------------------------------
+% What file, channel unit to plot?
+% file index
+findx = 1;
+% select Channel (technically , index into array of channel numbers)
+cindx = 1;
+% select unit ID num
+uindx = 1;
 
 
 
