@@ -1,6 +1,6 @@
-classdef CurveInfo
+classdef FRAInfo
 %------------------------------------------------------------------------
-% Class: CurveInfo
+% Class: FRAInfo
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
@@ -49,8 +49,8 @@ classdef CurveInfo
 %  Sharad J. Shanbhag
 %	sshanbhag@neomed.edu
 %------------------------------------------------------------------------
-% Created: 24 February, 2020 (SJS)
-%	- adapted from import_from_plexon_nonObj
+% Created: 18 June 2020, 2020 (SJS)
+%	- subclassed from CurveInfo
 % Revisions:
 %	3 Mar 2020 (SJS): adding elements from fData struct in the 
 %		export_for_plexon.m function to avoid future duplications and

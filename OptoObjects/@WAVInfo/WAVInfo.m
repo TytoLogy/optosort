@@ -234,31 +234,19 @@ classdef WAVInfo < CurveInfo
 		end
 		%}
 		
-%{
+
 		function [varlist, nvars] = varlist(obj)
 		%---------------------------------------------------------------------
 		% returns list of variable value and # of vars..
+		% overloaded for WAV
 		%---------------------------------------------------------------------
 			switch upper(obj.testtype)
-				case {'FREQ', 'LEVEL'}
-					% list of frequencies, and # of freqs tested
-					% list of levels, and # of levels tested
-					varlist = {obj.varied_values};
-					nvars = length(varlist);
-
-				case 'FREQ+LEVEL'
-					% list of freq, levels
-					varlist = cell(2, 1);
-					% # of freqs in nvars(1), # of levels in nvars(2)
-					nvars = zeros(2, 1);
-					tmprange = obj.varied_values;
-					for v = 1:2
-						varlist{v} = unique(tmprange(v, :), 'sorted');
-						nvars(v) = length(varlist{v});
-					end
+				case {'FREQ', 'LEVEL', 'FREQ+LEVEL'}
+					% wrong class
+					error('class mismatch in varlist')
 
 				case 'OPTO'
-					warning('CurveInfo.varlist: OPTO not yet implemented');
+					warning('WAVInfo.varlist: OPTO not yet implemented');
 					varlist = {obj.varied_values};
 					nvars = length(varlist);
 
@@ -271,7 +259,7 @@ classdef WAVInfo < CurveInfo
 					error('%s: unsupported test type %s', mfilename, cInfo.testtype);
 			end
 		end
-%}
+
 
 %{		
 		%-------------------------------------------------

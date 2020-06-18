@@ -42,16 +42,22 @@ end
 % plxFile			name of sorted .plx file from Plexon OfflineSorter
 %------------------------------------------------------------------------
 
-%{
-sortedPath = '~/Work/Data/TestData/MT';
-rawPath = sortedPath;
-nexPath = sortedPath;
-nexFile = '1382_20191212_02_02_3200_MERGE.nex';
-%}
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+% sorted data locations
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+
+
+%------------------------------------------------------------------------
+% merged data 
+%------------------------------------------------------------------------
 
 %{
 %------------------------------------------------------------------------
-% sorted data locations
+% BBN data 
 %------------------------------------------------------------------------
 sortedPath = '/Users/sshanbhag/Work/Data/TestData/MT/1407';
 rawPath = sortedPath;
@@ -61,29 +67,13 @@ nexFile = '1407_20200309_03_01_1350_BBN.nex';
 plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
 %}
 
-%{
+
 %------------------------------------------------------------------------
-% raw data locations
+% merged data
 %------------------------------------------------------------------------
-exportOpts.DataPath = {'/Users/sshanbhag/Work/Data/TestData/MT/1407'};
-% write to D drive on PETROL for testing with Plexon OFS
-% exportOpts.OutputPath = '/Volumes/D/1407';
-% local working dir
-exportOpts.OutputPath = '/Users/sshanbhag/Work/Data/TestData/working';
-exportOpts.DataFile = {	'1407_20200309_03_01_1350_BBN.dat', ...
-								'1407_20200309_03_01_1350_FREQ_TUNING.dat'};
-exportOpts.TestFile = { '1407_20200309_03_01_1350_BBN_testdata.mat', ...
-								'1407_20200309_03_01_1350_FREQ_TUNING_testdata.mat'};
-exportOpts.OutputFile = '1407_20200309_03_01_1350_MERGE.nex';
-exportOpts.Channels = [4, 5, 7, 15];
-% filter parameters for raw neural data
-exportOpts.BPfilt.Fc = [250 4000];
-exportOpts.BPfilt.forder = 5;
-exportOpts.BPfilt.ramp = 1;
-exportOpts.BPfilt.type = 'butter';
-% exportOpts.resampleData = [];
-%------------------------------------------------------------------------
-%}
+sortedPath = '/Users/sshanbhag/Work/Data/TestData/MT/1408/1408_20200319_02_01_950_MERGE-ch1,2,5,12,15-01-KmeansScan';
+plxFile = '1408_20200319_02_01_950_MERGE.plx';
+nexInfoFile = '1408_20200319_02_01_950_MERGE_nexinfo.mat';
 
 %{
 %------------------------------------------------------------------------
@@ -98,7 +88,7 @@ plxFile = '1407_20200309_03_01_1350_TIMETESTDATA-02.plx';
 %------------------------------------------------------------------------
 %}
 
-
+%{
 %------------------------------------------------------------------------
 % "fake" data for testing sorting OFS .plx file
 %------------------------------------------------------------------------
@@ -109,10 +99,12 @@ nexInfoFile = '1407_20200309_03_01_1350_TESTDATA_nexinfo.mat';
 nexFile = '1407_20200309_03_01_1350_TESTDATA.nex';
 plxFile = '1407_20200309_03_01_1350_TESTDATA-Sort.plx';
 %------------------------------------------------------------------------
+%}
 
-
-%------------------------------------------------------------------------
 %{
+%------------------------------------------------------------------------
+% WAV data
+%------------------------------------------------------------------------
 sortedPath = '/Users/sshanbhag/Work/Data/TestData/MT/1408';
 rawPath = sortedPath;
 nexPath = sortedPath;
@@ -123,6 +115,7 @@ nexFile = '1408_20200319_02_01_950_WAV-ch1,2,5,12,15.nex';
 % file with continuous data
 plxFile = '1408_20200319_950_WAV_ch1,2,5,12,15-01-SORTEDContKmeansScan.plx';
 %}
+
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -141,7 +134,7 @@ sendmsg(['plots_working running for ' sprintf('File: %s\n', plxFile)]);
 %	stimulus info
 %------------------------------------------------------------------------
 S = import_from_plexon(fullfile(sortedPath, plxFile), ...
-									fullfile(nexPath, nexInfoFile));
+									fullfile(sortedPath, nexInfoFile));
 
 %{
 %------------------------------------------------------------------------
@@ -164,42 +157,87 @@ load(fullfile(nexPath, sfile));
 %}
 	
 %------------------------------------------------------------------------
+%% show file, channel, unit
+%------------------------------------------------------------------------
+% display file, channel, unit info
+[fileList, channelList, unitList] = S.printInfo;
+
+%------------------------------------------------------------------------
 %% specify file, channel, unit
 %------------------------------------------------------------------------
-sendmsg(sprintf('Data in file %s', sfile));
-% get and display list of files
-fList = S.listFiles;
-fprintf('Files:\n');
-fprintf('\tIndex\t\tFilename\n');
-for f = 1:S.Info.nFiles
-	fprintf('\t%d:\t\t%s\n', f, fList{f});
-end
-fprintf('\n');
-% get and display list of channels...
-cList = S.listChannels;
-% ...and units
-% n.b.: could also get both using listUnits: [uList, cList] = S.listUnits
-uList = S.listUnits;
-fprintf('Channels and Unit ID #s:\n');
-fprintf('\tIndex\tChannel\tUnits\n');
-for c = 1:length(cList)
-	fprintf('\t%d:\t%d\t', c, cList(c));
-	fprintf('%d ', uList{c});
-	fprintf('\n');
-end
-fprintf('\n');
 
-% What file, channel unit to plot?
-% file index
-findx = 1;
+% What test data do you want to plot?
+testToPlot = 'FRA';
+
+% figure out file index for this test
+% get list of test names
+testNameList = S.listTestNames;
+findx = find(strcmpi(testToPlot, testNameList));
+if isempty(findx)
+	error('%s: test %s not found in file %s', mfilename, testToPlot, ...
+								plxFile);
+end
 % select Channel (technically , index into array of channel numbers)
-cindx = 1;
+channel = 1;
 % select unit ID num
-uindx = 1;
+unit = 1;
 
 
+%% get spikes times struct for 
+fprintf('Getting data for file %d, channel, %d unit %d\n', ...
+								findx, channel, unit);
+st = S.getSpikesByStim(findx, channel, unit);
+% make a local copy of Dinf for this file to make things a little simpler
+Dinf = S.Info.FileInfo{findx}.Dinf;
+
+%% plot data
+
+if any(strcmpi(testToPlot, {'LEVEL', 'BBN'}))
+	% set analysis window to [stimulus onset   stimulus offset]
+	analysisWindow = [Dinf.audio.Delay ...
+									(Dinf.audio.Delay + Dinf.audio.Duration)];
+	% compute rate level function
+	RLF = computeRLF(st.spiketimes, st.unique_stim, analysisWindow);
+	% plot
+	hRLF = plotCurveAndCI(RLF, 'mean');
+	% create title string with 2 rows:
+	%	filename
+	%	channel and unit
+	tstr = {	st.fileName, ...
+				sprintf('Channel %d Unit %d', channel, unit)};
+	% add title to plot
+	title(tstr, 'Interpreter', 'none');
+end
+
+if any(strcmpi(testToPlot, 'FREQ_TUNING'))
+	% set analysis window to [stimulus onset   stimulus offset]
+	analysisWindow = [Dinf.audio.Delay ...
+									(Dinf.audio.Delay + Dinf.audio.Duration)];
+	% compute rate level function
+	FTC = computeFTC(st.spiketimes, st.unique_stim, analysisWindow);
+	% plot
+	hFTC = plotCurveAndCI(FTC, 'mean');
+	% create title string with 2 rows:
+	%	filename
+	%	channel and unit
+	tstr = {	st.fileName, ...
+				sprintf('Channel %d Unit %d', channel, unit)};
+	% add title to plot
+	title(tstr, 'Interpreter', 'none');	
+end
+
+if any(strcmpi(testToPlot, 'FRA'))
+	% window for spike count
+	frawin = [Dinf.audio.Delay (Dinf.audio.Delay + Dinf.audio.Duration)];
+	% calculate FRA stored in struct FRA
+	FRA = computeFRA(spiketimes, varlist{1}, varlist{2}, frawin);
+	% set fname to data file name
+	FRA.fname = datafile;
+	hFRA = plotFRA(FRA, 'dB');	
+end
 
 
-
+% plot waveforms for this channel and unit
+S.plotUnitWaveforms(channel, unit);
 
 

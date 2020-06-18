@@ -69,46 +69,51 @@ mname = 'SpikeData.getSpikesByStim';
 %------------------------------------------------------------------------
 % parse inputs
 %------------------------------------------------------------------------
-
-if nargin < 3
+% need to use nargin == 4 since obj counts as an input in 
+% object methods!!!!!
+if nargin < 4
 	error('%s: need file index #, channel and unit', mname);
 end
 
 % file index
-fIndx = varargin{1}
+if (fIndx < 1) || (fIndx > obj.Info.nFiles)
+	error('%s: fIndx out of bounds', mname);
+end
+
 % channels
-chanNum = varargin{2};
 if length(chanNum) > 1
 	error('%s: only works for single channel at a time', mname);
 elseif obj.check_channels(chanNum) == -1
-				error('SpikeData.spikesForChannel: invalid channel %d', ...
-								chanNum);
+	error('%s: invalid channel %d', mname, chanNum);
 end
 
 % unit
-unitNum = varargin{3};
 if length(unitNum)  > 1
 	error('%s: only works for single unit at a time', mname);
-else
-	
-
+elseif ~obj.check_units(chanNum, unitNum)
+	error('%s: invalid unit %d', mname, unitNum);
+end	
 
 %------------------------------------------------------------------------
-%% get stim indices, varlist
+% get spikes for desired file, channel and unit
+%------------------------------------------------------------------------
+spiketable = obj.spikesForAnalysis(fIndx, 'channel', chanNum, ...
+											'Unit', unitNum, 'Align', 'Sweep');
+
+%------------------------------------------------------------------------
+% get stim indices, varlist
 %------------------------------------------------------------------------
 % stimindex is a cell array with each element (corresponding to a different
 % stimulus level/parameter) consisting of a list of indices into each data
 % sweep.
 % stimvar is a list of the variables in the sweeps
-[stimindex, stimvar] = S.Info.FileInfo{fnum}.getStimulusIndices;
+[stimindex, stimvar] = obj.Info.FileInfo{fIndx}.getStimulusIndices;
 unique_stim = unique(stimvar);
 nstim = length(unique_stim);
 
-%% get spikes for desired file, channel and unit
-spiketable = S.spikesForAnalysis(findx, 'channel', cList(cindx), ...
-											'Unit', uindx, 'Align', 'Sweep');
-
-%% convert to spiketimes format
+%------------------------------------------------------------------------
+% convert to spiketimes format
+%------------------------------------------------------------------------
 % 		spikeTimes{nLevels, 1}
 % 			spikeTimes{n} = {nTrials, 1}
 % 				spikeTimes{n}{t} = [spike1_ms spike2_ms spike3ms ...
@@ -117,11 +122,9 @@ spiketable = S.spikesForAnalysis(findx, 'channel', cList(cindx), ...
 spiketimes = cell(nstim, 1);
 % loop through stimuli
 for s = 1:nstim
-	fprintf('level = %d\n', unique_stim(s));
-
+	fprintf('stimvar(%d) = %d\n', s, unique_stim(s));
 	% allocate spiketimes storage
 	spiketimes{s} = cell(length(stimindex{s}), 1);
-
 	% loop through sweeps (aka trials, reps) for this stimulus
 	for r = 1:length(stimindex{s})
 		% get the proper index into spikeTable for this stimulus and sweep
@@ -135,18 +138,23 @@ for s = 1:nstim
 	end
 end
 
+%------------------------------------------------------------------------
+% create output struct
+%------------------------------------------------------------------------
+str.spiketimes = spiketimes;
+str.stimindex = stimindex;
+str.stimvar = stimvar;
+str.unique_stim = unique_stim;
+str.nstim = nstim;
+str.spiketable = spiketable;
+str.fileIndex = fIndx;
+str.channel = chanNum;
+str.unit = unitNum;
+str.fileName = obj.Info.FileInfo{fIndx}.F.file;
+% assign output
+varargout{1} = str;
 
-%% plot data
-
-% make a local copy of Dinf for this file to make things a little simpler
-Dinf = S.Info.FileInfo{findx}.Dinf;
-% set analysis window to [stimulus onset   stimulus offset]
-analysisWindow = [Dinf.audio.Delay ...
-								(Dinf.audio.Delay + Dinf.audio.Duration)];
-% compute rate level function
-RLF = computeRLF(spiketimes, unique_stim, analysisWindow);
-% plot
-hRLF = plotCurveAndCI(RLF, 'mean');
+%{
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -156,17 +164,17 @@ hRLF = plotCurveAndCI(RLF, 'mean');
 fnum = 1;
 
 % get list of stimuli and indices into sweep arrays
-[stimindex, stimvar] = S.Info.FileInfo{fnum}.getStimulusIndices;
+[stimindex, stimvar] = obj.Info.FileInfo{fnum}.getStimulusIndices;
 unique_stim = unique(stimvar);
 nstim = length(unique_stim);
 
 % get the spikes for this file as a table
-% spikeTable = S.spikesForAnalysis(fnum, 'Channel', 7, 'align', 'sweep');
-% spikeTable = S.spikesForAnalysis(fnum, 'align', 'sweep');
-channelList = S.listChannels;
+% spikeTable = obj.spikesForAnalysis(fnum, 'Channel', 7, 'align', 'sweep');
+% spikeTable = obj.spikesForAnalysis(fnum, 'align', 'sweep');
+channelList = obj.listChannels;
 nchan = length(channelList);
-unitList = S.listUnits;
-nUnits = S.nUnits;
+unitList = obj.listUnits;
+nUnits = obj.nUnits;
 
 dataByChannel = repmat(struct(	'dataByUnit', [], ...
 											'channel', []), ...
@@ -192,7 +200,7 @@ for c = 1:nchan
 		% get spike table for current channel and unit
 		dataByChannel(c).dataByUnit(u).Unit = unitList{c}(u);
 		dataByChannel(c).dataByUnit(u).spikeTable = ...
-					S.spikesForAnalysis(	fnum, ...
+					obj.spikesForAnalysis(	fnum, ...
 												'Channel', channelList(c), ...
 												'Unit', unitList{c}(u), ...
 												'align', 'sweep');
@@ -223,7 +231,7 @@ for c = 1:nchan
 end
 
 %% plot data
-Dinf = S.Info.FileInfo{fnum}.Dinf;
+Dinf = obj.Info.FileInfo{fnum}.Dinf;
 analysisWindow = [Dinf.audio.Delay (Dinf.audio.Delay + Dinf.audio.Duration)];
 for c = 1:nchan
 	RLF = computeRLF(dataByChannel(c).spikeTimes, ...
@@ -541,3 +549,8 @@ else
 end
 
 %}
+	
+	
+	
+%}
+	

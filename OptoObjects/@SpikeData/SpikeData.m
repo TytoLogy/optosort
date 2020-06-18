@@ -188,7 +188,6 @@ classdef SpikeData
 		%-------------------------------------------------------
 		
 		%-------------------------------------------------------
-		%-------------------------------------------------------
 		function val = listFiles(obj)
 		%-------------------------------------------------------
 		% return a list of files in the source data
@@ -197,6 +196,33 @@ classdef SpikeData
 			val = cell(obj.Info.nFiles, 1);
 			for f = 1:obj.Info.nFiles
 				val{f} = obj.Info.FileInfo{f}.F.file;
+			end
+		end
+		%-------------------------------------------------------
+		
+		%-------------------------------------------------------
+		function val = listTestNames(obj)
+		%-------------------------------------------------------
+		% return a list of test names in the source data
+		% list will be a cell array of strings
+		%-------------------------------------------------------
+			val = cell(obj.Info.nFiles, 1);
+			for f = 1:obj.Info.nFiles
+				val{f} = obj.Info.FileInfo{f}.testname;
+			end
+		end
+		%-------------------------------------------------------
+					
+		%-------------------------------------------------------
+		function val = listTestTypes(obj)
+		%-------------------------------------------------------
+		% return a list of test types in the source data
+		% test type will refer to stimulus type (usually)
+		% list will be a cell array of strings
+		%-------------------------------------------------------
+			val = cell(obj.Info.nFiles, 1);
+			for f = 1:obj.Info.nFiles
+				val{f} = obj.Info.FileInfo{f}.testtype;
 			end
 		end
 		%-------------------------------------------------------
@@ -293,6 +319,41 @@ classdef SpikeData
 
 		%-------------------------------------------------------
 		%-------------------------------------------------------
+		function varargout = printInfo(obj)
+		%-------------------------------------------------------
+			sendmsg(sprintf('Data in file %s', obj.Info.FileName));
+			% get info
+			[fList, cList, uList] = obj.listInfo;
+			% display list of files
+			fprintf('Files:\n');
+			fprintf('\tIndex\t\tFilename\n');
+			for f = 1:obj.Info.nFiles
+				fprintf('\t%d:\t\t%s\n', f, fList{f});
+			end
+			fprintf('\n');
+			% display list of channels...
+			% ...and units
+			% n.b.: could also get both using listUnits: [uList, cList] = obj.listUnits
+			fprintf('Channels and Unit ID #s:\n');
+			fprintf('\tIndex\tChannel\tUnits\n');
+			for c = 1:length(cList)
+				fprintf('\t%d:\t%d\t', c, cList(c));
+				fprintf('%d ', uList{c});
+				fprintf('\n');
+			end
+			fprintf('\n');
+			
+			if nargout
+				varargout{1} = fList;
+				varargout{2} = cList;
+				varargout{3} = uList;				
+			end
+		end
+		%-------------------------------------------------------
+		
+		
+		%-------------------------------------------------------
+		%-------------------------------------------------------
 		function tbl = spikesForChannel(obj, chanNum, varargin)
 		%-------------------------------------------------------
 		% tbl = spikesForChannel(channelNum, <unitNum>)
@@ -339,264 +400,7 @@ classdef SpikeData
 		end
 		%-------------------------------------------------------
 
-		%-------------------------------------------------------
-		%-------------------------------------------------------
-		function spikesBySweep = spikesForAnalysis(obj, fileNum, varargin)
-		%-------------------------------------------------------
-		% get table of spikes for a specific file aligned to file start,
-		% sweep, or as-is (original)
-		%
-		%	spikesBySweep = obj.spikesForAnalysis(fileNum)
-		%
-		%	Input args:
-		%		fileNum	file index for data 
-		%-------------------------------------------------------
-			%--------------------------------------
-			% set defaults
-			%--------------------------------------
-			% default is no shift
-			ALIGN = 'original';
-			% set channel and unit to empty
-			channelNum = [];
-			unitNum = [];
-					
-			%--------------------------------------
-			% process options and inputs
-			%--------------------------------------			
-			% process options
-			argI = 1;
-			while argI <= length(varargin)
-				switch upper(varargin{argI})
-					case 'ALIGN'
-						% check alignment mode
-						if ~any(strcmpi(varargin{argI+1}, ...
-										{'original', 'file', 'sweep'}))
-							% unknown mode
-							error(['SpikeData.spikesForAnalysis:' ...
-										'unknown align option %s'], varargin{argI+1});
-						else
-							ALIGN = lower(varargin{argI+1});
-						end
-						argI = argI + 2;
-					case {'CHANNEL', 'CHAN', 'C'}
-						% user specified channel option, so get desired list
-						channelNum = varargin{argI + 1};
-						fprintf('SpikeData.spikesForAnalysis: Channel %d\n', ...
-										channelNum);
-						argI = argI + 2;
-					case {'UNIT', 'UN', 'U'}
-						% user specified unit(s) so get them from input
-						unitNum = varargin{argI + 1};
-						fprintf('SpikeData.spikesForAnalysis: Unit %d\n', ...
-										unitNum);
-						argI = argI + 2;
-					otherwise
-						% unknown option provided by user
-						error(['SpikeData.spikesForAnalysis:' ...
-										'unknown option %s'], varargin{argI});
-				end
-			end
 
-			%--------------------------------------
-			% select valid timestamps/table entries
-			%--------------------------------------
-			% check that file is in range
-			if ~between(fileNum, 1, obj.Info.nFiles)
-				error('requested file %d out of range [1 %d]', ...
-										fileNum, obj.Info.nFiles);
-			end
-			
-			%--------------------------------------
-			% get spikes table for file, channel, unit combination
-			%--------------------------------------
-			vS = obj.selectSpikes(fileNum, channelNum, unitNum);
-			
-			%--------------------------------------
-			%--------------------------------------
-						%{
-			%%%%%%%%%%%%%% OLD
-			% create temp table of data for desired file
-			tmpS = obj.spikesForFile(fileNum);
-			
-			%--------------------------------------
-			% check channels and units
-			%--------------------------------------
-			% if channelNum is empty, use all channels and units
-			if isempty(channelNum)
-				fprintf(['SpikeData.spikesForAnalysis:' ...
-									'using all channels and units\n']);
-				channel_rows = true(size(tmpS.Channel));
-				unit_rows = true(size(tmpS.Channel)); 
-				% explicitly set unitNNum to empty
-				unitNum = [];
-			else
-				% check channel provided
-				cchk = obj.check_channels(channelNum);
-				if any(cchk == -1)
-					fprintf('SpikeData.spikesForAnalysis: invalid channelNum %d\n', ...
-									channelNum(cchk == -1));
-					error('SpikeData.spikesForAnalysis: invalid channel');
-				end
-				% get indices for channel(s)
-				channel_rows = false(size(tmpS.Channel));
-				% loop through channels and OR channel_rows with channels
-				for c = 1:length(channelNum)
-					channel_rows = channel_rows | (tmpS.Channel == channelNum(c));
-				end
-			end
-			% if unitNum is empty, find all units
-			if isempty(unitNum)
-				fprintf(['SpikeData.spikesForAnalysis:' ...
-									'using all units for channel %d\n'], channelNum);
-				% set unit_rows to ones, size of tmpS.Channel
-				unit_rows = true(size(tmpS.Channel));
-			elseif unitNum ~= -1
-				% get indices for unit
-				unit_rows = tmpS.Unit == unitNum;				
-			end
-			% reduce table to valid channel and unit
-			vS = tmpS( (channel_rows & unit_rows), :);
-			% clear tmpS
-			clear tmpS
-			%}
-			%--------------------------------------
-			%--------------------------------------
-			
-			
-			%--------------------------------------
-			% process sweeps
-			%--------------------------------------
-			% number of sweeps for this file
-			nsweeps = length(obj.Info.sweepStartTime{fileNum});
-			% some checks
-			if nsweeps ~= length(obj.Info.sweepEndTime{fileNum})
-				error('mismatch in lengths of sweepStartTime and sweepEndTime');
-			elseif nsweeps == 0
-				error('no sweeps!');	
-			end
-			% alignment issues (reference timestamps to start of datafile,
-			% start of sweep, or leave as is  - referenced to start of merged
-			% file used for spike sorting)
-			switch ALIGN
-				case 'original'
-					% don't modify time stamp values
-					fprintf('SpikeData:spikesForAnalysis: no timestamp realignment\n');
-					alignval = zeros(nsweeps, 1);
-				case 'file'
-					% adjust timestamp value by first sweep start time for each
-					% file in the overall merged file used for sorting
-					fprintf('SpikeData:spikesForAnalysis: align timestamp to file start\n');
-					alignval = obj.Info.sweepStartTime{fileNum}(1) ...
-										* ones(nsweeps, 1);
-				case 'sweep'
-					% adjust timestamp value by each sweep start time - this is
-					% most useful when doing things like analysis and plots of
-					% data 
-					fprintf('SpikeData:spikesForAnalysis: align timestamp to sweep start\n');
-					alignval = obj.Info.sweepStartTime{fileNum};
-			end
-			
-			% allocate cell to store spike info for each sweep
-			spikesBySweep = cell(nsweeps, 1);
-
-			% loop through sweeps
-			for s = 1:nsweeps
-				% find the valid time stamps (between sweepStartTimes and
-				% sweepEndTimes)
-				valid_rows = (vS.TS >= obj.Info.sweepStartTime{fileNum}(s)) ...
-								& (vS.TS < obj.Info.sweepEndTime{fileNum}(s));
-				spikesBySweep{s} = vS(valid_rows, :);
-				% apply offset correction
-				spikesBySweep{s}{:, 'TS'} = spikesBySweep{s}{:, 'TS'} - alignval(s);
-			end
-		end
-		%-------------------------------------------------------
-		
-
-		%-------------------------------------------------------
-		%-------------------------------------------------------
-		function spikesBySweep = spikesForAnalysisByUnit(obj, fileNum, ...
-																			unitNum, varargin)
-		%-------------------------------------------------------
-		% get table of spikes for a specific file, unit and by sweep
-		% this should be deprecated since it doesn't account for channel
-		%-------------------------------------------------------
-			%--------------------------------------
-			% process options and inputs
-			%--------------------------------------
-			% check that file is in range
-			if ~between(fileNum, 1, obj.Info.nFiles)
-				error('requested file %d out of range [1 %d]', ...
-										fileNum, obj.Info.nFiles);
-			elseif ~any(unitNum == obj.listUnits)
-				% and that unitnum is valid
-				error('unit %d not in Spikes table', unitNum);
-			end
-			% check alignment mode
-			if isempty(varargin)
-				% default is no shift
-				ALIGN = 'original';
-			else
-				if ~any(strcmpi(varargin{1}, {'original', 'file', 'sweep'}))
-					% unknown mode
-					error('%s: unknown align option %s', varargin{1})
-				else
-				ALIGN = lower(varargin{1});
-				end
-			end
-			
-			%--------------------------------------
-			% process data
-			%--------------------------------------
-			% get valid rows for unit
-			unit_rows = (obj.Spikes.Unit == unitNum);
-			% get valid rows for file - this is done by finding the spike
-			% times that occurred between the specified file's start and end
-			% times
-			file_rows = (obj.Spikes.TS >= obj.Info.fileStartTime(fileNum)) & ...
-									(obj.Spikes.TS <= obj.Info.fileEndTime(fileNum));
-			% get reduced Spikes table for specified unit and data file
-			vS = obj.Spikes( (unit_rows & file_rows), :);
-			
-			% number of sweeps for this file
-			nsweeps = length(obj.Info.sweepStartTime{fileNum});
-			% some checks
-			if nsweeps ~= length(obj.Info.sweepEndTime{fileNum})
-				error('mismatch in lengths of sweepStartTime and sweepEndTime');
-			elseif nsweeps == 0
-				error('no sweeps!');	
-			end
-			% alignment issues
-			switch ALIGN
-				case 'original'
-					% don't modify time stamp values
-					alignval = zeros(nsweeps, 1);
-				case 'file'
-					% adjust timestamp value by first sweep start time
-					alignval = obj.Info.sweepStartTime{fileNum}(1) ...
-										* ones(nsweeps, 1);
-				case 'sweep'
-					% adjust timestamp value by each sweep start time
-					alignval = obj.Info.sweepStartTime{fileNum};
-			end
-			
-			% allocate cell to store spike info for each sweep
-			spikesBySweep = cell(nsweeps, 1);
-			
-			% loop through sweeps
-			for s = 1:nsweeps
-				% find the valid time stamps (between sweepStartTimes and
-				% sweepEndTimes), store the row indices...
-				valid_rows = (vS.TS >= obj.Info.sweepStartTime{fileNum}(s)) ...
-								& (vS.TS < obj.Info.sweepEndTime{fileNum}(s));
-				% get Spikes that match
-				spikesBySweep{s} = vS(valid_rows, :);
-				% apply offset correction to timestamps (TS variable)
-				spikesBySweep{s}{:, 'TS'} = spikesBySweep{s}{:, 'TS'} - alignval(s);
-			end
-		end
-		%-------------------------------------------------------
-		
 		%-------------------------------------------------------
 		function arr = spikesAsMatrix(obj)
 		%-------------------------------------------------------
@@ -605,65 +409,8 @@ classdef SpikeData
 			% return Spikes table in original form
 			arr = table2array(obj.Spikes);
 		end
-		%-------------------------------------------------------
+		%-------------------------------------------------------		
 
-		
-		%-------------------------------------------------------
-		%-------------------------------------------------------
-		function H = plotUnitWaveforms(obj, channel, varargin)
-		%-------------------------------------------------------
-		% [plot handles] = obj.plotUnitWaveforms([channels], 
-		% Plot sorted waveforms for each identified unit for a given channel
-		% This will work for individual channels and either all units for the
-		% channel (if unit list is not provided) or a specified unit(s)
-		%-------------------------------------------------------
-			% check channel provided
-			cchk = obj.check_channels(channel);
-			if cchk == -1
-				error('SpikeData.plotUnitWaveforms: invalid channel %d', channel);
-			end
-			if isempty(varargin)
-				tmp = obj.listUnits(channel);
-				unitList = tmp{1};
-				nU = length(unitList);
-			else
-				unitList = varargin{1};
-				% check units
-				nU = length(unitList);
-				if nU == 0
-					error('SpikeData.plotUnitWaveforms: no units for channel %d', ...
-												channel);
-				else
-					for u = 1:nU
-						if ~any(unitList(u) == obj.listUnits)
-							error('unit %d not found', unitList(u));
-						end
-					end
-				end
-			end			
-			% allocate gobjects array to hold figure handles
-			H = gobjects(nU, 1);
-			% loop through units
-			for u = 1:nU
-				fprintf('Plotting unit %d waveforms\n', unitList(u));
-				% create figure and store handle in H array
-				H(u) = figure;
-				% get spike waveforms for this unit
-				W = obj.Spikes{obj.Spikes.Unit == unitList(u), 'Wave'};
-				if ~isempty(W)
-					[~, nBins] = size(W);
-					ms = (1000/obj.Info.Fs) * (0:(nBins - 1));
-					plot(ms, W', 'k');
-				end
-				[~, fstr] = fileparts(obj.Info.FileName);
-				tstr = sprintf('File: %s   Unit: %d', [fstr '.mat'], unitList(u));
-				title(tstr, 'Interpreter', 'none');
-				xlabel('ms');
-				grid on
-				H(u).Name = sprintf('%s_unit%d', fstr, unitList(u));
-			end
-		end
-		%-------------------------------------------------------
 
 		
 		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -766,84 +513,7 @@ classdef SpikeData
 		%-------------------------------------------------------
 		%-------------------------------------------------------
 		
-		
-		
-		%-------------------------------------------------------
-		%-------------------------------------------------------
-		function [tbl, varargout] = selectSpikes(obj, fileNum, channelNum, unitNum)
-		%-------------------------------------------------------
-			
-			% create temp table of data for desired file
-			tmpS = obj.spikesForFile(fileNum);
 
-			% check channels and units
-			% if channelNum is empty, use all channels and units
-			if isempty(channelNum)
-				fprintf(['SpikeData.selectSpikes:' ...
-									'using all channels and units\n']);
-				channel_rows = true(size(tmpS.Channel));
-			% 	unit_rows = true(size(tmpS.Channel)); 
-				% explicitly set unitNNum to empty
-				unitNum = [];
-			else
-				% check channel provided
-				cchk = obj.check_channels(channelNum);
-				if any(cchk == -1)
-					fprintf('SpikeData.selectSpikes: invalid channelNum %d\n', ...
-									channelNum(cchk == -1));
-					error('SpikeData.selectSpikes: invalid channel');
-				end
-				% get indices for channel(s)
-				channel_rows = false(size(tmpS.Channel));
-				% loop through channels and OR channel_rows with channels
-				for c = 1:length(channelNum)
-					channel_rows = channel_rows | (tmpS.Channel == channelNum(c));
-				end
-			end
-
-			% if unitNum is empty, find all units
-			if isempty(unitNum)
-				fprintf(['SpikeData.selectSpikes:' ...
-									'using all units for channel %d\n'], channelNum);
-				% set unit_rows to ones, size of tmpS.Unit
-				unit_rows = true(size(tmpS.Unit));
-			else
-				% if unit num is specified and more than one channel is provided, 
-				% throw error if unitNum is not a cell
-				if (length(channelNum) > 1) && ~iscell(unitNum)
-					error(['SpikeData.selectSpikes: if multiple channels are ' ...
-								'specified, cell vector of units to match must be' ...
-								'provided to spikesForAnalysis']);
-				else
-					% check units
-					[uchk, uchklist] = obj.check_units(channelNum, unitNum); %#ok<ASGLU>
-					if any(uchk == false)
-						error('Requested unit does not exist on channel');
-					end
-				end
-
-				% build unit_rows
-				% initialize unit_rows
-				unit_rows = false(size(tmpS.Unit));
-				% loop through units, OR unit_rows with each unit_num
-				for u = 1:length(unitNum)
-					% get indices for unit
-					unit_rows = unit_rows | (tmpS.Unit == unitNum);
-				end
-			end
-
-			% reduce table to valid channel and unit
-			tbl = tmpS( (channel_rows & unit_rows), :);
-			
-			% outputs
-			varargout{1} = channel_rows;
-			varargout{2} = unit_rows;
-		end
-		%-------------------------------------------------------
-		%-------------------------------------------------------
-		
-		
-		
 		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		
 		
@@ -902,7 +572,12 @@ classdef SpikeData
  		%------------------------------------------------------------------------
 		%------------------------------------------------------------------------
 		function [val, varargout] = check_units(obj, channels, units)
-		
+			% need to use nargin == 3 since obj counts as an input in 
+			% object methods!!!!!
+			if nargin ~= 3
+				error('SpikeData.check_units: requires channel(s) and unit(s)');
+			end
+			
 			% check channel provided
 			cchk = obj.check_channels(channels);
 			if any(cchk == -1)
@@ -984,7 +659,13 @@ classdef SpikeData
 		%-------------------------------------------------
 		% get data  and sweep info for each channel
 		varargout = getSpikesByStim(obj, fileNum, channel, unit)
+		% plot waveforms
+		H = plotUnitWaveforms(obj, channel, varargin)
+		% get spikes (in matlab table) for file, channel and unit
+		[tbl, varargout] = selectSpikes(obj, fileNum, channelNum, unitNum)
 		
+		spikesBySweep = spikesForAnalysisByUnit(obj, fileNum, ...
+																	unitNum, varargin)
 	end	% END OF METHODS (general)
 	%------------------------------------------------------------------------
 	%------------------------------------------------------------------------
@@ -998,35 +679,6 @@ classdef SpikeData
 	%------------------------------------------------------------------------
 	%{
 	methods (Access = protected)
-		%------------------------------------------------------------------------
-		%------------------------------------------------------------------------
-		function [clist, varargout] = check_channels(obj, channel_arg)
-			if isempty(channel_arg)
-				% if no channels provided, use all existing channels
-				clist = obj.listChannels;
-			else
-				% otherwise, use provided channels
-				% note that channel_arg might be a cell
-				if iscell(channel_arg)
-					clist = channel_arg{1};
-				else
-					clist = channel_arg;
-				end
-				% check channels existence
-				cchk = ismember(clist, obj.listChannels);
-				if ~all(cchk)
-					for c = 1:length(clist)
-						if cchk(c) == false
-							warning('unknown channel: %d\n', clist(c))
-							clist(c) = -1;
-						end
-					end
-				end
-			end
-			% number of channels
-			varargout{1} = length(clist);
-		end
-		%------------------------------------------------------------------------
 	end	% END METHODS (PROTECTED)
 	%}
 	%------------------------------------------------------------------------
