@@ -121,6 +121,19 @@ classdef WAVInfo < CurveInfo
 		function varargout = getStimulusIndices(obj)
 		%-------------------------------------------------
 		% returns stimindex{} and stimvar{} lists
+		%	stimindex	{# unique stimuli, 1} cell array where each
+		%					element is a [nreps, 1] vector of indices into
+		%					the total list of stimulus sweeps (trials). so, 
+		%					if there are 8 sound levels and 20 reps of each 
+		%					stimulus in a rate-level curve, then indices will be
+		%					values from 1-160
+		%					For data like FRA, this will be {nlevels, nfreqs}
+		%					cell array (2 variables)
+		%					For WAV data see WAVInfo subclass of CurveInfo
+		%	stimvar		[total # of sweeps, 1] vector of varied values
+		%					e.g., db SPL levels for rate-level curve
+		%-------------------------------------------------		
+		% how to deal with different levels????
 		%-------------------------------------------------
 			% make sure Dinf is initialized
 			if isempty(obj.Dinf)

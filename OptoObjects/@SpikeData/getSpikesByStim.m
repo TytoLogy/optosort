@@ -21,6 +21,9 @@
 %	- adapted from OptoAnalysis:getFilteredOptoData
 %
 % Revisions:
+%	18 Jun 2020 (SJS):
+%		- modifying to return values for a single file/test, channel and unit
+%		- using test fake data for now
 %------------------------------------------------------------------------
 % TO DO:
 %   *Documentation!
@@ -37,6 +40,7 @@ entire file
 obj.spikesForAnalysis will return spikes for a specific file (can also
 limit to specific channel and/or unit). for now, get spiketimes organized
 into sweeps and across all channels
+** NOT ACROSS ALL CHANNELS!
 
 for each test, will need:
 	list of stimuli and indices
@@ -53,8 +57,6 @@ output will be in format that can be passed to computeRLF, computeFRA, etc:
 --------------------------------------------------------------------------
 %}
 
-
-
 %----------------------------------------------------------------------
 %% for script, need to load data
 %----------------------------------------------------------------------
@@ -68,18 +70,127 @@ nexInfoFile = '1407_20200309_03_01_1350_BBN_nexinfo.mat';
 nexFile = '1407_20200309_03_01_1350_BBN.nex';
 plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
 
+%{
+%------------------------------------------------------------------------
+% "fake" data for testing sorting OFS .plx file
+%------------------------------------------------------------------------
+sortedPath = '/Users/sshanbhag/Work/Data/TestData/working/FakeData/TestData';
+rawPath = sortedPath;
+nexPath = sortedPath;
+nexInfoFile = '1407_20200309_03_01_13 50_TESTDATA_nexinfo.mat';
+nexFile = '1407_20200309_03_01_1350_TESTDATA.nex';
+plxFile = '1407_20200309_03_01_1350_TESTDATA-Sort.plx';
+%------------------------------------------------------------------------
+%}
+
 %------------------------------------------------------------------------
 %% load S object from file
 %------------------------------------------------------------------------
 % use OptoFileName object to make this easier
+% create object using nexfile
 OFobj = OptoFileName(fullfile(nexPath, nexFile));
+% create name of mat file containing SpikeData object
 sfile = [OFobj.fileWithoutOther '_Sobj.mat'];
-fprintf('\n%s\n', sepstr);
-fprintf('loading Sobj from file\n\t%s\n', fullfile(nexPath, sfile));
-fprintf('%s\n', sepstr);
+sendmsg(sprintf('loading Sobj from file\n\t%s', ...
+						fullfile(nexPath, sfile)));
+% load object from mat file
 load(fullfile(nexPath, sfile));
 
+
+%------------------------------------------------------------------------
+%% specify file, channel, unit
+%------------------------------------------------------------------------
+sendmsg(sprintf('Data in file %s', sfile));
+% get and display list of files
+fList = S.listFiles;
+fprintf('Files:\n');
+fprintf('\tIndex\t\tFilename\n');
+for f = 1:S.Info.nFiles
+	fprintf('\t%d:\t\t%s\n', f, fList{f});
+end
+fprintf('\n');
+% get and display list of channels...
+cList = S.listChannels;
+% ...and units
+% n.b.: could also get both using listUnits: [uList, cList] = S.listUnits
+uList = S.listUnits;
+fprintf('Channels and Unit ID #s:\n');
+fprintf('\tIndex\tChannel\tUnits\n');
+for c = 1:length(cList)
+	fprintf('\t%d:\t%d\t', c, cList(c));
+	fprintf('%d ', uList{c});
+	fprintf('\n');
+end
+fprintf('\n');
+
+% What file, channel unit to plot?
+% file index
+findx = 1;
+% select Channel (technically , index into array of channel numbers)
+cindx = 1;
+% select unit ID num
+uindx = 1;
+
+%------------------------------------------------------------------------
 %% get stim indices, varlist
+%------------------------------------------------------------------------
+% stimindex is a cell array with each element (corresponding to a different
+% stimulus level/parameter) consisting of a list of indices into each data
+% sweep.
+% stimvar is a list of the variables in the sweeps
+[stimindex, stimvar] = S.Info.FileInfo{fnum}.getStimulusIndices;
+unique_stim = unique(stimvar);
+nstim = length(unique_stim);
+
+%% get spikes for desired file, channel and unit
+spiketable = S.spikesForAnalysis(findx, 'channel', cList(cindx), ...
+											'Unit', uindx, 'Align', 'Sweep');
+
+%% convert to spiketimes format
+% 		spikeTimes{nLevels, 1}
+% 			spikeTimes{n} = {nTrials, 1}
+% 				spikeTimes{n}{t} = [spike1_ms spike2_ms spike3ms ...
+%
+
+spiketimes = cell(nstim, 1);
+% loop through stimuli
+for s = 1:nstim
+	fprintf('level = %d\n', unique_stim(s));
+
+	% allocate spiketimes storage
+	spiketimes{s} = cell(length(stimindex{s}), 1);
+
+	% loop through sweeps (aka trials, reps) for this stimulus
+	for r = 1:length(stimindex{s})
+		% get the proper index into spikeTable for this stimulus and sweep
+		% combination
+		rIndx = stimindex{s}(r);
+		% get table for currrent sweep
+		tmpT = spiketable{rIndx};
+		% assign spike timestamps to spikeTimes, ...
+		% converting to milliseconds
+		spiketimes{s}{r} = force_row(1000 * tmpT.TS);
+	end
+end
+
+
+%% plot data
+
+% make a local copy of Dinf for this file to make things a little simpler
+Dinf = S.Info.FileInfo{findx}.Dinf;
+% set analysis window to [stimulus onset   stimulus offset]
+analysisWindow = [Dinf.audio.Delay ...
+								(Dinf.audio.Delay + Dinf.audio.Duration)];
+% compute rate level function
+RLF = computeRLF(spiketimes, unique_stim, analysisWindow);
+% plot
+hRLF = plotCurveAndCI(RLF, 'mean');
+
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%% Old attempt at all channels/units
+%{
+% specify file
 fnum = 1;
 
 % get list of stimuli and indices into sweep arrays
@@ -159,11 +270,19 @@ for c = 1:nchan
 	drawnow
 end
 
+%}
 
 
-%%
 
 
+
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%% code for getFilteredOptoData
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 %{
 %----------------------------------------------------------------------
 %% settings for processing data

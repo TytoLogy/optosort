@@ -167,11 +167,23 @@ classdef CurveInfo
 		%-------------------------------------------------
 		function varargout = getStimulusIndices(obj)
 		%-------------------------------------------------
-		% returns stimindex{} and stimvar{} lists
+		% returns stimindex{} and stimvar() lists
+		%	stimindex	{# unique stimuli, 1} cell array where each
+		%					element is a [nreps, 1] vector of indices into
+		%					the total list of stimulus sweeps (trials). so, 
+		%					if there are 8 sound levels and 20 reps of each 
+		%					stimulus in a rate-level curve, then indices will be
+		%					values from 1-160
+		%					For data like FRA, this will be {nlevels, nfreqs}
+		%					cell array (2 variables)
+		%					For WAV data see WAVInfo subclass of CurveInfo
+		%	stimvar		[total # of sweeps, 1] vector of varied values
+		%					e.g., db SPL levels for rate-level curve
 		%-------------------------------------------------		
 			% make sure Dinf is initialized
 			if isempty(obj.Dinf)
-				error('Dinf not defined/is empty')
+				error(['CurveInfo.getStimulusIndices: ' ...
+							'Dinf not defined/is empty']);
 			end
 			
 			% for FREQ test, find indices of stimuli with same frequency
@@ -183,8 +195,8 @@ classdef CurveInfo
 					freqs = obj.varied_values;
 					nfreqs = length(obj.varied_values);
 					% locate where trials for each frequency are located in the
-					% stimulus cache list - this will be used to pull out trials of
-					% same frequency
+					% stimulus cache list - this will be used to pull out trials
+					% of same frequency
 					stimindex = cell(nfreqs, 1);
 					for f = 1:nfreqs
 						stimindex{f} = find(freqs(f) == freqlist);
@@ -201,8 +213,8 @@ classdef CurveInfo
 					levels = obj.varied_values;
 					nlevels = length(levels);
 					% locate where trials for each frequency are located in the
-					% stimulus cache list - this will be used to pull out trials of
-					% same frequency
+					% stimulus cache list - this will be used to pull out trials
+					% of same frequency
 					stimindex = cell(nlevels, 1);
 					for l = 1:nlevels
 						stimindex{l} = find(levels(l) == levellist);
@@ -222,7 +234,7 @@ classdef CurveInfo
 					for c = 1:length(testcell)
 						if iscell(obj.Dinf.test.stimcache.(testcell{c}))
 							obj.Dinf.test.stimcache.(testcell{c}) = ...
-										cell2mat(obj.Dinf.test.stimcache.(testcell{c}));
+									cell2mat(obj.Dinf.test.stimcache.(testcell{c}));
 						end
 					end
 					% list of stimulus freqs, # of freqs tested
@@ -232,24 +244,23 @@ classdef CurveInfo
 					levellist = unique(obj.levels_bysweep, 'sorted');
 					nlevels = length(levellist);
 					%{
-						Raw data are in a vector of length nstims, in order of
-						presentation.
+					Raw data are in a vector of length nstims, in order of
+					presentation.
 
-						values used for the two variables (Freq. and Level) are stored in
-						vrange matrix, which is of length (nfreq X nlevel) and holds
-						values as row 1 = freq, row 2 = level
+					values used for the two variables (Freq. and Level) are
+					stored in vrange matrix, which is of length (nfreq X nlevel)
+					and holds values as row 1 = freq, row 2 = level
 
-						e.g. obj.Dinf.test.stimcache.vrange(:, 1:5) = 
-							4000  4000  4000  4000  4000
-							0     10    20    30    40
+					e.g. obj.Dinf.test.stimcache.vrange(:, 1:5) = 4000  4000
+					4000  4000  4000 0     10    20    30    40
 
-						trialRandomSequence holds randomized list of indices into vrange,
-						has dimensions of [nreps, ntrials]
+					trialRandomSequence holds randomized list of indices into
+					vrange, has dimensions of [nreps, ntrials]
 
-						To sort the data for FRA: (1)	for each freq and level combination,
-						locate the indices for that combination in the respective FREQ and
-						LEVEL list. (2)	These indices can then be used within the D{}
-						array
+					To sort the data for FRA: (1)	for each freq and level
+					combination, locate the indices for that combination in the
+					respective FREQ and LEVEL list. (2)	These indices can then
+					be used within the D{} array
 					%}
 					stimindex = cell(nlevels, nfreqs);
 					for f = 1:nfreqs

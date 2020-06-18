@@ -1,10 +1,10 @@
 %------------------------------------------------------------------------
-% import_working.m
+% plots_working.m
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
 % working script for importing sorted data from plexon
-% uses objects
+% amd plotting data
 %------------------------------------------------------------------------
 % See also: 
 %------------------------------------------------------------------------
@@ -13,8 +13,8 @@
 %  Sharad J. Shanbhag
 %	sshadnbhag@neomed.edu
 %------------------------------------------------------------------------
-% Created: 16 June, 2020(SJS)
-%	- split off from importTest.m
+% Created: 18 June, 2020(SJS)
+%	- split off from import_working.m
 % Revisions:
 %------------------------------------------------------------------------
 % TO DO:
@@ -127,51 +127,8 @@ plxFile = '1408_20200319_950_WAV_ch1,2,5,12,15-01-SORTEDContKmeansScan.plx';
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
-sendmsg(['import_from_plexon running for ' sprintf('File: %s\n', plxFile)]);
+sendmsg(['plots_working running for ' sprintf('File: %s\n', plxFile)]);
 
-%------------------------------------------------------------------------
-%{
-nexInfo:
-	NexFileName: '1382_20191212_02_02_3200_test.nex'
-	fData: [1×3 struct]
-	nFiles: 3
-	Fs: 4.8828e+04
-	sweepStartBin: {[1×140 double]  [1×160 double]  [1×180 double]}
-	sweepEndBin: {[1×140 double]  [1×160 double]  [1×180 double]}
-	fileStartBin: [1 1708981 3662101]
-	fileEndBin: [1708980 3662100 5859360]
-	startTimes: [1×480 double]
-	endTimes: [1×480 double]
-	fileStartTime: [0 34.9999 74.9998]
-	fileEndTime: [34.9999 74.9998 119.9997]
-	Channels: [4 5 11 14]
-
-
-nexInfo.fData
-	DataPath: '~/Work/Data/TestData/MT'
-	DataFile: '1382_20191212_02_02_3200_FREQ_TUNING.dat'
-	startSweepBin: {# channels × 1 cell}
-	endSweepBin: {# channels × 1 cell}
-	sweepLen: {# channels × 1 cell}
-	fileStartBin: 1
-	fileEndBin: 1708980
-	Dinf: [1×1 struct] =
-	F: [1×1 struct]
-
-nexInfo.fData.F
-	base: '1382_20191212_02_02_3200_FREQ_TUNING'
-	animal: '1382'
-	datecode: '20191212'
-	unit: '02'
-	penetration: '02'
-	depth: '3200'
-	other: 'FREQ_TUNING'
-	path: '~/Work/Data/TestData/MT'
-	file: '1382_20191212_02_02_3200_FREQ_TUNING.dat'
-	testfile: '1382_20191212_02_02_3200_FREQ_TUNING_testdata.mat'
-%}
-
-%------------------------------------------------------------------------
 %------------------------------------------------------------------------
 %% load sorted data
 %------------------------------------------------------------------------
@@ -185,138 +142,13 @@ nexInfo.fData.F
 %------------------------------------------------------------------------
 S = import_from_plexon(fullfile(sortedPath, plxFile), ...
 									fullfile(nexPath, nexInfoFile));
-%{
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-%% load raw data in order to compare with plx data
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-F  = defineSampleData(exportOpts.DataPath, ...
-											exportOpts.DataFile, exportOpts.TestFile);
-% storage for raw data
-D = cell(length(exportOpts.DataFile), 1);
-N = cell(length(exportOpts.DataFile), 1);
-
-for f = 1:length(F)
-	[tmp, N{f}] = read_data_for_export(F(f), exportOpts.Channels, exportOpts.BPfilt, []);
-	D{f} = tmp{1};
-end
-
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-%% compare data from raw and sorted continuous data
-%------------------------------------------------------------------------
-%------------------------------------------------------------------------
-
-% file (index into cell) to plot
-fnum = 1;
-% channel (index into channel list) to plot
-chan = 1;
-% sweep to plot
-sweep = 3;
-
-figure(1)
-subplot(211)
-rawD = D{fnum}{chan, sweep};
-nD = length(rawD);
-plxStart = (1 + (sweep-1)*nD)
-plxD = S.Continuous(chan).Values(plxStart:(plxStart+nD));
-plot(rawD)
-title({F(1).file; sprintf('Channel %d Sweep %d', chan, sweep)}, 'Interpreter', 'none');
-subplot(212)
-plot(plxD)
-
-figure(2)
-plot(xcorr(rawD, plxD))
-%}
-									
-%------------------------------------------------------------------------
-%% save Sobject in file
-%------------------------------------------------------------------------
-% get base from one of the file objects in S.Info
-sfile = [S.Info.FileInfo{1}.F.fileWithoutOther '_Sobj.mat'];
-fprintf('\n%s\n', sepstr);
-fprintf('writing Sobj to file\n\t%s\n', fullfile(nexPath, sfile));
-fprintf('%s\n', sepstr);
-save(fullfile(nexPath, sfile), '-MAT', 'S');
-
-%------------------------------------------------------------------------
-%% break up spiketimes by data file
-%------------------------------------------------------------------------
-spikesByFile = cell(S.Info.nFiles, 1);
-for f = 1:S.Info.nFiles
-	spikesByFile{f} = S.spikesForFile(f);
-end
-
-%------------------------------------------------------------------------
-%% assign spike times to appropriate sweeps/stimuli
-%------------------------------------------------------------------------
-% OBJ - by unit
-unitID = S.listUnits;
-nunits = S.nUnits;
-% store spikes for each file in spikes ByStim, all units
-spikesBySweepAndUnit = cell(S.Info.nFiles, nunits);
-% loop through files
-for f = 1:S.Info.nFiles
-	% loop through units
-	for u = 1:nunits
-		% get spikes (as a table) for each file (rows) and unit (columns)
-		spikesBySweepAndUnit{f, u} = S.spikesForAnalysisByUnit(f, unitID(u), 'sweep');
-	end
-end
-
-%------------------------------------------------------------------------
-%% OBJ - don't separate by unit - can do posthoc
-%------------------------------------------------------------------------
-% store spikes for each file in spikes ByStim, all units
-spikesByFile = cell(S.Info.nFiles, 1);
-% loop through files
-for f = 1:S.Info.nFiles
-		spikesByFile{f} = S.spikesForAnalysis(f, 'align', 'sweep');
-end
-
-%------------------------------------------------------------------------
-%% extract timestamps for use in analysis, raster plots, etc.
-% in this case, organize data by file and channel in the spikesFC array
-% data will be returned in a MATLAB table data structure.
-% for more about accessing data in a table, please see matlab docs
-%------------------------------------------------------------------------
-% convert to timestamps
-spikesFC = cell(S.Info.nFiles, S.Info.nChannels);
-
-% loop through files
-for f = 1:S.Info.nFiles
-	% loop through channels
-	for c = 1:S.Info.nChannels
-		fprintf('Getting spikes for file %d, channel %d\n', f, S.Info.ADchannel(c));
-		% extract timestamp data from each table, store in cell matrix
-		spikesFC{f, c} = S.spikesForAnalysis(f, ...
-									'Channel', S.Info.ADchannel(c), 'align', 'sweep');
-	end
-end
 
 
-%% Get spike data for a specific file aligned by sweep for given channels
-% get data for first file
-fNum = 1;
-spikesBySweep = S.spikesForAnalysis(fNum, 'Channel', S.Info.ADchannel, 'align', 'sweep');
+%------------------------------------------------------------------------
+%% load sorted data
+%------------------------------------------------------------------------
 
 
-%% plot waveforms
-
-S.plotUnitWaveforms(4, S.listUnits(4));
- 
-
-
-%% check two data files
-
-tmpS = S.spikesForFile(1);
-channel_rows = false(size(tmpS.Channel));
-for c = 3:5
-	channel_rows = channel_rows | (tmpS.Channel == S.Info.ADchannel(c));
-	cm(:, c) = channel_rows;
-end
-unique(tmpS.Channel(channel_rows, :))
 
 
 
