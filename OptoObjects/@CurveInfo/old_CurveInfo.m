@@ -1,6 +1,6 @@
-classdef FRAInfo
+classdef CurveInfo
 %------------------------------------------------------------------------
-% Class: FRAInfo
+% Class: CurveInfo
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
@@ -49,8 +49,8 @@ classdef FRAInfo
 %  Sharad J. Shanbhag
 %	sshanbhag@neomed.edu
 %------------------------------------------------------------------------
-% Created: 18 June 2020, 2020 (SJS)
-%	- subclassed from CurveInfo
+% Created: 24 February, 2020 (SJS)
+%	- adapted from import_from_plexon_nonObj
 % Revisions:
 %	3 Mar 2020 (SJS): adding elements from fData struct in the 
 %		export_for_plexon.m function to avoid future duplications and
@@ -67,11 +67,37 @@ classdef FRAInfo
 	% class properties
 	%-------------------------------------------------
 	properties
-
+		Dinf
+		F
+		startSweepBin = {}
+		endSweepBin = {}
+		stimStartBin = [];
+		stimEndBin = [];
+		sweepLen
+		fileStartBin
+		fileEndBin
+		% validSweep = true(0); NOT SURE WHERE THIS SHOULD LIVE - or at what
+		% level....??????? try here for now
+		validSweep = true(0);
 	end	% END properties (main)
 	properties (Dependent)
-
+		testtype
+		testname
+% 		freqs_bysweep
+% 		levels_bysweep
+% 		varied_parameter
+% 		varied_values
+		analysis_window
+% 		nreps
+% 		ntrials
+% 		nstims
+		ADFs
+		DAFs
 	end	% END properties(Dependent)
+	properties (Access = protected)
+		has_stimcache = 0;
+		has_stimList = 0;
+	end
 	
 	%-------------------------------------------------
 	%-------------------------------------------------
@@ -84,7 +110,6 @@ classdef FRAInfo
 		% Constructor
 		%-------------------------------------------------
 		%-------------------------------------------------
-		%{
 		function obj = CurveInfo(varargin)
 			if isempty(varargin)
 				return
@@ -134,8 +159,7 @@ classdef FRAInfo
 				error('Unknown input type %s', varargin{1});
 			end
 		end
-		%}
-		
+
 		%-------------------------------------------------
 		%-------------------------------------------------
 		% returns stimulus Indices and list of stim variables
@@ -161,59 +185,109 @@ classdef FRAInfo
 				error(['CurveInfo.getStimulusIndices: ' ...
 							'Dinf not defined/is empty']);
 			end
+			
+			% for FREQ test, find indices of stimuli with same frequency
+			switch upper(obj.testtype)
+				case 'FREQ'
+					fprintf('\t%s test, finding indices\n', obj.testtype);
+					% list of frequencies, freqs and # of freqs tested
+					freqlist = cell2mat(obj.freqs_bysweep);
+					freqs = obj.varied_values;
+					nfreqs = length(obj.varied_values);
+					% locate where trials for each frequency are located in the
+					% stimulus cache list - this will be used to pull out trials
+					% of same frequency
+					stimindex = cell(nfreqs, 1);
+					for f = 1:nfreqs
+						stimindex{f} = find(freqs(f) == freqlist);
+					end
+					% assign outputs
+					varargout{1} = stimindex;
+					varargout{2} = freqlist;
+
+			% for LEVEL test, find indices of stimuli with same level (dB SPL)
+				case 'LEVEL'
+					fprintf('\t%s test, finding indices\n', obj.testtype);
+					% list of levels by sweep, levels and # of levels tested
+					levellist = obj.levels_bysweep;
+					levels = obj.varied_values;
+					nlevels = length(levels);
+					% locate where trials for each frequency are located in the
+					% stimulus cache list - this will be used to pull out trials
+					% of same frequency
+					stimindex = cell(nlevels, 1);
+					for l = 1:nlevels
+						stimindex{l} = find(levels(l) == levellist);
+					end
+					% assign outputs
+					varargout{1} = stimindex;
+					varargout{2} = levellist;
 
 			% for FRA (FREQ+LEVEL) test, find indices of stimuli with
 			% freq and same level (dB SPL)
-			fprintf('\t%s test, finding freq and level indices\n', ...
-																	obj.testtype);
+				case 'FREQ+LEVEL'
+					fprintf('\t%s test, finding freq and level indices\n', ...
+																			obj.testtype);
 
-			% if necessary, convert cells to matrices
-			testcell = {'splval', 'rmsval', 'atten', 'FREQ', 'LEVEL'};
-			for c = 1:length(testcell)
-				if iscell(obj.Dinf.test.stimcache.(testcell{c}))
-					obj.Dinf.test.stimcache.(testcell{c}) = ...
-							cell2mat(obj.Dinf.test.stimcache.(testcell{c}));
-				end
+					% if necessary, convert cells to matrices
+					testcell = {'splval', 'rmsval', 'atten', 'FREQ', 'LEVEL'};
+					for c = 1:length(testcell)
+						if iscell(obj.Dinf.test.stimcache.(testcell{c}))
+							obj.Dinf.test.stimcache.(testcell{c}) = ...
+									cell2mat(obj.Dinf.test.stimcache.(testcell{c}));
+						end
+					end
+					% list of stimulus freqs, # of freqs tested
+					freqlist = unique(obj.freqs_bysweep, 'sorted');
+					nfreqs = length(freqlist);
+					% list of stimulus levels, # of levels tested
+					levellist = unique(obj.levels_bysweep, 'sorted');
+					nlevels = length(levellist);
+					%{
+					Raw data are in a vector of length nstims, in order of
+					presentation.
+
+					values used for the two variables (Freq. and Level) are
+					stored in vrange matrix, which is of length (nfreq X nlevel)
+					and holds values as row 1 = freq, row 2 = level
+
+					e.g. obj.Dinf.test.stimcache.vrange(:, 1:5) = 4000  4000
+					4000  4000  4000 0     10    20    30    40
+
+					trialRandomSequence holds randomized list of indices into
+					vrange, has dimensions of [nreps, ntrials]
+
+					To sort the data for FRA: (1)	for each freq and level
+					combination, locate the indices for that combination in the
+					respective FREQ and LEVEL list. (2)	These indices can then
+					be used within the D{} array
+					%}
+					stimindex = cell(nlevels, nfreqs);
+					for f = 1:nfreqs
+						for l = 1:nlevels
+							currentF = freqlist(f);
+							currentL = levellist(l);
+							stimindex{l, f} = ...
+								find( (obj.freqs_bysweep == currentF) & ...
+										(obj.levels_bysweep == currentL) );
+						end
+					end
+					% assign outputs
+					varargout{1} = stimindex;
+					varargout{2} = {freqlist levellist};
+
+			% for OPTO test...
+				case 'OPTO'
+					fprintf('\t%s test, finding indices\n', obj.testtype);
+
+			% for WavFile, tell user to use WAVInfo class.
+				case 'WAVFILE'
+					error('%s: Please use WAVInfo class for these data', mfilename);
+				
+				% unknown type
+				otherwise
+					error('%s: unsupported test type %s', mfilename, obj.testtype);
 			end
-			% list of stimulus freqs, # of freqs tested
-			freqlist = unique(obj.freqs_bysweep, 'sorted');
-			nfreqs = length(freqlist);
-			% list of stimulus levels, # of levels tested
-			levellist = unique(obj.levels_bysweep, 'sorted');
-			nlevels = length(levellist);
-			%{
-			Raw data are in a vector of length nstims, in order of
-			presentation.
-
-			values used for the two variables (Freq. and Level) are
-			stored in vrange matrix, which is of length (nfreq X nlevel)
-			and holds values as row 1 = freq, row 2 = level
-
-			e.g. obj.Dinf.test.stimcache.vrange(:, 1:5) = 4000  4000
-			4000  4000  4000 0     10    20    30    40
-
-			trialRandomSequence holds randomized list of indices into
-			vrange, has dimensions of [nreps, ntrials]
-
-			To sort the data for FRA: (1)	for each freq and level
-			combination, locate the indices for that combination in the
-			respective FREQ and LEVEL list. (2)	These indices can then
-			be used within the D{} array
-			%}
-			stimindex = cell(nlevels, nfreqs);
-			for f = 1:nfreqs
-				for l = 1:nlevels
-					currentF = freqlist(f);
-					currentL = levellist(l);
-					stimindex{l, f} = ...
-						find( (obj.freqs_bysweep == currentF) & ...
-								(obj.levels_bysweep == currentL) );
-				end
-			end
-			% assign outputs
-			varargout{1} = stimindex;
-			varargout{2} = {freqlist levellist};
-
 		end	% END getStimulusIndices method
 		
 
@@ -225,15 +299,64 @@ classdef FRAInfo
 		%-------------------------------------------------
 			[~, fname, fext] = fileparts(obj.Dinf.filename);
 			fname = [fname '.' fext];
-			% list of freq, levels
-			varlist = cell(2, 1);
-			% # of freqs in nvars(1), # of levels in nvars(2)
-			nvars = zeros(2, 1);
-			for v = 1:2
-				varlist{v} = unique(obj.varied_values(v, :), 'sorted');
-				nvars(v) = length(varlist{v});
+			switch obj.testtype
+				case 'FREQ'
+					% list of frequencies, and # of freqs tested
+					varlist = obj.varied_values;
+					nvars = length(varlist);
+					titleString = cell(nvars, 1);
+					for v = 1:nvars
+						if v == 1
+							titleString{v} = {fname, ...
+													sprintf('Frequency = %.0f kHz', ...
+																			0.001*varlist(v))};
+						else
+							titleString{v} = sprintf('Frequency = %.0f kHz', ...
+													0.001*varlist(v));
+						end
+					end
+				case 'LEVEL'
+					% list of levels, and # of levels tested
+					varlist = obj.varied_values;
+					nvars = length(varlist);
+					titleString = cell(nvars, 1);
+					for v = 1:nvars
+						if v == 1
+							titleString{v} = {fname, sprintf('Level = %d dB SPL', ...
+																					varlist(v))};
+						else
+							titleString{v} = sprintf('Level = %d dB SPL', varlist(v));
+						end
+					end
+				case 'FREQ+LEVEL'
+					% list of freq, levels
+					varlist = cell(2, 1);
+					% # of freqs in nvars(1), # of levels in nvars(2)
+					nvars = zeros(2, 1);
+					for v = 1:2
+						varlist{v} = unique(obj.varied_values(v, :), 'sorted');
+						nvars(v) = length(varlist{v});
+					end
+					titleString = fname;
+
+				case 'OPTO'
+					% not yet implemented
+					
+				case 'WAVFILE'
+					% get list of stimuli (wav file names)
+					varlist = obj.Dinf.test.wavlist;
+					nvars = length(varlist);
+					titleString = cell(nvars, 1);
+					for v = 1:nvars
+						if v == 1 
+							titleString{v} = {fname, sprintf('wav name: %s', varlist{v})};
+						else
+							titleString{v} = sprintf('wav name: %s', varlist{v});
+						end
+					end
+				otherwise
+					error('%s: unsupported test type %s', mfilename, obj.testtype);
 			end
-			titleString = fname;
 		end
 		%-------------------------------------------------
 		%-------------------------------------------------
@@ -247,7 +370,10 @@ classdef FRAInfo
 		%---------------------------------------------------------------------
 			switch upper(obj.testtype)
 				case {'FREQ', 'LEVEL'}
-					error('use CurveInfo')
+					% list of frequencies, and # of freqs tested
+					% list of levels, and # of levels tested
+					varlist = {obj.varied_values};
+					nvars = length(varlist);
 
 				case 'FREQ+LEVEL'
 					% list of freq, levels
@@ -347,14 +473,103 @@ classdef FRAInfo
 		% get/set access for dependent properties
 		%-------------------------------------------------
 		%-------------------------------------------------
-	
+		% returns test.Type
+		function val = get.testtype(obj)
+			val = obj.Dinf.test.Type;
+		end
+		% returns test.Name
+		function val = get.testname(obj)
+			val = obj.Dinf.test.Name;
+		end
+		% returns analysis_window : audio Delay to Delay+Duration interval
+		function val = get.analysis_window(obj)
+			val = [obj.Dinf.audio.Delay ...
+							(obj.Dinf.audio.Delay + obj.Dinf.audio.Duration)];
+		end
+		% returns Dinf.indev.Fs
+		function val = get.ADFs(obj)
+			val = obj.Dinf.indev.Fs;
+		end
+		% returns Dinf.outdev.Fs
+		function val = get.DAFs(obj)
+			val = obj.Dinf.outdev.Fs;
+		end
+
+		%{
+		% returns test.Type
+		function val = testtype(obj)
+			val = obj.Dinf.test.Type;
+		end
+		% returns test.Name
+		function val = testname(obj)
+			val = obj.Dinf.test.Name;
+		end
+		% returns test.stimcache.FREQS, which is a list of frequencies (or
+		% freq ranges for BBN) used for each stimulus sweep
+		%	this is a cell array {nsweeps, 1}
+		function val = freqs_bysweep(obj)
+			val = obj.Dinf.test.stimcache.FREQ;
+		end
+		% returns test.stimcache.LEVELS, which is a list of db SPL 
+		% stimulus levels used for each stimulus sweep
+		%	this is a numerical array [nsweeps, 1]
+		function val = levels_bysweep(obj)
+			val = obj.Dinf.test.stimcache.LEVEL;
+		end
+		% returns test.stimcache.vname, char string identifying
+		% variable(s) for curve (similar to test.Name
+		function val = varied_parameter(obj)
+			val = char(obj.Dinf.test.stimcache.vname);
+		end
+		% returns test.stimcache.vrange, values of varied parameter
+		function val = varied_values(obj)
+			val = obj.Dinf.test.stimcache.vrange;
+		end
+		% returns analysis_window : audio Delay to Delay+Duration interval
+		function val = analysis_window(obj)
+			val = [obj.Dinf.audio.Delay (obj.Dinf.audio.Delay + obj.Dinf.audio.Duration)];
+		end
+		% returns test.stimcache.nreps: # of reps for each stimulus
+		function val = nreps(obj)
+			if obj.has_stimcache
+				val = obj.Dinf.test.stimcache.nreps;
+			elseif obj.has_stimList
+				val = obj.Dinf.test.Reps;
+			end
+		end
+		% returns test.stimcache.ntrials: # of stimulus types
+		function val = ntrials(obj)
+			val = obj.Dinf.test.stimcache.ntrials;
+		end
+		% returns test.stimcache.nstims: total # of stimulus presentations
+		% (usually equal to nreps * ntrials
+		function val = nstims(obj)
+			val = obj.Dinf.test.stimcache.nstims;
+		end		
+		% returns Dinf.indev.Fs
+		function val = ADFs(obj)
+			val = obj.Dinf.indev.Fs;
+		end
+		% returns Dinf.outdev.Fs
+		function val = DAFs(obj)
+			val = obj.Dinf.outdev.Fs;
+		end
+		%}
 		
 		%-------------------------------------------------
 		%-------------------------------------------------
 		% methods defined in separate files
 		%-------------------------------------------------
 		%-------------------------------------------------
-		
+		% get data  and sweep info for each channel
+		[obj, varargout] = buildChannelData(obj, Channels, BPfilt, ...
+															D, varargin)
+		% create dummy/test data  and sweep info for each channel
+		[obj, varargout] = buildTimingTestData(obj, Channels, BPfilt, ...
+															D, varargin)
+		% builds vector of stimulus onset and offset bins referenced to start
+		% of file
+		[obj, varargout] = buildStimOnOffData(obj)
 	end	% END methods
 	
 end	% END classdef

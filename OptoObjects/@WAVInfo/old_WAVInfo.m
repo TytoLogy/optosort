@@ -167,36 +167,86 @@ classdef WAVInfo < CurveInfo
 		end	% END getStimulusIndices method
 		
 		
+		%{
 		function titleString = getCurveTitleString(obj)
 		% returns title string for curve type
+		
 			[~, fname, fext] = fileparts(obj.Dinf.filename);
 			fname = [fname '.' fext];
-			% get list of stimuli (wav file names)
-			varlist = obj.Dinf.test.wavlist;
-			nvars = length(varlist);
-			titleString = cell(nvars, 1);
-			for v = 1:nvars
-				if v == 1 
-					titleString{v} = {fname, sprintf('wav name: %s', varlist{v})};
-				else
-					titleString{v} = sprintf('wav name: %s', varlist{v});
-				end
-			end
+			switch obj.testtype
+				case 'FREQ'
+					% list of frequencies, and # of freqs tested
+					varlist = obj.varied_values;
+					nvars = length(varlist);
+					titleString = cell(nvars, 1);
+					for v = 1:nvars
+						if v == 1
+							titleString{v} = {fname, ...
+													sprintf('Frequency = %.0f kHz', ...
+																			0.001*varlist(v))};
+						else
+							titleString{v} = sprintf('Frequency = %.0f kHz', ...
+													0.001*varlist(v));
+						end
+					end
+				case 'LEVEL'
+					% list of levels, and # of levels tested
+					varlist = obj.varied_values;
+					nvars = length(varlist);
+					titleString = cell(nvars, 1);
+					for v = 1:nvars
+						if v == 1
+							titleString{v} = {fname, sprintf('Level = %d dB SPL', ...
+																					varlist(v))};
+						else
+							titleString{v} = sprintf('Level = %d dB SPL', varlist(v));
+						end
+					end
+				case 'FREQ+LEVEL'
+					% list of freq, levels
+					varlist = cell(2, 1);
+					% # of freqs in nvars(1), # of levels in nvars(2)
+					nvars = zeros(2, 1);
+					for v = 1:2
+						varlist{v} = unique(obj.varied_values(v, :), 'sorted');
+						nvars(v) = length(varlist{v});
+					end
+					titleString = fname;
+
+				case 'OPTO'
+					% not yet implemented
+					
+				case 'WAVFILE'
+					% get list of stimuli (wav file names)
+					varlist = obj.Dinf.test.wavlist;
+					nvars = length(varlist);
+					titleString = cell(nvars, 1);
+					for v = 1:nvars
+						if v == 1 
+							titleString{v} = {fname, sprintf('wav name: %s', varlist{v})};
+						else
+							titleString{v} = sprintf('wav name: %s', varlist{v});
+						end
+					end
+				otherwise
+					error('%s: unsupported test type %s', mfilename, obj.testtype);
+			end			
 		end
+		%}
+		
 
 		function [varlist, nvars] = varlist(obj)
 		%---------------------------------------------------------------------
 		% returns list of variable value and # of vars..
+		% overloaded for WAV
 		%---------------------------------------------------------------------
 			switch upper(obj.testtype)
-				case {'FREQ', 'LEVEL'}
-					error('use CurveInfo')
-					
-				case 'FREQ+LEVEL'
-					error('Use FRA');
+				case {'FREQ', 'LEVEL', 'FREQ+LEVEL'}
+					% wrong class
+					error('class mismatch in varlist')
 
 				case 'OPTO'
-					warning('CurveInfo.varlist: OPTO not yet implemented');
+					warning('WAVInfo.varlist: OPTO not yet implemented');
 					varlist = {obj.varied_values};
 					nvars = length(varlist);
 

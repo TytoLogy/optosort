@@ -329,31 +329,14 @@ classdef CurveInfo
 						end
 					end
 				case 'FREQ+LEVEL'
-					% list of freq, levels
-					varlist = cell(2, 1);
-					% # of freqs in nvars(1), # of levels in nvars(2)
-					nvars = zeros(2, 1);
-					for v = 1:2
-						varlist{v} = unique(obj.varied_values(v, :), 'sorted');
-						nvars(v) = length(varlist{v});
-					end
-					titleString = fname;
+					error('Use FRAINfo subclass');
 
 				case 'OPTO'
 					% not yet implemented
 					
 				case 'WAVFILE'
-					% get list of stimuli (wav file names)
-					varlist = obj.Dinf.test.wavlist;
-					nvars = length(varlist);
-					titleString = cell(nvars, 1);
-					for v = 1:nvars
-						if v == 1 
-							titleString{v} = {fname, sprintf('wav name: %s', varlist{v})};
-						else
-							titleString{v} = sprintf('wav name: %s', varlist{v});
-						end
-					end
+					error('Use WAVInfo subclass');
+					
 				otherwise
 					error('%s: unsupported test type %s', mfilename, obj.testtype);
 			end
@@ -366,7 +349,6 @@ classdef CurveInfo
 		function [varlist, nvars] = varlist(obj)
 		%---------------------------------------------------------------------
 		% returns list of variable value and # of vars..
-		% use overloaded methods depending on curve/test type
 		%---------------------------------------------------------------------
 			switch upper(obj.testtype)
 				case {'FREQ', 'LEVEL'}
@@ -389,6 +371,11 @@ classdef CurveInfo
 				case 'OPTO'
 					warning('CurveInfo.varlist: OPTO not yet implemented');
 					varlist = {obj.varied_values};
+					nvars = length(varlist);
+
+				case 'WAVFILE'
+					% get list of stimuli (wav file names)
+					varlist = obj.Dinf.test.wavlist;
 					nvars = length(varlist);
 
 				otherwise
