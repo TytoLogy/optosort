@@ -12,37 +12,8 @@ classdef FRAInfo
 %------------------------------------------------------------------------
 % class properties
 %------------------------------------------------------------------------
-% Dinf				Data information struct from opto .dat files
-% F					opto file object
-% startSweepBin	sample for start of each sweep (for each channel)
-%							cell array
-% endSweepBin		sample for end of each sweep (for each channel)
-%							cell array
-% sweepLen			length (# of samples) for each sweep (for each channel)
-%							vector
-% stimStartBin		sample for stimulus onset (vector)
-% stimEndBin		sample for stimulus offset (vector)
-% fileStartBin		sample for start of file in merged file
-% fileEndBin		sample for end of file in merged data file
-% 
-% validSweep		logical vector [nsweeps, 1], true for sweeps with valid
-%						(no artifact, etc) data
-%
-% Dependent properties:
-% 	testtype
-% 	testname
-% 	freqs_bysweep
-% 	levels_bysweep
-% 	varied_parameter
-% 	varied_values
-% 	analysis_window
-% 	nreps
-% 	ntrials
-% 	nstims
-% 	ADFs
-% 	DAFs
 %------------------------------------------------------------------------
-% See also: 
+% See also: CurveInfo, WAVInfo
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -52,13 +23,6 @@ classdef FRAInfo
 % Created: 18 June 2020, 2020 (SJS)
 %	- subclassed from CurveInfo
 % Revisions:
-%	3 Mar 2020 (SJS): adding elements from fData struct in the 
-%		export_for_plexon.m function to avoid future duplications and
-%		streamline curve/test information handling
-%	9 Apr 2020 (SJS): adding stimStartBin, stimEndBin.
-%	9 Jun 2020 (SJS): modifying to create test data for checking timing
-%	15 Jun 2020 (SJS): fixed issue with trying to directly index into 
-%							varied_values dependent property
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -218,7 +182,6 @@ classdef FRAInfo
 		
 
 		%-------------------------------------------------
-		%-------------------------------------------------
 		function titleString = getCurveTitleString(obj)
 		%-------------------------------------------------
 		% returns title string for curve type
@@ -236,15 +199,13 @@ classdef FRAInfo
 			titleString = fname;
 		end
 		%-------------------------------------------------
-		%-------------------------------------------------
 
 		%-------------------------------------------------
-		%-------------------------------------------------
 		function [varlist, nvars] = varlist(obj)
-		%---------------------------------------------------------------------
+		%-------------------------------------------------
 		% returns list of variable value and # of vars..
 		% use overloaded methods depending on curve/test type
-		%---------------------------------------------------------------------
+		%-------------------------------------------------
 			switch upper(obj.testtype)
 				case {'FREQ', 'LEVEL'}
 					error('use CurveInfo')
@@ -279,68 +240,6 @@ classdef FRAInfo
 		%-------------------------------------------------
 		%-------------------------------------------------
 	
-		% returns test.stimcache.FREQS, which is a list of frequencies (or
-		% freq ranges for BBN) used for each stimulus sweep
-		%	this is a cell array {nsweeps, 1}
-		function val = freqs_bysweep(obj)
-			if obj.has_stimcache
-				val = obj.Dinf.test.stimcache.FREQ;
-			else
-				val = [];
-			end
-		end
-		% returns test.stimcache.LEVELS, which is a list of db SPL 
-		% stimulus levels used for each stimulus sweep
-		%	this is a numerical array [nsweeps, 1]
-		function val = levels_bysweep(obj)
-			if obj.has_stimcache
-				val = obj.Dinf.test.stimcache.LEVEL;
-			else
-				val = [];
-			end
-		end
-		% returns test.stimcache.vname, char string identifying
-		% variable(s) for curve (similar to test.Name
-		function val = varied_parameter(obj)
-			if obj.has_stimcache
-				val = char(obj.Dinf.test.stimcache.vname);
-			else
-				val = [];
-			end
-		end
-		% returns test.stimcache.vrange, values of varied parameter
-		function val = varied_values(obj)
-			if obj.has_stimcache
-				val = obj.Dinf.test.stimcache.vrange;
-			else
-				val = [];
-			end
-		end
-		% returns test.stimcache.nreps: # of reps for each stimulus
-		function val = nreps(obj)
-			if obj.has_stimcache
-				val = obj.Dinf.test.stimcache.nreps;
-			else
-				val = [];
-			end
-		end
-		% returns test.stimcache.ntrials: # of stimulus types
-		function val = ntrials(obj)
-			if obj.has_stimcache
-				val = obj.Dinf.test.stimcache.ntrials;
-			else
-				val = [];
-			end
-		end
-		% returns test.stimcache.nstims: total # of stimulus presentations
-		% (usually equal to nreps * ntrials
-		function val = nstims(obj)
-			if obj.has_stimcache
-				val = obj.Dinf.test.stimcache.nstims;
-			else
-				val = [];
-			end
-		end
 		
 		%-------------------------------------------------
 		%-------------------------------------------------

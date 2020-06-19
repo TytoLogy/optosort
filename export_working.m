@@ -218,7 +218,7 @@ exportOpts.TestFile = { '1407_20200309_03_01_1350_BBN_testdata.mat', ...
 								'1407_20200309_03_01_1350_FREQ_TUNING_testdata.mat'};
 exportOpts.OutputFile = 'testdata_MERGE.nex';
 exportOpts.Channels = [4, 5, 7, 15];
-exportOpts.testData = true;
+exportOpts.testData = false;
 %---------------------------------------
 %---------------------------------------
 

@@ -21,7 +21,7 @@ classdef WAVInfo < CurveInfo
 % Dependent properties:
 % 
 %------------------------------------------------------------------------
-% See also: 
+% See also: CurveInfo, FRAInfo
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -36,6 +36,7 @@ classdef WAVInfo < CurveInfo
 %		streamline curve/test information handling
 %	15 Apr 2020 (SJS): adding code to determine stim onset, offset and wav
 %	onset
+%	18 Jun 2020 (SJS): broadened scope of subclass - overloaded methods
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -167,8 +168,11 @@ classdef WAVInfo < CurveInfo
 		end	% END getStimulusIndices method
 		
 		
+		%-------------------------------------------------
 		function titleString = getCurveTitleString(obj)
+		%-------------------------------------------------
 		% returns title string for curve type
+		%-------------------------------------------------
 			[~, fname, fext] = fileparts(obj.Dinf.filename);
 			fname = [fname '.' fext];
 			% get list of stimuli (wav file names)
@@ -184,10 +188,11 @@ classdef WAVInfo < CurveInfo
 			end
 		end
 
+		%-------------------------------------------------
 		function [varlist, nvars] = varlist(obj)
-		%---------------------------------------------------------------------
+		%-------------------------------------------------
 		% returns list of variable value and # of vars..
-		%---------------------------------------------------------------------
+		%-------------------------------------------------
 			switch upper(obj.testtype)
 				case {'FREQ', 'LEVEL'}
 					error('use CurveInfo')
@@ -211,70 +216,12 @@ classdef WAVInfo < CurveInfo
 		end
 
 
-%{		
 		%-------------------------------------------------
 		%-------------------------------------------------
 		% shortcut methods to values
 		%-------------------------------------------------
 		%-------------------------------------------------
-		% returns test.stimcache.LEVELS, which is a list of db SPL 
-		% stimulus levels used for each stimulus sweep
-		%	this is a numerical array [nsweeps, 1]
-		function val = levels_bysweep(obj)
-			if obj.has_stimList
-				levels = zeros(obj.ntrials, 1);
-				for l = 1:obj.ntrials
-					levels(l) = obj.Dinf.stimList(l).audio.Level;
-				end
-				val = levels(obj.Dinf.test.stimIndices);
-			else
-				val = [];
-			end
-		end
-		% returns test.stimcache.vname, char string identifying
-		% variable(s) for curve (similar to test.Name
-		function val = varied_parameter(obj)
-			if obj.has_stimList
-				val = {'Level'; 'WAV'};
-			else
-				val = [];
-			end
-		end
-		% returns test.stimcache.vrange, values of varied parameter
-		function val = varied_values(obj)
-			if obj.has_stimList
-				val = {obj.Dinf.test.Level'; ...
-							unique(obj.Dinf.test.wavlist, 'stable')};
-			else
-				val = [];
-			end
-		end
-		% returns test.Reps: # of reps for each stimulus
-		function val = nreps(obj)
-			if obj.has_stimList
-				val = obj.Dinf.test.Reps;
-			else
-				val = [];
-			end
-		end
-		% returns test.stimcache.ntrials: # of stimulus types
-		function val = ntrials(obj)
-			if obj.has_stimList
-				val = obj.Dinf.test.nCombinations;
-			else
-				val = [];
-			end
-		end
-		% returns test.stimcache.nstims: total # of stimulus presentations
-		% (usually equal to nreps * ntrials
-		function val = nstims(obj)
-			if obj.has_stimList
-				val = length(obj.Dinf.test.stimIndices);
-			else
-				val = [];
-			end
-		end
-%}		
+
 		
 		%-------------------------------------------------
 		%-------------------------------------------------

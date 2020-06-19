@@ -103,6 +103,10 @@ spiketable = obj.spikesForAnalysis(fIndx, 'channel', chanNum, ...
 %------------------------------------------------------------------------
 % get stim indices, varlist
 %------------------------------------------------------------------------
+%{
+% THIS NEEDS TO BE REWORKED crashes on FRA data
+%
+%}
 % stimindex is a cell array with each element (corresponding to a different
 % stimulus level/parameter) consisting of a list of indices into each data
 % sweep.
