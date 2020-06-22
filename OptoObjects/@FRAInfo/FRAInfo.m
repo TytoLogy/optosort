@@ -1,4 +1,4 @@
-classdef FRAInfo
+classdef FRAInfo < CurveInfo
 %------------------------------------------------------------------------
 % Class: FRAInfo
 %------------------------------------------------------------------------
@@ -48,6 +48,36 @@ classdef FRAInfo
 		% Constructor
 		%-------------------------------------------------
 		%-------------------------------------------------
+		function obj = FRAInfo(varargin)
+			% invoke superclass constructor - this initializes obj.Dinf if it
+			% was provided as input
+			obj@CurveInfo(varargin{1})
+			% return if nothing else to do (no Dinf)
+			if isempty(varargin)
+				return
+			end
+			%{
+			if isstruct(varargin{1})
+				testfields = {'ScriptType', 'optovar_name', 'audiovar_name', ...
+										'audiovar', 'curvetype'};
+				for n = 1:length(testfields)
+					obj.Dinf.test.(testfields{n}) = ...
+								convert_to_text(obj.Dinf.test.(testfields{n}));
+				end
+			else
+				error('Unknown input type %s', varargin{1});
+			end
+			% if wavinfo is provided, use it
+			if nargin == 2
+				if isstruct(varargin{2})
+					obj.wavInfo = obj.init_wavInfo(varargin{2});
+				else
+					error('Unknown type for wavInfo input');
+				end
+			end
+			%}
+		end
+		
 		%{
 		function obj = CurveInfo(varargin)
 			if isempty(varargin)
