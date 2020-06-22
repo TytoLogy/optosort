@@ -206,7 +206,7 @@ exportOpts.TestFile = {	'1382_20191212_02_02_3200_FRA_testdata.mat'};
 exportOpts.OutputFile = 'FRA.nex';
 %}
 
-%{
+
 %---------------------------------------
 % 1407 multichannel, all files
 %---------------------------------------
@@ -228,8 +228,9 @@ exportOpts.Channels = [4, 5, 7, 15];
 exportOpts.testData = false;
 %---------------------------------------
 %---------------------------------------
-%}
 
+
+%{
 %---------------------------------------
 % 1407 FRA Only
 %---------------------------------------
@@ -243,6 +244,7 @@ exportOpts.TestFile = { '1407_20200309_03_01_1350_FRA_testdata.mat'	};
 exportOpts.OutputFile = '1407_20200309_03_01_1350_FRA.nex';
 exportOpts.Channels = [4, 5, 7, 15];
 exportOpts.testData = false;
+%}
 
 %------------------------------------------------------------------------
 % filter parameters for raw neural data
