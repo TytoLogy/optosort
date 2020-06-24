@@ -56,79 +56,7 @@ classdef FRAInfo < CurveInfo
 			if isempty(varargin)
 				return
 			end
-			%{
-			if isstruct(varargin{1})
-				testfields = {'ScriptType', 'optovar_name', 'audiovar_name', ...
-										'audiovar', 'curvetype'};
-				for n = 1:length(testfields)
-					obj.Dinf.test.(testfields{n}) = ...
-								convert_to_text(obj.Dinf.test.(testfields{n}));
-				end
-			else
-				error('Unknown input type %s', varargin{1});
-			end
-			% if wavinfo is provided, use it
-			if nargin == 2
-				if isstruct(varargin{2})
-					obj.wavInfo = obj.init_wavInfo(varargin{2});
-				else
-					error('Unknown type for wavInfo input');
-				end
-			end
-			%}
 		end
-		
-		%{
-		function obj = CurveInfo(varargin)
-			if isempty(varargin)
-				return
-			end
-			if isstruct(varargin{1})
-				% save Dinf
-				obj.Dinf = varargin{1};
-				% extract filename, convert to optofilename object
-				obj.F = OptoFileName(obj.Dinf.filename);
-				% initialize validSweep
-				obj.validSweep = true(obj.Dinf.nread, 1);
-				% if necessary, convert stimtype and curvetype to strings
-				% not all tests (WAV) have stimcache...
-				if isfield(obj.Dinf.test, 'stimcache')
-					if ~isempty(obj.Dinf.test.stimcache)
-						obj.has_stimcache = 1;
-						obj.Dinf.test.stimcache.stimtype = ...
-													char(obj.Dinf.test.stimcache.stimtype);
-						obj.Dinf.test.stimcache.curvetype = ...
-													char(obj.Dinf.test.stimcache.curvetype);
-					else
-						obj.has_stimcache = 0;
-					end
-				else
-					obj.has_stimcache = 0;
-				end
-				% not all tests (WAV) have stimList...
-				if isfield(obj.Dinf, 'stimList')
-					if ~isempty(obj.Dinf.stimList)
-						obj.has_stimList = 1;
-					else
-						obj.has_stimList = 0;
-					end
-				else
-					obj.has_stimList = 0;
-				end
-				% signal name should be a char
-				if isfield(obj.Dinf, 'audio')
-					if isfield(obj.Dinf.audio, 'signal')
-						if isfield(obj.Dinf.audio.signal, 'Type')
-							obj.Dinf.audio.signal.Type = ...
-											char(obj.Dinf.audio.signal.Type);
-						end
-					end
-				end
-			else
-				error('Unknown input type %s', varargin{1});
-			end
-		end
-		%}
 		
 		%-------------------------------------------------
 		%-------------------------------------------------
@@ -152,7 +80,7 @@ classdef FRAInfo < CurveInfo
 		%-------------------------------------------------		
 			% make sure Dinf is initialized
 			if isempty(obj.Dinf)
-				error(['CurveInfo.getStimulusIndices: ' ...
+				error(['FRAInfo.getStimulusIndices: ' ...
 							'Dinf not defined/is empty']);
 			end
 
@@ -239,6 +167,8 @@ classdef FRAInfo < CurveInfo
 			switch upper(obj.testtype)
 				case {'FREQ', 'LEVEL'}
 					error('use CurveInfo')
+				case 'WAVFILE'
+					error('use WAVInfo')
 
 				case 'FREQ+LEVEL'
 					% list of freq, levels
@@ -252,7 +182,7 @@ classdef FRAInfo < CurveInfo
 					end
 
 				case 'OPTO'
-					warning('CurveInfo.varlist: OPTO not yet implemented');
+					warning('FRAInfo.varlist: OPTO not yet implemented');
 					varlist = {obj.varied_values};
 					nvars = length(varlist);
 

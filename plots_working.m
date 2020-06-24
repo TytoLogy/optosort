@@ -55,7 +55,7 @@ end
 % merged data 
 %------------------------------------------------------------------------
 
-%{
+
 %------------------------------------------------------------------------
 % BBN data 
 %------------------------------------------------------------------------
@@ -65,7 +65,6 @@ nexPath = sortedPath;
 nexInfoFile = '1407_20200309_03_01_1350_BBN_nexinfo.mat';
 nexFile = '1407_20200309_03_01_1350_BBN.nex';
 plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
-%}
 
 
 %------------------------------------------------------------------------
@@ -80,12 +79,15 @@ plxFile = '1408_20200319_02_01_950_MERGE.plx';
 nexInfoFile = '1408_20200319_02_01_950_MERGE_nexinfo.mat';
 %}
 
+%{
 %-------------------------------------------------
 % FRA wih FRAInfo
 %-------------------------------------------------
 sortedPath = '/Users/sshanbhag/Work/Data/TestData/working';
 plxFile = '1407_20200309_03_01_1350_FRA.plx';
 nexInfoFile = '1407_20200309_03_01_1350_FRA_nexinfo.mat';
+SobjFile = fullfile(sortedPath, 'Sobj_1407_20200309_03_01_1350_FRA.mat');
+%}
 
 %{
 %-------------------------------------------------
@@ -154,9 +156,18 @@ sendmsg(['plots_working running for ' sprintf('File: %s\n', plxFile)]);
 %	continuous data, if saved in plx file
 %	stimulus info
 %------------------------------------------------------------------------
-S = import_from_plexon(fullfile(sortedPath, plxFile), ...
+if exist('SobjFile', 'var')
+	if exist(SobjFile, 'file')
+	sendmsg(['Loading SpikeData object from ' SobjFile]);
+	load(SobjFile);
+	else
+		S = import_from_plexon(fullfile(sortedPath, plxFile), ...
 									fullfile(sortedPath, nexInfoFile));
-
+	end
+else
+	S = import_from_plexon(fullfile(sortedPath, plxFile), ...
+								fullfile(sortedPath, nexInfoFile));
+end
 %{
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -188,7 +199,8 @@ load(fullfile(nexPath, sfile));
 %------------------------------------------------------------------------
 
 % What test data do you want to plot?
-testToPlot = 'FRA';
+% testToPlot = 'FRA';
+testToPlot = 'BBN';
 
 % figure out file index for this test
 % get list of test names
@@ -199,7 +211,7 @@ if isempty(findx)
 								plxFile);
 end
 % select Channel (technically , index into array of channel numbers)
-channel = 1;
+channel = 4;
 % select unit ID num
 unit = 1;
 
@@ -222,7 +234,7 @@ if any(strcmpi(testToPlot, {'LEVEL', 'BBN'}))
 	% plot
 	hRLF = plotCurveAndCI(RLF, 'mean');
 	% create title string with 2 rows:
-	%	filename
+	%	filenametestToPlot = 'FRA';
 	%	channel and unit
 	tstr = {	st.fileName, ...
 				sprintf('Channel %d Unit %d', channel, unit)};

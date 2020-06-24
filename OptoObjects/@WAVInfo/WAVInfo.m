@@ -198,10 +198,10 @@ classdef WAVInfo < CurveInfo
 					error('use CurveInfo')
 					
 				case 'FREQ+LEVEL'
-					error('Use FRA');
+					error('Use FRAInfo');
 
 				case 'OPTO'
-					warning('CurveInfo.varlist: OPTO not yet implemented');
+					warning('WAVInfo.varlist: OPTO not yet implemented');
 					varlist = {obj.varied_values};
 					nvars = length(varlist);
 

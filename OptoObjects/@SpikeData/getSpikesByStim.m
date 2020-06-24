@@ -107,11 +107,14 @@ spiketable = obj.spikesForAnalysis(fIndx, 'channel', chanNum, ...
 % THIS NEEDS TO BE REWORKED crashes on FRA data
 %
 %}
+%{
 % stimindex is a cell array with each element (corresponding to a different
 % stimulus level/parameter) consisting of a list of indices into each data
 % sweep.
 % stimvar is a list of the variables in the sweeps
 [stimindex, stimvar] = obj.Info.FileInfo{fIndx}.getStimulusIndices;
+
+
 unique_stim = unique(stimvar);
 nstim = length(unique_stim);
 
@@ -151,6 +154,11 @@ str.stimvar = stimvar;
 str.unique_stim = unique_stim;
 str.nstim = nstim;
 str.spiketable = spiketable;
+%}
+
+str = obj.Info.FileInfo{fIndx}.convertSpikeTableToSpikeTimes(spiketable)
+
+% add fields to str
 str.fileIndex = fIndx;
 str.channel = chanNum;
 str.unit = unitNum;

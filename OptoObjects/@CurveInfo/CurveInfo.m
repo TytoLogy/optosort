@@ -223,58 +223,10 @@ classdef CurveInfo
 					varargout{1} = stimindex;
 					varargout{2} = levellist;
 
-			% for FRA (FREQ+LEVEL) test, find indices of stimuli with
-			% freq and same level (dB SPL)
+			% for FRA (FREQ+LEVEL) test, need to use subclass FRAInfo
 				case 'FREQ+LEVEL'
-					fprintf('\t%s test, finding freq and level indices\n', ...
-																			obj.testtype);
-
-					% if necessary, convert cells to matrices
-					testcell = {'splval', 'rmsval', 'atten', 'FREQ', 'LEVEL'};
-					for c = 1:length(testcell)
-						if iscell(obj.Dinf.test.stimcache.(testcell{c}))
-							obj.Dinf.test.stimcache.(testcell{c}) = ...
-									cell2mat(obj.Dinf.test.stimcache.(testcell{c}));
-						end
-					end
-					% list of stimulus freqs, # of freqs tested
-					freqlist = unique(obj.freqs_bysweep, 'sorted');
-					nfreqs = length(freqlist);
-					% list of stimulus levels, # of levels tested
-					levellist = unique(obj.levels_bysweep, 'sorted');
-					nlevels = length(levellist);
-					%{
-					Raw data are in a vector of length nstims, in order of
-					presentation.
-
-					values used for the two variables (Freq. and Level) are
-					stored in vrange matrix, which is of length (nfreq X nlevel)
-					and holds values as row 1 = freq, row 2 = level
-
-					e.g. obj.Dinf.test.stimcache.vrange(:, 1:5) = 4000  4000
-					4000  4000  4000 0     10    20    30    40
-
-					trialRandomSequence holds randomized list of indices into
-					vrange, has dimensions of [nreps, ntrials]
-
-					To sort the data for FRA: (1)	for each freq and level
-					combination, locate the indices for that combination in the
-					respective FREQ and LEVEL list. (2)	These indices can then
-					be used within the D{} array
-					%}
-					stimindex = cell(nlevels, nfreqs);
-					for f = 1:nfreqs
-						for l = 1:nlevels
-							currentF = freqlist(f);
-							currentL = levellist(l);
-							stimindex{l, f} = ...
-								find( (obj.freqs_bysweep == currentF) & ...
-										(obj.levels_bysweep == currentL) );
-						end
-					end
-					% assign outputs
-					varargout{1} = stimindex;
-					varargout{2} = {freqlist levellist};
+					error('%s: Please use FRAInfo class for these data', ...
+								mfilename);
 
 			% for OPTO test...
 				case 'OPTO'
@@ -282,14 +234,73 @@ classdef CurveInfo
 
 			% for WavFile, tell user to use WAVInfo class.
 				case 'WAVFILE'
-					error('%s: Please use WAVInfo class for these data', mfilename);
+					error('%s: Please use WAVInfo class for these data', ...
+								mfilename);
 				
 				% unknown type
 				otherwise
-					error('%s: unsupported test type %s', mfilename, obj.testtype);
+					error('%s: unsupported test type %s', mfilename, ...
+								obj.testtype);
 			end
 		end	% END getStimulusIndices method
+		%-------------------------------------------------
+
 		
+		%-------------------------------------------------
+		%-------------------------------------------------
+		function varargout = convertSpikeTableToSpikeTimes(obj, spiketable)
+		%-------------------------------------------------
+		% = convertSpikeTableToSpikeTimes(obj, spiketable)
+		%-------------------------------------------------
+			
+			%-----------------------------------------------------------
+			% get stim indices, varlist
+			%-----------------------------------------------------------
+			% stimindex is a cell array with each element (corresponding to a
+			% different stimulus level/parameter) consisting of a list of
+			% indices into each data sweep. stimvar is a list of the variables
+			% in the sweeps
+			[stimindex, stimvar] = obj.getStimulusIndices;
+			unique_stim = unique(stimvar);
+			nstim = length(unique_stim);
+			%-----------------------------------------------------------
+			% convert to spiketimes format (for 1-D data)
+			%-----------------------------------------------------------
+			% 		spikeTimes{nLevels, 1}
+			% 			spikeTimes{n} = {nTrials, 1}
+			% 				spikeTimes{n}{t} = [spike1_ms spike2_ms spike3ms ...
+			%
+			spiketimes = cell(nstim, 1);
+			% loop through stimuli
+			for s = 1:nstim
+				fprintf('stimvar(%d) = %d\n', s, unique_stim(s));
+				% allocate spiketimes storage
+				spiketimes{s} = cell(length(stimindex{s}), 1);
+				% loop through sweeps (aka trials, reps) for this stimulus
+				for r = 1:length(stimindex{s})
+					% get the proper index into spikeTable for this stimulus and
+					% sweep combination
+					rIndx = stimindex{s}(r);
+					% get table for currrent sweep
+					tmpT = spiketable{rIndx};
+					% assign spike timestamps to spikeTimes, ...
+					% converting to milliseconds
+					spiketimes{s}{r} = force_row(1000 * tmpT.TS);
+				end
+			end			
+			%-----------------------------------------------------------
+			% create output struct
+			%-----------------------------------------------------------
+			str.spiketimes = spiketimes;
+			str.stimindex = stimindex;
+			str.stimvar = stimvar;
+			str.unique_stim = unique_stim;
+			str.nstim = nstim;
+			str.spiketable = spiketable;
+			varargout{1} = str;
+		end
+		%-------------------------------------------------
+		%-------------------------------------------------
 
 		%-------------------------------------------------
 		%-------------------------------------------------
@@ -309,7 +320,7 @@ classdef CurveInfo
 						if v == 1
 							titleString{v} = {fname, ...
 													sprintf('Frequency = %.0f kHz', ...
-																			0.001*varlist(v))};
+																		0.001*varlist(v))};
 						else
 							titleString{v} = sprintf('Frequency = %.0f kHz', ...
 													0.001*varlist(v));
@@ -322,12 +333,15 @@ classdef CurveInfo
 					titleString = cell(nvars, 1);
 					for v = 1:nvars
 						if v == 1
-							titleString{v} = {fname, sprintf('Level = %d dB SPL', ...
-																					varlist(v))};
+							titleString{v} = {	fname, ...
+														sprintf('Level = %d dB SPL', ...
+																			varlist(v))};
 						else
-							titleString{v} = sprintf('Level = %d dB SPL', varlist(v));
+							titleString{v} = sprintf('Level = %d dB SPL', ...
+																varlist(v));
 						end
 					end
+					
 				case 'FREQ+LEVEL'
 					error('Use FRAINfo subclass');
 
@@ -338,7 +352,8 @@ classdef CurveInfo
 					error('Use WAVInfo subclass');
 					
 				otherwise
-					error('%s: unsupported test type %s', mfilename, obj.testtype);
+					error('%s: unsupported test type %s', mfilename, ...
+									obj.testtype);
 			end
 		end
 		%-------------------------------------------------
@@ -358,15 +373,7 @@ classdef CurveInfo
 					nvars = length(varlist);
 
 				case 'FREQ+LEVEL'
-					% list of freq, levels
-					varlist = cell(2, 1);
-					% # of freqs in nvars(1), # of levels in nvars(2)
-					nvars = zeros(2, 1);
-					tmprange = obj.varied_values;
-					for v = 1:2
-						varlist{v} = unique(tmprange(v, :), 'sorted');
-						nvars(v) = length(varlist{v});
-					end
+					error('Use FRAINfo subclass');
 
 				case 'OPTO'
 					warning('CurveInfo.varlist: OPTO not yet implemented');
@@ -374,12 +381,11 @@ classdef CurveInfo
 					nvars = length(varlist);
 
 				case 'WAVFILE'
-					% get list of stimuli (wav file names)
-					varlist = obj.Dinf.test.wavlist;
-					nvars = length(varlist);
+					error('Use WAVINfo subclass');
 
 				otherwise
-					error('%s: unsupported test type %s', mfilename, cInfo.testtype);
+					error('%s: unsupported test type %s', mfilename, ...
+										cInfo.testtype);
 			end
 		end
 		%-------------------------------------------------
