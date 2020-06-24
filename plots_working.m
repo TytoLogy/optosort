@@ -50,12 +50,7 @@ end
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
-
-%------------------------------------------------------------------------
-% merged data 
-%------------------------------------------------------------------------
-
-
+%{
 %------------------------------------------------------------------------
 % BBN data 
 %------------------------------------------------------------------------
@@ -65,12 +60,12 @@ nexPath = sortedPath;
 nexInfoFile = '1407_20200309_03_01_1350_BBN_nexinfo.mat';
 nexFile = '1407_20200309_03_01_1350_BBN.nex';
 plxFile = '1407_20200309_03_01_1350_BBN-sorted.ch4,5,7,15.plx';
+%}
 
-
+%{
 %------------------------------------------------------------------------
 % merged data
 %------------------------------------------------------------------------
-%{
 %-------------------------------------------------
 % PRE FRAInfo
 %-------------------------------------------------
@@ -79,7 +74,7 @@ plxFile = '1408_20200319_02_01_950_MERGE.plx';
 nexInfoFile = '1408_20200319_02_01_950_MERGE_nexinfo.mat';
 %}
 
-%{
+
 %-------------------------------------------------
 % FRA wih FRAInfo
 %-------------------------------------------------
@@ -87,7 +82,7 @@ sortedPath = '/Users/sshanbhag/Work/Data/TestData/working';
 plxFile = '1407_20200309_03_01_1350_FRA.plx';
 nexInfoFile = '1407_20200309_03_01_1350_FRA_nexinfo.mat';
 SobjFile = fullfile(sortedPath, 'Sobj_1407_20200309_03_01_1350_FRA.mat');
-%}
+
 
 %{
 %-------------------------------------------------
@@ -199,8 +194,8 @@ load(fullfile(nexPath, sfile));
 %------------------------------------------------------------------------
 
 % What test data do you want to plot?
-% testToPlot = 'FRA';
-testToPlot = 'BBN';
+testToPlot = 'FRA';
+% testToPlot = 'BBN';
 
 % figure out file index for this test
 % get list of test names
@@ -263,9 +258,9 @@ if any(strcmpi(testToPlot, 'FRA'))
 	% window for spike count
 	frawin = [Dinf.audio.Delay (Dinf.audio.Delay + Dinf.audio.Duration)];
 	% calculate FRA stored in struct FRA
-	FRA = computeFRA(spiketimes, varlist{1}, varlist{2}, frawin);
+	FRA = computeFRA(st.spiketimes, st.unique_stim{1}, st.unique_stim{2}, frawin);
 	% set fname to data file name
-	FRA.fname = datafile;
+	FRA.fname = st.fileName;
 	hFRA = plotFRA(FRA, 'dB');	
 end
 

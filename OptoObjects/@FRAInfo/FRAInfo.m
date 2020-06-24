@@ -138,7 +138,67 @@ classdef FRAInfo < CurveInfo
 
 		end	% END getStimulusIndices method
 		
-
+		%-------------------------------------------------
+		%-------------------------------------------------
+		function varargout = convertSpikeTableToSpikeTimes(obj, spiketable)
+		%-------------------------------------------------
+		% = convertSpikeTableToSpikeTimes(obj, spiketable)
+		%-------------------------------------------------
+			
+			%-----------------------------------------------------------
+			% get stim indices, varlist
+			%-----------------------------------------------------------
+			% stimindex is a cell array with each element (corresponding to a
+			% different stimulus level/parameter) consisting of a list of
+			% indices into each data sweep. stimvar is a list of the variables
+			% in the sweeps
+			[stimindex, stimvar] = obj.getStimulusIndices;
+			% for FRA data, unique_stim has values {freqs levels}
+			% nstim has values (nfreqs, nlevels)
+			[unique_stim, nstim] = obj.varlist;
+			
+			%-----------------------------------------------------------
+			% convert to spiketimes format (for 2-D data)
+			%-----------------------------------------------------------
+			% 	spikeTimes{nLevels, nFreqs}
+			% 		where spikeTimes{l, f} = {nTrials, 1}
+			% 		and spikeTimes{l, f}{t} = [spike1_ms spike2_ms spike3ms ...]
+			%
+			spiketimes = cell(nstim(2), nstim(1));
+			% loop through freqs and levels
+			for v1 = 1:nstim(1)
+				for v2 = 1:nstim(2)
+					fprintf('stimvar(%d, %d) = [%d\t%d]\n', v1, v2, ...
+									unique_stim{1}(v1), unique_stim{2}(v2));
+					% allocate spiketimes storage
+					spiketimes{v2, v1} = cell(size(stimindex{v2, v1}));
+					% loop through sweeps (aka trials, reps) for this stimulus
+					for r = 1:length(stimindex{v2, v1})
+						% get the proper index into spikeTable for this stimulus and
+						% sweep combination
+						rIndx = stimindex{v2, v1}(r);
+						% get table for currrent sweep
+						tmpT = spiketable{rIndx};
+						% assign spike timestamps to spikeTimes, 
+						% converting to milliseconds
+						spiketimes{v2, v1}{r} = force_row(1000 * tmpT.TS);
+					end
+				end
+			end			
+			%-----------------------------------------------------------
+			% create output struct
+			%-----------------------------------------------------------
+			str.spiketimes = spiketimes;
+			str.stimindex = stimindex;
+			str.stimvar = stimvar;
+			str.unique_stim = unique_stim;
+			str.nstim = nstim;
+			str.spiketable = spiketable;
+			varargout{1} = str;
+		end
+		%-------------------------------------------------
+		%-------------------------------------------------
+		
 		%-------------------------------------------------
 		function titleString = getCurveTitleString(obj)
 		%-------------------------------------------------

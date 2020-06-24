@@ -156,7 +156,7 @@ str.nstim = nstim;
 str.spiketable = spiketable;
 %}
 
-str = obj.Info.FileInfo{fIndx}.convertSpikeTableToSpikeTimes(spiketable)
+str = obj.Info.FileInfo{fIndx}.convertSpikeTableToSpikeTimes(spiketable);
 
 % add fields to str
 str.fileIndex = fIndx;
