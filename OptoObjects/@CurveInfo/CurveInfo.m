@@ -273,7 +273,7 @@ classdef CurveInfo
 			spiketimes = cell(nstim, 1);
 			% loop through stimuli
 			for s = 1:nstim
-				fprintf('stimvar(%d) = %d\n', s, unique_stim(s));
+% 				fprintf('stimvar(%d) = %d\n', s, unique_stim(s));
 				% allocate spiketimes storage
 				spiketimes{s} = cell(length(stimindex{s}), 1);
 				% loop through sweeps (aka trials, reps) for this stimulus
@@ -489,14 +489,6 @@ classdef CurveInfo
 		end
 
 		%{
-		% returns test.Type
-		function val = testtype(obj)
-			val = obj.Dinf.test.Type;
-		end
-		% returns test.Name
-		function val = testname(obj)
-			val = obj.Dinf.test.Name;
-		end
 		% returns test.stimcache.FREQS, which is a list of frequencies (or
 		% freq ranges for BBN) used for each stimulus sweep
 		%	this is a cell array {nsweeps, 1}

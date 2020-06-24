@@ -172,8 +172,8 @@ classdef FRAInfo < CurveInfo
 			% loop through freqs and levels
 			for v1 = 1:nstim(1)
 				for v2 = 1:nstim(2)
-					fprintf('stimvar(%d, %d) = [%d\t%d]\n', v1, v2, ...
-									unique_stim{1}(v1), unique_stim{2}(v2));
+% 					fprintf('stimvar(%d, %d) = [%d\t%d]\n', v1, v2, ...
+% 									unique_stim{1}(v1), unique_stim{2}(v2));
 					% allocate spiketimes storage
 					spiketimes{v2, v1} = cell(size(stimindex{v2, v1}));
 					% loop through sweeps (aka trials, reps) for this stimulus

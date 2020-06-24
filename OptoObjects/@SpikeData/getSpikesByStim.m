@@ -115,7 +115,7 @@ end
 spiketable = obj.spikesForAnalysis(fIndx, 'channel', chanNum, ...
 											'Unit', unitNum, 'Align', 'Sweep');
 %------------------------------------------------------------------------
-% convert to spiketimes array
+% convert to spiketimes array using this class' method
 %------------------------------------------------------------------------
 str = obj.Info.FileInfo{fIndx}.convertSpikeTableToSpikeTimes(spiketable);
 

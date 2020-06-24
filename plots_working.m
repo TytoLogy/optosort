@@ -74,7 +74,7 @@ plxFile = '1408_20200319_02_01_950_MERGE.plx';
 nexInfoFile = '1408_20200319_02_01_950_MERGE_nexinfo.mat';
 %}
 
-
+%{
 %-------------------------------------------------
 % FRA wih FRAInfo
 %-------------------------------------------------
@@ -82,16 +82,15 @@ sortedPath = '/Users/sshanbhag/Work/Data/TestData/working';
 plxFile = '1407_20200309_03_01_1350_FRA.plx';
 nexInfoFile = '1407_20200309_03_01_1350_FRA_nexinfo.mat';
 SobjFile = fullfile(sortedPath, 'Sobj_1407_20200309_03_01_1350_FRA.mat');
+%}
 
 
-%{
 %-------------------------------------------------
 % MERGED, FRA wih FRAInfo
 %-------------------------------------------------
 sortedPath = '/Users/sshanbhag/Work/Data/TestData/working';
 plxFile = '1407_20200309_03_01_1350_MERGEALL.plx';
-nexInfoFile = '1407_20200309_03_01_1350_MERGEALL.mat';
-%}
+nexInfoFile = '1407_20200309_03_01_1350_MERGEALL_nexinfo.mat';
 
 %{
 %------------------------------------------------------------------------
@@ -138,7 +137,7 @@ plxFile = '1408_20200319_950_WAV_ch1,2,5,12,15-01-SORTEDContKmeansScan.plx';
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
-sendmsg(['plots_working running for ' sprintf('File: %s\n', plxFile)]);
+sendmsg(['plots_working running for ' sprintf('File: %s', plxFile)]);
 
 %------------------------------------------------------------------------
 %% load sorted data
@@ -206,12 +205,12 @@ if isempty(findx)
 								plxFile);
 end
 % select Channel (technically , index into array of channel numbers)
-channel = 4;
+channel = 5;
 % select unit ID num
 unit = 1;
 
 
-%% get spikes times struct for 
+% get spikes times struct for 
 fprintf('Getting data for file %d, channel, %d unit %d\n', ...
 								findx, channel, unit);
 st = S.getSpikesByStim(findx, channel, unit);
