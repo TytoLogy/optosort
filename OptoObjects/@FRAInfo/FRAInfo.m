@@ -144,7 +144,11 @@ classdef FRAInfo < CurveInfo
 		%-------------------------------------------------
 		% = convertSpikeTableToSpikeTimes(obj, spiketable)
 		%-------------------------------------------------
-			
+		% 	spikeTimes{nLevels, nFreqs}
+		% 		where spikeTimes{l, f} = {nTrials, 1}
+		% 		and spikeTimes{l, f}{t} = [spike1_ms spike2_ms spike3ms ...]
+		%
+				
 			%-----------------------------------------------------------
 			% get stim indices, varlist
 			%-----------------------------------------------------------
