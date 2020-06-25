@@ -261,7 +261,7 @@ classdef CurveInfo
 			% indices into each data sweep. stimvar is a list of the variables
 			% in the sweeps
 			[stimindex, stimvar] = obj.getStimulusIndices;
-			unique_stim = unique(stimvar);
+			unique_stim = unique(stimvar, 'stable');
 			nstim = length(unique_stim);
 			%-----------------------------------------------------------
 			% convert to spiketimes format (for 1-D data)
@@ -308,7 +308,7 @@ classdef CurveInfo
 		%-------------------------------------------------
 		% returns title string for curve type
 		%-------------------------------------------------
-			[~, fname, fext] = fileparts(obj.Dinf.filename);
+			[~, fname, fext] = fileparts(path_unix(obj.Dinf.filename));
 			fname = [fname '.' fext];
 			switch obj.testtype
 				case 'FREQ'
@@ -555,6 +555,8 @@ classdef CurveInfo
 		% builds vector of stimulus onset and offset bins referenced to start
 		% of file
 		[obj, varargout] = buildStimOnOffData(obj)
+		% plot PSTH
+		H = plotPSTH(obj, ST, binSize)
 	end	% END methods
 	
 end	% END classdef

@@ -30,6 +30,18 @@ function H = plotPSTH(obj, ST, binSize, varargin)
 %            unit: 1
 %        fileName: '1407_20200309_03_01_1350_FRA.dat'
 
+if ~isempty(varargin)
+	switch(upper(varargin{1}))
+		case {'LEVEL', 'BYLEVEL', 'PLOT_PSTH_BY_LEVEL'}
+			plotPSTH_BY_LEVEL = true;
+		otherwise
+			warning('%s: unknown option %s', mfilename, varargin{1})
+			plotPSTH_BY_LEVEL = false;
+	end
+else
+	plotPSTH_BY_LEVEL = false;
+end
+
 % determine rows, cols for plots
 if numel(ST.nstim) == 1
 	% for data that are not "2D" (e.g., FRA), adjust # of columns based
@@ -56,7 +68,14 @@ timeLimits = [0 obj.Dinf.test.AcqDuration];
 
 % get plot title string(s)
 % titleStr = obj.getTitleString
+% hack to have wavlist in Dinf
+obj.Dinf.test.wavlist = obj.getwavList;
 
-%code for plotPSTHMATRIX here
-H = plotPSTHMATRIX(ST.spiketimes, obj.Dinf, binSize, ST.nstim, ST.stimvar, ...
-		[prows pcols], timeLimits, [], obj.getCurveTitleString);
+if plotPSTH_BY_LEVEL
+	H = optoproc_plotPSTH_WAVbyLevel(ST.spiketimes, obj.Dinf, binSize, ...
+		[prows pcols], timeLimits, []);
+else
+	H = optoproc_plotPSTH_byWAV(ST.spiketimes, obj.Dinf, binSize, ...
+									timeLimits, []);
+end
+

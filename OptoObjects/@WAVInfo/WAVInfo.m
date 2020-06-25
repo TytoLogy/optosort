@@ -166,7 +166,68 @@ classdef WAVInfo < CurveInfo
 			varargout{1} = stimindex;
 			varargout{2} = wavlist;
 		end	% END getStimulusIndices method
+		%-------------------------------------------------		
+	
 		
+		%-------------------------------------------------
+		% overload method
+		%-------------------------------------------------
+		function varargout = convertSpikeTableToSpikeTimes(obj, spiketable)
+		%-------------------------------------------------
+		% = convertSpikeTableToSpikeTimes(obj, spiketable)
+		%-------------------------------------------------
+			
+			%-----------------------------------------------------------
+			% get stim indices, varlist
+			%-----------------------------------------------------------
+			% stimindex is a cell array with each element (corresponding to a
+			% different stimulus level/parameter) consisting of a list of
+			% indices into each data sweep. stimvar is a list of the variables
+			% in the sweeps
+			[stimindex, stimvar] = obj.getStimulusIndices;
+% this worked for other curves, but won't for WAV
+% 			unique_stim = unique(stimvar, 'stable');
+% 			nstim = length(unique_stim);
+			% use stimvar for unique_stim
+			unique_stim = stimvar;
+			nstim = length(unique_stim);
+			%-----------------------------------------------------------
+			% convert to spiketimes format (for 1-D data)
+			%-----------------------------------------------------------
+			% 		spikeTimes{nLevels, 1}
+			% 			spikeTimes{n} = {nTrials, 1}
+			% 				spikeTimes{n}{t} = [spike1_ms spike2_ms spike3ms ...
+			%
+			spiketimes = cell(nstim, 1);
+			% loop through stimuli
+			for s = 1:nstim
+% 				fprintf('stimvar(%d) = %d\n', s, unique_stim(s));
+				% allocate spiketimes storage
+				spiketimes{s} = cell(length(stimindex{s}), 1);
+				% loop through sweeps (aka trials, reps) for this stimulus
+				for r = 1:length(stimindex{s})
+					% get the proper index into spikeTable for this stimulus and
+					% sweep combination
+					rIndx = stimindex{s}(r);
+					% get table for currrent sweep
+					tmpT = spiketable{rIndx};
+					% assign spike timestamps to spikeTimes, ...
+					% converting to milliseconds
+					spiketimes{s}{r} = force_row(1000 * tmpT.TS);
+				end
+			end			
+			%-----------------------------------------------------------
+			% create output struct
+			%-----------------------------------------------------------
+			str.spiketimes = spiketimes;
+			str.stimindex = stimindex;
+			str.stimvar = stimvar;
+			str.unique_stim = unique_stim;
+			str.nstim = nstim;
+			str.spiketable = spiketable;
+			varargout{1} = str;
+		end
+		%-------------------------------------------------
 		
 		%-------------------------------------------------
 		function titleString = getCurveTitleString(obj)
@@ -207,7 +268,7 @@ classdef WAVInfo < CurveInfo
 
 				case 'WAVFILE'
 					% get list of stimuli (wav file names)
-					varlist = obj.Dinf.test.wavlist;
+					varlist = obj.getwavList;
 					nvars = length(varlist);
 
 				otherwise
@@ -221,6 +282,26 @@ classdef WAVInfo < CurveInfo
 		% shortcut methods to values
 		%-------------------------------------------------
 		%-------------------------------------------------
+		% returns wavList
+		function wavlist = getwavList(obj)
+			% get list of stimuli (wav file names)
+			nwavs = length(obj.Dinf.stimList);
+			wavlist = cell(nwavs, 1);
+			stimindex = cell(nwavs, 1);
+			for w = 1:nwavs
+				stype = obj.Dinf.stimList(w).audio.signal.Type;
+				if strcmpi(stype, 'null')
+					wavlist{w} = 'null';
+				elseif strcmpi(stype, 'noise')
+					wavlist{w} = 'BBN';
+				elseif strcmpi(stype, 'wav')
+					[~, wavlist{w}] = fileparts(obj.Dinf.stimList(w).audio.signal.WavFile);
+				else
+					error('%s: unknown type %s', mfilename, stype);
+				end
+				stimindex{w} = find(obj.Dinf.test.stimIndices == w);
+			end
+		end
 
 		
 		%-------------------------------------------------
@@ -228,7 +309,8 @@ classdef WAVInfo < CurveInfo
 		% get/set access for dependent properties
 		%-------------------------------------------------
 		%-------------------------------------------------
-	
+		
+		
 		%-------------------------------------------------
 		%-------------------------------------------------
 		% methods defined in separate files

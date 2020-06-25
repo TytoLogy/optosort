@@ -193,8 +193,10 @@ load(fullfile(nexPath, sfile));
 %------------------------------------------------------------------------
 
 % What test data do you want to plot?
-testToPlot = 'FRA';
+% testToPlot = 'FREQ_TUNING';
+% testToPlot = 'FRA';
 % testToPlot = 'BBN';
+testToPlot = 'WAV';
 
 % figure out file index for this test
 % get list of test names
@@ -217,7 +219,20 @@ st = S.getSpikesByStim(findx, channel, unit);
 % make a local copy of Dinf for this file to make things a little simpler
 Dinf = S.Info.FileInfo{findx}.Dinf;
 
-%% plot data
+%% plot PSTH and rasters
+
+if strcmpi(testToPlot, 'WAV')
+	H = S.Info.FileInfo{findx}.plotPSTH(st, 5, 'LEVEL')
+end
+
+%% rename plots if needed
+for h = 1:length(H)
+	origname = get(H{h}, 'Name');
+	set(H{h}, 'Name', ...
+				sprintf('%s_Ch%d_Un%d', origname, st.channel, st.unit));
+end
+
+%% plot response curves
 
 if any(strcmpi(testToPlot, {'LEVEL', 'BBN'}))
 	% set analysis window to [stimulus onset   stimulus offset]
@@ -264,7 +279,7 @@ if any(strcmpi(testToPlot, 'FRA'))
 end
 
 
-% plot waveforms for this channel and unit
+%% plot waveforms for this channel and unit
 S.plotUnitWaveforms(channel, unit);
 
 
