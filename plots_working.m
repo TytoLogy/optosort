@@ -150,18 +150,8 @@ sendmsg(['plots_working running for ' sprintf('File: %s', plxFile)]);
 %	continuous data, if saved in plx file
 %	stimulus info
 %------------------------------------------------------------------------
-if exist('SobjFile', 'var')
-	if exist(SobjFile, 'file')
-	sendmsg(['Loading SpikeData object from ' SobjFile]);
-	load(SobjFile);
-	else
-		S = import_from_plexon(fullfile(sortedPath, plxFile), ...
-									fullfile(sortedPath, nexInfoFile));
-	end
-else
-	S = import_from_plexon(fullfile(sortedPath, plxFile), ...
-								fullfile(sortedPath, nexInfoFile));
-end
+S = import_from_plexon(fullfile(sortedPath, plxFile), ...
+								fullfile(sortedPath, nexInfoFile), 'NOCONTINUOUS');
 %{
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------

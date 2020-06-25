@@ -1,13 +1,26 @@
 function varargout = import_from_plexon(varargin)
 %------------------------------------------------------------------------
-% import_from_plexon.m
+% [SpikeData] = import_from_plexon(plxfile, nexinfofile, <options>)
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
-% working script for importing sorted data from plexon
-% uses objects
+% function for importing sorted data from Plexon OfflineSorter .plx files
+% 
+% Input Args:
+%	<no args>		Will open panel to ask user to select .plx file
+%	plxfile			.plx output file from Plexon OfflineSorter
+%	nexinfofile		_nexInfo.mat file from export_for_plexon() function
+%
+%	Options:
+%		'Continuous'	load continuous data from .plx file (default)
+% 								can be slow/use lots of RAM
+% 		'NoContinuous'	do not load continuous data from .plx file
+% 
+% Output Args:
+%	SpikeData	SpikeData object
+%	
 %------------------------------------------------------------------------
-% See also: 
+% See also: SpikeData (class), export_for_plexon, OptoObjects
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -16,11 +29,14 @@ function varargout = import_from_plexon(varargin)
 %------------------------------------------------------------------------
 % Created: 12 February, 2020 (SJS)
 %	- adapted from import_from_plexon_nonObj
+%
 % Revisions:
+%	25 Jun 2020 (SJS):
+%		- added comments
+%		- added option to load/not load continuous data
 %------------------------------------------------------------------------
 % TO DO:
-% - need to have input option to load/not load continuous data OR
-%   maybe have way to specify what to load...
+% - maybe have way to specify what to load...
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -28,6 +44,9 @@ function varargout = import_from_plexon(varargin)
 %------------------------------------------------------------------------
 % string used to separate text 
 sepstr = '----------------------------------------------------';
+
+% load continuous data? default is true
+load_continuous = true;
 
 %------------------------------------------------------------------------
 % path to readPXFileC
@@ -66,13 +85,32 @@ if isempty(varargin)
 		varargout{1} = [];
 		return
 	end
-elseif nargin == 2
+	
+elseif nargin < 2
+		error('%s: input arg error, need .plx and nexinfo.mat file', ...
+						mfilename);
+
+else
+	% user provided plx file and nexinfo file
 	[plxPath, plxFile, ext] = fileparts(varargin{1});
 	plxFile = [plxFile ext];
 	[nexinfoPath, nexinfoFile, ext] = fileparts(varargin{2});
 	nexinfoFile = [nexinfoFile ext];
-else
-	error('%s: input arg error', mfilename);
+	
+	% check options
+	if nargin > 2
+		for n = 3:nargin
+			argV = upper(varargin{n});
+			switch(argV)
+				case {'CONTINUOUS', 'CONT'}
+					load_continuous = true;
+				case {'NOCONTINUOUS', 'NOCONT', 'NO_CONT'}
+					load_continuous = false;
+				otherwise
+					error('%s: invalid option %s', mfilename, argV);
+			end
+		end
+	end
 end
 
 
@@ -144,8 +182,12 @@ S = SpikeData();
 sendmsg(sprintf('Loading nexInfo from file\n\t%s\n', fullfile(nexinfoPath, nexinfoFile)));
 % read nexinfo from file
 S.Info = SpikeInfo('file', fullfile(nexinfoPath, nexinfoFile));
-% get plx data
-Plx = PLXData(fullfile(plxPath, plxFile), 'all', 'continuous');
+% get plx data with or without continuous data
+if load_continuous
+	Plx = PLXData(fullfile(plxPath, plxFile), 'all', 'continuous');
+else
+	Plx = PLXData(fullfile(plxPath, plxFile), 'all', 'nocontinuous');
+end
 
 %------------------------------------------------------------------------
 % add spikes from PLX data to SpikeData object (S)

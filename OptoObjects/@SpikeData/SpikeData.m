@@ -155,14 +155,8 @@ classdef SpikeData
 		function obj = addContinuousDataFromPLXObj(obj, Pobj)
 		%-------------------------------------------------------
 		% adds continuousChannels data from Pobj to SpikeData.Continuous
+		%  - converts data to double and scales by ContMaxMagnitudeMV
 		%-------------------------------------------------------
-% 			if Pobj.hasContinuousData
-% 				obj.Continuous = Pobj.P.ContinuousChannels;
-% 			else
-% 				warning(['SpikeData.addContinuousDataFromPLXObj: ' ...
-% 								'Pobj has no continupis channel data'])
-% 				obj.Continuous = [];
-% 			end
 			obj.Continuous = Pobj.getContinuousData;
 			% scale Continuous data
 			for c = 1:length(obj.Continuous)
@@ -289,6 +283,7 @@ classdef SpikeData
 		function [val, varargout] = nUnits(obj, varargin)
 		%-------------------------------------------------------
 		% [# units] = SpikeData.nUnits([channel numbers])
+		%-------------------------------------------------------
 		% return # of unique units for each channel
 		%	if no channel(s) provided, list for all channels
 		% ¡NOTE: channels will match the AD channel from  TDT!
@@ -309,7 +304,10 @@ classdef SpikeData
 		%-------------------------------------------------------
 
 		%-------------------------------------------------------
+		%-------------------------------------------------------
 		function varargout = listInfo(obj)
+		%-------------------------------------------------------
+		% returns cell array lists of Files, Channels, Units
 		%-------------------------------------------------------
 			varargout{1} = obj.listFiles;
 			varargout{2} = obj.listChannels;
@@ -321,28 +319,42 @@ classdef SpikeData
 		%-------------------------------------------------------
 		function varargout = printInfo(obj)
 		%-------------------------------------------------------
+		% [fileList, channelList, unitList] = SpikeData.printInfo
+		%	Displays information about data
+		%-------------------------------------------------------
 			sendmsg(sprintf('Data in file %s', obj.Info.FileName));
 			% get info
 			[fList, cList, uList] = obj.listInfo;
+			% continuous data?
+			if obj.hasContinuousData
+				sendmsg('Has continuous data: Yes');
+				for s = 1:length(obj.Continuous)
+					fprintf('Continuous Channel %d:\n', s)
+					fprintf('\tName: %s\n', obj.Continuous(s).Name);
+					fprintf('\t# samples: %d\n', ...
+									length(obj.Continuous(s).Values));
+				end
+					
+			else
+				sendmsg('Has continuous data: No');
+			end
 			% display list of files
-			fprintf('Files:\n');
+			sendmsg('Input Data Files:\n');
 			fprintf('\tIndex\t\tFilename\n');
 			for f = 1:obj.Info.nFiles
 				fprintf('\t%d:\t\t%s\n', f, fList{f});
 			end
-			fprintf('\n');
 			% display list of channels...
 			% ...and units
 			% n.b.: could also get both using listUnits: [uList, cList] = obj.listUnits
-			fprintf('Channels and Unit ID #s:\n');
+			sendmsg('Channels and Unit ID #s:\n');
 			fprintf('\tIndex\tChannel\tUnits\n');
 			for c = 1:length(cList)
 				fprintf('\t%d:\t%d\t', c, cList(c));
 				fprintf('%d ', uList{c});
 				fprintf('\n');
 			end
-			fprintf('\n');
-			
+			% assign outputs
 			if nargout
 				varargout{1} = fList;
 				varargout{2} = cList;
