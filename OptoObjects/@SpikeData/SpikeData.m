@@ -525,10 +525,33 @@ classdef SpikeData
 		%-------------------------------------------------------
 		%-------------------------------------------------------
 		
+		
+		%-------------------------------------------------
+		%-------------------------------------------------
+		function indx = indexForChannel(obj, channel_number)
+		%-------------------------------------------------
+		% index_number = indexForChannel(obj, channel_number)
+		%-------------------------------------------------
+		% given a channel_number, returns index_number for accessing
+		% that channel in various SpikeData arrays
+		%-------------------------------------------------
+			if obj.check_channels(channel_number) == -1
+				indx = [];
+			else
+				cList = obj.listChannels;
+				indx = find(channel_number == cList);
+			end
+		
+		end
+		%-------------------------------------------------
+		%-------------------------------------------------
+		
+		%-------------------------------------------------
 
 		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 		
-		
+		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		%------------------------------------------------------------------------
 		%------------------------------------------------------------------------
 		% get/set access for dependent properties
@@ -540,7 +563,8 @@ classdef SpikeData
 		end
 
 		
-		% TEMPORARY
+		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		% TEMPORARY (???)
 		%------------------------------------------------------------------------
 		%------------------------------------------------------------------------
 		function [clist, varargout] = check_channels(obj, channel_arg)
@@ -574,7 +598,12 @@ classdef SpikeData
 			% index or indices for channel(s)
 			tmp = zeros(length(clist), 1);
 			for c = 1:length(clist)
-				tmp(c) = find(clist(c) == obj.listChannels);
+				tmpindx = find(clist(c) == obj.listChannels);
+				if isempty(tmpindx)
+					tmp(c) = -1;
+				else
+					tmp(c) = tmpindx;
+				end
 			end
 			varargout{2} = tmp;
 		end
@@ -663,6 +692,8 @@ classdef SpikeData
 				varargout{1} = uList;
 			end
 		end % END check_units()
+		
+		
 		
 		%-------------------------------------------------
 		%-------------------------------------------------
