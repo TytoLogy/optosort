@@ -183,15 +183,15 @@ load(fullfile(nexPath, sfile));
 %------------------------------------------------------------------------
 
 % What test data do you want to plot?
-% testToPlot = 'FREQ_TUNING';
+testToPlot = 'FREQ_TUNING';
 % testToPlot = 'FRA';
 % testToPlot = 'BBN';
-testToPlot = 'WAV';
+% testToPlot = 'WAV';
 
 % figure out file index for this test
 % get list of test names
-testNameList = S.listTestNames;
-findx = S.indexForTestName('WAV');
+% testNameList = S.listTestNames;
+findx = S.indexForTestName(testToPlot);
 if isempty(findx)
 	error('%s: test %s not found in file %s', mfilename, testToPlot, ...
 								plxFile);
@@ -207,22 +207,35 @@ psth_bin_size = 5;
 fprintf('Getting data for file %d (%s), channel, %d unit %d\n', ...
 								findx, S.listFiles{findx}, channel, unit);
 st = S.getSpikesByStim(findx, channel, unit);
+% st  struct with fields:
+% st = 
+%      spiketimes: {53×1 cell}
+%       stimindex: {53×1 cell}
+%         stimvar: {53×1 cell}
+%     unique_stim: {53×1 cell}
+%           nstim: 53
+%      spiketable: {1060×1 cell}
+%       fileIndex: 3
+%         channel: 5
+%            unit: 1
+%        fileName: '1407_20200309_03_01_1350_WAV.dat'
+		 
 % make a local copy of Dinf for this file to make things a little simpler
 Dinf = S.Info.FileInfo{findx}.Dinf;
 
 %% plot PSTH and rasters for WAV test, separated by stimulus level
 if strcmpi(testToPlot, 'WAV')
 	H = S.Info.FileInfo{findx}.plotPSTH(st, psth_bin_size, 'LEVEL');
-end
-% rename plots if needed
-for h = 1:length(H)
-	origname = get(H{h}, 'Name');
-	set(H{h}, 'Name', ...
-				sprintf('%s_Ch%d_Un%d', origname, st.channel, st.unit));
+
+	% rename plots if needed
+	for h = 1:length(H)
+		origname = get(H{h}, 'Name');
+		set(H{h}, 'Name', ...
+					sprintf('%s_Ch%d_Un%d', origname, st.channel, st.unit));
+	end
 end
 
-%% plot response curves
-
+% plot response curves
 if any(strcmpi(testToPlot, {'LEVEL', 'BBN'}))
 	% set analysis window to [stimulus onset   stimulus offset]
 	analysisWindow = [Dinf.audio.Delay ...
@@ -247,7 +260,7 @@ if any(strcmpi(testToPlot, 'FREQ_TUNING'))
 	% compute rate level function
 	FTC = computeFTC(st.spiketimes, st.unique_stim, analysisWindow);
 	% plot
-	hFTC = plotCurveAndCI(FTC, 'mean');
+	hFTC = plotCurveAndCI(FTC, 'median');
 	% create title string with 2 rows:
 	%	filename
 	%	channel and unit
@@ -268,7 +281,41 @@ if any(strcmpi(testToPlot, 'FRA'))
 end
 
 
-%% plot waveforms for this channel and unit
+%% plot waveforms for this channel and unit - note that these are extracted from entire file
 S.plotUnitWaveforms(channel, unit);
+
+%% to plot spike waveforms for this test
+
+% (1) vertically concatenate data stored in cell array of sweeps in
+% st.spiketable into a single table
+tmpT = vertcat(st.spiketable{:});
+
+% (2) extract just the wave field 
+tmpwav = tmpT.Wave;
+
+% (3) plot overlaid waveforms
+
+% plot in new figure
+figure
+
+% need time vector for x-axis
+[~, nBins] = size(tmpwav);
+t_ms = (1000/S.Info.Fs) * (0:(nBins - 1));
+
+% plot waveforms, with mean and legend
+% need tmpwav to be in column format - time in rows, indv. units by column
+% so send the function the transpose of the tmpwav matrix.
+plot_spike_waveforms(t_ms, tmpwav', 'MEAN', true, 'LEGEND', true);
+
+% add title to plot
+% create title string with 2 rows:
+%	filename (either from st struct or S.Info.FileInfo{findx}.F.file
+%	channel and unit
+tstr = {	st.fileName, ...
+			sprintf('Channel %d Unit %d', channel, unit)};
+title(tstr, 'Interpreter', 'none');	
+
+
+
 
 

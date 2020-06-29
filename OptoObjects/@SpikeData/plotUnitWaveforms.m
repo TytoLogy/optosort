@@ -2,7 +2,7 @@
 %-------------------------------------------------------
 function H = plotUnitWaveforms(obj, channel, varargin)
 %-------------------------------------------------------
-% [plot handles] = obj.plotUnitWaveforms([channels], 
+% [plot handles] = obj.plotUnitWaveforms([channels], [units (optional)])
 % Plot sorted waveforms for each identified unit for a given channel
 % This will work for individual channels and either all units for the
 % channel (if unit list is not provided) or a specified unit(s)
@@ -49,8 +49,6 @@ for u = 1:nU
 	% get spike waveforms for this unit
 	W = obj.Spikes{obj.Spikes.Unit == unitList(u), 'Wave'};
 	if ~isempty(W)
-		[~, nBins] = size(W);
-		ms = (1000/obj.Info.Fs) * (0:(nBins - 1));
 		plot(ms, W', 'k');
 	end
 	[~, fstr] = fileparts(obj.Info.FileName);
