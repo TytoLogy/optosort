@@ -3,7 +3,7 @@
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
-% sample script to show how to export data for spike sorting
+% sample script - working file for Sharad during development
 % 
 %------------------------------------------------------------------------
 % See also: 
@@ -207,6 +207,7 @@ exportOpts.OutputFile = 'FRA.nex';
 %}
 
 
+%{
 %---------------------------------------
 % 1407 multichannel, all files
 %---------------------------------------
@@ -228,7 +229,25 @@ exportOpts.Channels = [4, 5, 7, 15];
 exportOpts.testData = false;
 %---------------------------------------
 %---------------------------------------
+%}
 
+%---------------------------------------
+% 1407 multichannel, test with smaller files
+%---------------------------------------
+exportOpts.DataPath = '/Users/sshanbhag/Work/Data/TestData/MT/1407';
+% write to D drive on PETROL for testing with Plexon OFS
+% exportOpts.OutputPath = '/Volumes/D/1407';
+% local working dir
+exportOpts.OutputPath = '/Users/sshanbhag/Work/Data/TestData/working';
+exportOpts.DataFile = {	'1407_20200309_03_01_1350_BBN.dat', ...
+								'1407_20200309_03_01_1350_FREQ_TUNING.dat' 	};
+exportOpts.TestFile = { '1407_20200309_03_01_1350_BBN_testdata.mat', ...
+								'1407_20200309_03_01_1350_FREQ_TUNING_testdata.mat'	};
+exportOpts.OutputFile = '1407_20200309_03_01_1350_MERGE_BBNFREQ.nex';
+exportOpts.Channels = [4, 5, 7, 15];
+exportOpts.testData = false;
+%---------------------------------------
+%---------------------------------------
 
 %{
 %---------------------------------------
