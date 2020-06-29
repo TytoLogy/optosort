@@ -32,6 +32,13 @@ classdef SpikeData
 % TO DO: how to handle multiple channels?????
 %------------------------------------------------------------------------
 
+	%-------------------------------------------------------
+	%-------------------------------------------------------
+	%-------------------------------------------------------
+	%-------------------------------------------------------
+	% Properties
+	%-------------------------------------------------------
+	%-------------------------------------------------------
 	properties
 	% Info			SpikeInfo object
 	% Spikes			sorted spikes in table object
@@ -42,10 +49,28 @@ classdef SpikeData
 		Continuous
 		plxvar
 	end
+	
+	%-------------------------------------------------------
+	% dependent props
+	%-------------------------------------------------------
 	properties (Dependent)
 		hasContinuousData
 	end
 	
+	%-------------------------------------------------------
+	% protected contants
+	%-------------------------------------------------------
+	properties (Access = protected, Constant = true)
+		VALID_TESTNAMES =  {'BBN', 'FREQ_TUNING', 'WAV', 'FRA'};
+	end
+	
+	%-------------------------------------------------------
+	%-------------------------------------------------------
+	%-------------------------------------------------------
+	%-------------------------------------------------------
+	% METHODS
+	%-------------------------------------------------------
+	%-------------------------------------------------------	
 	methods
 		
 		%-------------------------------------------------------
@@ -528,6 +553,26 @@ classdef SpikeData
 		
 		%-------------------------------------------------
 		%-------------------------------------------------
+		function indx = indexForFile(obj, filename)
+		%-------------------------------------------------
+		% index_number = SpikeData.indexForFile(filename)
+		%-------------------------------------------------
+		% given a filename (with or without path), returns index to that
+		% file (into SpikeData.Info.FileInfo{}).
+		% If not found, empty array returned.
+		%-------------------------------------------------
+		
+			% strip path, save file and extension
+			% convert to unix filesep if need be
+			[~, fbase, fext] = fileparts(path_unix(filename));
+			indx = find(strcmpi([fbase fext], obj.listFiles));
+		end
+		%-------------------------------------------------
+		%-------------------------------------------------
+		
+		
+		%-------------------------------------------------
+		%-------------------------------------------------
 		function indx = indexForChannel(obj, channel_number)
 		%-------------------------------------------------
 		% index_number = indexForChannel(obj, channel_number)
@@ -541,11 +586,32 @@ classdef SpikeData
 				cList = obj.listChannels;
 				indx = find(channel_number == cList);
 			end
-		
 		end
 		%-------------------------------------------------
 		%-------------------------------------------------
+
+		%-------------------------------------------------
+		%-------------------------------------------------
+		function indx = indexForTestName(obj, test_name)
+		%-------------------------------------------------
+		% index_number = indexForTestName(obj, test_name)
+		%-------------------------------------------------
+		% given a test name, returns index_number for accessing
+		% that file in various SpikeData arrays (e.g.,
+		% SpikeData.Info.FileInfo{}
+		% if file is not found, empty value will be returned
+		%-------------------------------------------------		
+			indx = find(strcmpi(test_name, obj.listTestNames));			
+		end
+		%-------------------------------------------------
+		%-------------------------------------------------		
 		
+		
+		%-------------------------------------------------
+		%-------------------------------------------------		
+		function val = validTestNames(obj)
+			val = obj.VALID_TESTNAMES;
+		end		
 		%-------------------------------------------------
 
 		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

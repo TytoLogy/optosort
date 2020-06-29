@@ -191,31 +191,30 @@ testToPlot = 'WAV';
 % figure out file index for this test
 % get list of test names
 testNameList = S.listTestNames;
-findx = find(strcmpi(testToPlot, testNameList));
+findx = S.indexForTestName('WAV');
 if isempty(findx)
 	error('%s: test %s not found in file %s', mfilename, testToPlot, ...
 								plxFile);
 end
-% select Channel (technically , index into array of channel numbers)
+% select Channel
 channel = 5;
 % select unit ID num
 unit = 1;
+% set bin size in milliseconds
+psth_bin_size = 5;
 
-
-% get spikes times struct for 
-fprintf('Getting data for file %d, channel, %d unit %d\n', ...
-								findx, channel, unit);
+% get spikes times struct (store in st) for this test, channel and unit
+fprintf('Getting data for file %d (%s), channel, %d unit %d\n', ...
+								findx, S.listFiles{findx}, channel, unit);
 st = S.getSpikesByStim(findx, channel, unit);
 % make a local copy of Dinf for this file to make things a little simpler
 Dinf = S.Info.FileInfo{findx}.Dinf;
 
-%% plot PSTH and rasters
-
+%% plot PSTH and rasters for WAV test, separated by stimulus level
 if strcmpi(testToPlot, 'WAV')
-	H = S.Info.FileInfo{findx}.plotPSTH(st, 5, 'LEVEL')
+	H = S.Info.FileInfo{findx}.plotPSTH(st, psth_bin_size, 'LEVEL');
 end
-
-%% rename plots if needed
+% rename plots if needed
 for h = 1:length(H)
 	origname = get(H{h}, 'Name');
 	set(H{h}, 'Name', ...
