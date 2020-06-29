@@ -261,7 +261,7 @@ classdef CurveInfo
 			% indices into each data sweep. stimvar is a list of the variables
 			% in the sweeps
 			[stimindex, stimvar] = obj.getStimulusIndices;
-			unique_stim = unique(stimvar, 'stable');
+			unique_stim = unique(stimvar, 'sorted');
 			nstim = length(unique_stim);
 			%-----------------------------------------------------------
 			% convert to spiketimes format (for 1-D data)

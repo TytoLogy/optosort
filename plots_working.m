@@ -203,7 +203,9 @@ unit = 1;
 % set bin size in milliseconds
 psth_bin_size = 5;
 
+%------------------------------------------------------------------------
 % get spikes times struct (store in st) for this test, channel and unit
+%------------------------------------------------------------------------
 fprintf('Getting data for file %d (%s), channel, %d unit %d\n', ...
 								findx, S.listFiles{findx}, channel, unit);
 st = S.getSpikesByStim(findx, channel, unit);
@@ -223,7 +225,11 @@ st = S.getSpikesByStim(findx, channel, unit);
 % make a local copy of Dinf for this file to make things a little simpler
 Dinf = S.Info.FileInfo{findx}.Dinf;
 
-%% plot PSTH and rasters for WAV test, separated by stimulus level
+%------------------------------------------------------------------------
+% WAV test:
+%	plot PSTH and rasters for WAV test, separated by stimulus level
+%	Note: stim onset offset not  accurate (29 Jun 2020) - need to fix!!!
+%------------------------------------------------------------------------
 if strcmpi(testToPlot, 'WAV')
 	H = S.Info.FileInfo{findx}.plotPSTH(st, psth_bin_size, 'LEVEL');
 
@@ -235,7 +241,10 @@ if strcmpi(testToPlot, 'WAV')
 	end
 end
 
-% plot response curves
+%------------------------------------------------------------------------
+% LEVEL/BBN tests:
+%	plot rate-level curves (firing rate- level function)
+%------------------------------------------------------------------------
 if any(strcmpi(testToPlot, {'LEVEL', 'BBN'}))
 	% set analysis window to [stimulus onset   stimulus offset]
 	analysisWindow = [Dinf.audio.Delay ...
@@ -253,6 +262,10 @@ if any(strcmpi(testToPlot, {'LEVEL', 'BBN'}))
 	title(tstr, 'Interpreter', 'none');
 end
 
+%------------------------------------------------------------------------
+% FREQ_TUNING tests:
+%	plot frequency-tuning curves
+%------------------------------------------------------------------------
 if any(strcmpi(testToPlot, 'FREQ_TUNING'))
 	% set analysis window to [stimulus onset   stimulus offset]
 	analysisWindow = [Dinf.audio.Delay ...
@@ -270,6 +283,10 @@ if any(strcmpi(testToPlot, 'FREQ_TUNING'))
 	title(tstr, 'Interpreter', 'none');	
 end
 
+%------------------------------------------------------------------------
+% FRA (frequency-response area) tests:
+%	plot heat map and "waterfall" plot 
+%------------------------------------------------------------------------
 if any(strcmpi(testToPlot, 'FRA'))
 	% window for spike count
 	frawin = [Dinf.audio.Delay (Dinf.audio.Delay + Dinf.audio.Duration)];
@@ -280,12 +297,14 @@ if any(strcmpi(testToPlot, 'FRA'))
 	hFRA = plotFRA(FRA, 'dB');	
 end
 
-
-%% plot waveforms for this channel and unit - note that these are extracted from entire file
-S.plotUnitWaveforms(channel, unit);
-
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%% Two ways to plot waveforms:
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 %% to plot spike waveforms for this test
-
+%------------------------------------------------------------------------
 % (1) vertically concatenate data stored in cell array of sweeps in
 % st.spiketable into a single table
 tmpT = vertcat(st.spiketable{:});
@@ -317,5 +336,9 @@ title(tstr, 'Interpreter', 'none');
 
 
 
-
+%------------------------------------------------------------------------
+%% plot this unit for ALL tests in sorted file
+%plot waveforms for this channel and unit - note that these are extracted from entire file
+%------------------------------------------------------------------------
+S.plotUnitWaveforms(channel, unit);
 
