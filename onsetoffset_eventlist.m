@@ -67,7 +67,11 @@ for FRA:
 
 %}
 
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 %% BBN, leveldata
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 
 findx = 1;
 
@@ -83,7 +87,38 @@ varied_values = obj.varied_values;
 onsetbins = obj.stimStartBin;
 offsetbins = obj.stimEndBin;
 
-% create eventList
+%------------------------------------------------------------------------
+% create eventList as struct array
+%------------------------------------------------------------------------
+% {# stimulus levels, 2}
+% 1st col will hold event name, second col will hold event times
+nevents = length(varied_values);
+events = repmat(	struct(	'name', '', ...
+									'samples', [], ...
+									'timestamps', [] ), ...
+						nevents, 1);
+for n = 1:nevents
+	events(n).name = sprintf('%s_%s_%ddB', obj.testtype, obj.testname, varied_values(n));
+	events(n).samples = onsetbins(stimindex{n});
+end
+
+% to write to nex file, this would be in SpikeData...
+% 1) loop through nevents
+for n = 1:nevents
+	% 2) event times  are ebins + (filestartbin -1) / sampling rate
+	events(n).timestamps = ((nI.fileStartBin(findx) - 1) + events(n).samples) ...
+							./ nI.Fs;
+			
+	% 3) then add to nex struct/file
+% 	 nD = nexAddEvent(nD, force_col(etimes{n}), eventSamplesByStim{n, 1})
+end
+
+
+
+%{
+%------------------------------------------------------------------------
+% create eventList as cell array
+%------------------------------------------------------------------------
 % {# stimulus levels, 2}
 % 1st col will hold event name, second col will hold event times
 nevents = length(varied_values);
@@ -102,13 +137,20 @@ for n = 1:nevents
 	% 2) event times  are ebins + (filestartbin -1) / sampling rate
 	etimes{n} = ((nI.fileStartBin(findx) - 1) + eventSamplesByStim{n, 2}) ...
 							./ nI.Fs;
-						
+			
 	% 3) then add to nex struct/file
-	% nD = nexAddEvent(nD, force_col(etimes{n}), eventStamplsByStim
+% 	 nD = nexAddEvent(nD, force_col(etimes{n}), eventSamplesByStim{n, 1})
 end
+%}
+
+
 
 %{
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 %% FREQ, tuning data
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 
 % get stimulus indices
 [stimindex, stimlist] = nI.FileInfo{2}.getStimulusIndices;
@@ -124,7 +166,11 @@ offsetbins = nI.FileInfo{2}.stimEndBin;
 eventList = cell(length(varied_values), 2);
 
 
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 %% wav data
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 
 % get stimindices
 [stimindex, stimlist] = nI.FileInfo{3}.getStimulusIndices;
@@ -132,9 +178,11 @@ eventList = cell(length(varied_values), 2);
 levellist = cell2mat(nI.FileInfo{3}.getlevelList);
 
 
-
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 %% FRA data
-
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 % get stimindices
 [stimindex, stimlist] = nI.FileInfo{4}.getStimulusIndices;
 %}
