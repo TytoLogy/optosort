@@ -212,9 +212,9 @@ classdef CurveInfo
 					levellist = obj.levels_bysweep;
 					levels = obj.varied_values;
 					nlevels = length(levels);
-					% locate where trials for each frequency are located in the
+					% locate where trials for each level are located in the
 					% stimulus cache list - this will be used to pull out trials
-					% of same frequency
+					% of same level
 					stimindex = cell(nlevels, 1);
 					for l = 1:nlevels
 						stimindex{l} = find(levels(l) == levellist);

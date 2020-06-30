@@ -282,13 +282,18 @@ classdef WAVInfo < CurveInfo
 		% shortcut methods to values
 		%-------------------------------------------------
 		%-------------------------------------------------
+		
+		%-------------------------------------------------
 		% returns wavList
+		%-------------------------------------------------
 		function wavlist = getwavList(obj)
-			% get list of stimuli (wav file names)
-			nwavs = length(obj.Dinf.stimList);
-			wavlist = cell(nwavs, 1);
-			stimindex = cell(nwavs, 1);
-			for w = 1:nwavs
+		%-------------------------------------------------
+		% get list of stimuli (wav file names)
+		%-------------------------------------------------
+			nstimuli = length(obj.Dinf.stimList);
+			wavlist = cell(nstimuli, 1);
+% 			stimindex = cell(nstimuli, 1);
+			for w = 1:nstimuli
 				stype = obj.Dinf.stimList(w).audio.signal.Type;
 				if strcmpi(stype, 'null')
 					wavlist{w} = 'null';
@@ -299,10 +304,24 @@ classdef WAVInfo < CurveInfo
 				else
 					error('%s: unknown type %s', mfilename, stype);
 				end
-				stimindex{w} = find(obj.Dinf.test.stimIndices == w);
+% 				stimindex{w} = find(obj.Dinf.test.stimIndices == w);
 			end
 		end
+		%-------------------------------------------------
 
+		%-------------------------------------------------
+		% returns levelList (stimulus levels)
+		%-------------------------------------------------
+		function levellist = getlevelList(obj)
+		%-------------------------------------------------
+		% get list of stimuli (wav file names)
+		%-------------------------------------------------
+			nstimuli = length(obj.Dinf.stimList);
+			levellist = cell(nstimuli, 1);
+			for l = 1:nstimuli
+				levellist{l} = obj.Dinf.stimList(l).audio.Level;
+			end
+		end
 		
 		%-------------------------------------------------
 		%-------------------------------------------------
