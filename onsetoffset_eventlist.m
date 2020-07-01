@@ -195,7 +195,6 @@ end
 %% wav data
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
-%{
 findx = 3;
 
 obj = nI.FileInfo{findx};
@@ -215,9 +214,9 @@ offsetbins = obj.stimEndBin;
 %------------------------------------------------------------------------
 % create eventList as struct array
 %------------------------------------------------------------------------
-% {# stimulus levels, 2}
-% 1st col will hold event name, second col will hold event times
+% get # of events
 nevents = length(varied_values);
+% init events struct
 events = repmat(	struct(	'name', '', ...
 									'samples', [], ...
 									'timestamps', [] ), ...
@@ -235,10 +234,10 @@ for n = 1:nevents
 							./ nI.Fs;
 			
 	% 3) then add to nex struct/file
-% 	 nD = nexAddEvent(nD, force_col(etimes{n}), eventSamplesByStim{n, 1})
+% 	 nD = nexAddEvent(nD, force_col(events(n).timestamps), ...
+% 								events(n).name)
 end
 
-%}
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------

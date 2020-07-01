@@ -324,6 +324,43 @@ classdef WAVInfo < CurveInfo
 		end
 		
 		%-------------------------------------------------
+		% returns eventlist (stimulus type, levels)
+		%-------------------------------------------------
+		function events = geteventList(obj)
+		%-------------------------------------------------
+		% get list of stimuli (wav file names)
+		%-------------------------------------------------
+			% get stimulus indices
+			[stimindex, ~] = obj.getStimulusIndices;
+			% get varied values (wav files)
+			varied_values = obj.getwavList;
+			% get levels for each value
+			varied_levels = cell2mat(obj.getlevelList);
+			% get stimulus onset offset bins
+			% to align to appended/merged file, will need to add
+			% SpikeInfo.fileStartBin(findx) - 1
+			onsetbins = obj.stimStartBin;
+% 			offsetbins = obj.stimEndBin;
+
+			%------------------------------------------------------------------------
+			% create eventList as struct array
+			%------------------------------------------------------------------------
+			% get # of events
+			nevents = length(varied_values);
+			% init events struct
+			events = repmat(	struct(	'name', '', ...
+												'samples', [], ...
+												'timestamps', [] ), ...
+									nevents, 1);
+			for n = 1:nevents
+				events(n).name = sprintf('%s_%s_%ddB', obj.testname, varied_values{n}, varied_levels(n));
+				events(n).samples = onsetbins(stimindex{n});
+			end
+		end
+		
+		
+		
+		%-------------------------------------------------
 		%-------------------------------------------------
 		% get/set access for dependent properties
 		%-------------------------------------------------

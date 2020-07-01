@@ -448,7 +448,46 @@ classdef SpikeData
 		end
 		%-------------------------------------------------------		
 
-
+		%-------------------------------------------------------
+		function events = stimEventTimesForFile(obj, fileNum, varargin)
+		%-------------------------------------------------------
+		% get array of event structs for given file
+		%	events		struct array with fields:
+		%		name
+		%		samples
+		%		timestamps
+		%-------------------------------------------------------
+			alignMode = 'FILE';
+			
+			if ~isempty(varargin)
+				if any(strcmpi(varargin{1}, {'FILE', 'ORIG'}))
+					alignMode = varargin{1};
+				else
+					error('SpikeData.stimEventTimesForFile: invalid mode %s', ...
+									varargin{1});
+				end
+			end
+			
+			% get events for the given file/test
+			events = obj.Info.FileInfo{fileNum}.geteventList;
+			
+			switch upper(alignMode)
+				case 'FILE'
+					% get onset of file
+					offsetbin = obj.Info.fileStartBin(fileNum);
+					
+				case 'ORIG'
+					offsetbin = 1;
+			end
+			% convert samples to timestamps, aligned
+			% 1) loop through nevents
+			for n = 1:length(events)
+				% 2) event times  are ebins + (filestartbin -1) / sampling rate
+				events(n).timestamps = (offsetbin - 1) + events(n).samples) ...
+							./ obj.Fs;
+			end
+		end
+		%-------------------------------------------------------
 		
 		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		% % % THESE SHOULD PROBABLY BE PROTECTED METHODS
