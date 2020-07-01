@@ -1,5 +1,5 @@
 %------------------------------------------------------------------------
-% exportTest.m
+% export_working.m
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
@@ -130,7 +130,7 @@ end
 % 1382_20191212_02_02_3200_WAV.dat
 % 1382_20191212_02_02_3200_WAV_PSTH.fig
 % 1382_20191212_02_02_3200_WAV_wavinfo.mat
-% exportOpts.DataPath = '~/Work/Data/TestData/MT';
+% exportOpts.DataPath = '~/Work/Data/TestData/MT/1382';
 % exportOpts.DataFile = {	'1382_20191212_02_02_3200_FREQ_TUNING.dat'; ...
 % 					'1382_20191212_02_02_3200_BBN.dat'; ...
 % 					'1382_20191212_02_02_3200_FRA.dat';	};
@@ -141,6 +141,24 @@ end
 % exportOpts.OutputPath = exportOpts.DataPath;
 % exportOpts.OutputFile = '1382_20191212_02_02_3200_MERGE.nex';
 %---------------------------------------
+
+%---------------------------------------
+% 1407
+%---------------------------------------
+%{
+exportOpts.DataPath = '~/Work/Data/TestData/MT/1407';
+exportOpts.DataFile = {	'1407_20200309_03_01_1350_FREQ_TUNING.dat'; ...
+					'1407_20200309_03_01_1350_BBN.dat'; ...
+					'1407_20200309_03_01_1350_FRA.dat';	};
+exportOpts.TestFile = {	'1407_20200309_03_01_1350_FREQ_TUNING_testdata.mat'; ...
+					'1407_20200309_03_01_1350_BBN_testdata.mat'; ...
+					'1407_20200309_03_01_1350_FRA_testdata.mat'; };
+exportOpts.Channels = [4, 5, 7, 15];
+exportOpts.OutputPath = exportOpts.DataPath;
+exportOpts.OutputFile = '1407_20200309_03_01_1350_MERGEEVENTS.nex';
+%}
+%---------------------------------------
+
 
 %---------------------------------------
 %---------------------------------------
@@ -211,6 +229,7 @@ exportOpts.OutputFile = 'FRA.nex';
 %---------------------------------------
 % 1407 multichannel, all files
 %---------------------------------------
+%{
 exportOpts.DataPath = '/Users/sshanbhag/Work/Data/TestData/MT/1407';
 % write to D drive on PETROL for testing with Plexon OFS
 % exportOpts.OutputPath = '/Volumes/D/1407';
@@ -224,14 +243,15 @@ exportOpts.TestFile = { '1407_20200309_03_01_1350_BBN_testdata.mat', ...
 								'1407_20200309_03_01_1350_FREQ_TUNING_testdata.mat', ...
 								'1407_20200309_03_01_1350_WAV_testdata.mat', ...
 								'1407_20200309_03_01_1350_FRA_testdata.mat'	};
-exportOpts.OutputFile = '1407_20200309_03_01_1350_MERGEALL.nex';
+exportOpts.OutputFile = '1407_20200309_03_01_1350_MERGEEVENTS.nex';
 exportOpts.Channels = [4, 5, 7, 15];
 exportOpts.testData = false;
+%}
 %---------------------------------------
 %---------------------------------------
 
 
-%{
+
 %---------------------------------------
 % 1407 multichannel, test with smaller files
 %---------------------------------------
@@ -244,12 +264,12 @@ exportOpts.DataFile = {	'1407_20200309_03_01_1350_BBN.dat', ...
 								'1407_20200309_03_01_1350_FREQ_TUNING.dat' 	};
 exportOpts.TestFile = { '1407_20200309_03_01_1350_BBN_testdata.mat', ...
 								'1407_20200309_03_01_1350_FREQ_TUNING_testdata.mat'	};
-exportOpts.OutputFile = '1407_20200309_03_01_1350_MERGE_BBNFREQ.nex';
+exportOpts.OutputFile = '1407_20200309_03_01_1350_MERGEEVENTS_BBNFREQ.nex';
 exportOpts.Channels = [4, 5, 7, 15];
 exportOpts.testData = false;
 %---------------------------------------
 %---------------------------------------
-%}
+
 
 %{
 %---------------------------------------

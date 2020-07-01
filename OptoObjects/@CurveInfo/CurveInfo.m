@@ -418,10 +418,24 @@ classdef CurveInfo
 												'samples', [], ...
 												'timestamps', [] ), ...
 									nevents, 1);
-			for n = 1:nevents
-				events(n).name = sprintf('%s_%s_%ddB', obj.testtype, ...
-														obj.testname, varied_values(n));
-				events(n).samples = onsetbins(stimindex{n});
+			% format string depends on test type
+			switch upper(obj.testtype)
+				case 'LEVEL'
+					formatstr = '%s_%s_%ddB';
+					for n = 1:nevents
+						events(n).name = sprintf(formatstr, obj.testtype, ...
+																obj.testname, varied_values(n));
+						events(n).samples = onsetbins(stimindex{n});
+					end
+				case 'FREQ'
+					formatstr = '%s_TONE_%dHz';
+					for n = 1:nevents
+						events(n).name = sprintf(formatstr, obj.testtype, ...
+																 varied_values(n));
+						events(n).samples = onsetbins(stimindex{n});
+					end
+				otherwise
+					error('CurveInfo: use subclass or unsupported %s', obj.testtype);
 			end
 		end
 		%-------------------------------------------------

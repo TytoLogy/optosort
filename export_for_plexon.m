@@ -341,12 +341,16 @@ end
 nD = nexAddEvent(nD, force_col(nexInfo.stimStartTimeVector), 'stimstart');
 nD = nexAddEvent(nD, force_col(nexInfo.stimEndTimeVector), 'stimend');
 
-%{
 % add stimulus-specific onset times
 for f = 1:nFiles
-	events = 
-	nD = nexAddEvent(nD, force_col
-%}
+	events = nexInfo.stimEventTimesForFile(f);
+	fprintf('Adding events from file %s\n', nexInfo.FileInfo{f}.F.file);
+	for n = 1:length(events)
+		fprintf('\t%s\n', events(n).name);
+		nD = nexAddEvent(nD, force_col(events(n).timestamps), events(n).name);
+	end
+end
+
 % write to nexfile
 sendmsg(sprintf('Writing nex file %s:', nexInfo.FileName));
 writeNexFile(nD, nexInfo.FileName);
