@@ -483,8 +483,8 @@ classdef SpikeData
 			% 1) loop through nevents
 			for n = 1:length(events)
 				% 2) event times  are ebins + (filestartbin -1) / sampling rate
-				events(n).timestamps = (offsetbin - 1) + events(n).samples) ...
-							./ obj.Fs;
+				events(n).timestamps = ((offsetbin - 1) + events(n).samples) ...
+							./ obj.Info.Fs;
 			end
 		end
 		%-------------------------------------------------------

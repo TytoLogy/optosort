@@ -357,7 +357,7 @@ classdef WAVInfo < CurveInfo
 				events(n).samples = onsetbins(stimindex{n});
 			end
 		end
-		
+		%-------------------------------------------------
 		
 		
 		%-------------------------------------------------

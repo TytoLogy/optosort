@@ -340,6 +340,13 @@ end
 % add stimulus onset and offset times
 nD = nexAddEvent(nD, force_col(nexInfo.stimStartTimeVector), 'stimstart');
 nD = nexAddEvent(nD, force_col(nexInfo.stimEndTimeVector), 'stimend');
+
+%{
+% add stimulus-specific onset times
+for f = 1:nFiles
+	events = 
+	nD = nexAddEvent(nD, force_col
+%}
 % write to nexfile
 sendmsg(sprintf('Writing nex file %s:', nexInfo.FileName));
 writeNexFile(nD, nexInfo.FileName);
