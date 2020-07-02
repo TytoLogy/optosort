@@ -88,9 +88,18 @@ SobjFile = fullfile(sortedPath, 'Sobj_1407_20200309_03_01_1350_FRA.mat');
 %-------------------------------------------------
 % MERGED, FRA wih FRAInfo
 %-------------------------------------------------
+%{
 sortedPath = '/Users/sshanbhag/Work/Data/TestData/working';
 plxFile = '1407_20200309_03_01_1350_MERGEALL.plx';
 nexInfoFile = '1407_20200309_03_01_1350_MERGEALL_nexinfo.mat';
+%}
+%-------------------------------------------------
+% MERGED, expanded stimulus onset events
+%-------------------------------------------------
+
+sortedPath = '/Users/sshanbhag/Work/Data/TestData/working';
+plxFile = '1407_20200309_03_01_1350_MERGEEVENTS2.plx';
+nexInfoFile = '1407_20200309_03_01_1350_MERGEEVENTS2_nexinfo.mat';
 
 %{
 %------------------------------------------------------------------------
