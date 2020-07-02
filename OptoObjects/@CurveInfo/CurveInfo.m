@@ -59,6 +59,7 @@ classdef CurveInfo
 %	9 Jun 2020 (SJS): modifying to create test data for checking timing
 %	15 Jun 2020 (SJS): fixed issue with trying to directly index into 
 %							varied_values dependent property
+%	2 Jul 2020 (SJS): pulled out FREQTUNING specific code into subclass
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -189,21 +190,8 @@ classdef CurveInfo
 			% for FREQ test, find indices of stimuli with same frequency
 			switch upper(obj.testtype)
 				case 'FREQ'
-					fprintf('\t%s test, finding indices\n', obj.testtype);
-					% list of frequencies, freqs and # of freqs tested
-					freqlist = cell2mat(obj.freqs_bysweep);
-					freqs = obj.varied_values;
-					nfreqs = length(obj.varied_values);
-					% locate where trials for each frequency are located in the
-					% stimulus cache list - this will be used to pull out trials
-					% of same frequency
-					stimindex = cell(nfreqs, 1);
-					for f = 1:nfreqs
-						stimindex{f} = find(freqs(f) == freqlist);
-					end
-					% assign outputs
-					varargout{1} = stimindex;
-					varargout{2} = freqlist;
+					error('%s: Please use FreqTuningInfo class for these data', ...
+								mfilename);
 
 			% for LEVEL test, find indices of stimuli with same level (dB SPL)
 				case 'LEVEL'
@@ -312,20 +300,9 @@ classdef CurveInfo
 			fname = [fname '.' fext];
 			switch obj.testtype
 				case 'FREQ'
-					% list of frequencies, and # of freqs tested
-					varlist = obj.varied_values;
-					nvars = length(varlist);
-					titleString = cell(nvars, 1);
-					for v = 1:nvars
-						if v == 1
-							titleString{v} = {fname, ...
-													sprintf('Frequency = %.0f kHz', ...
-																		0.001*varlist(v))};
-						else
-							titleString{v} = sprintf('Frequency = %.0f kHz', ...
-													0.001*varlist(v));
-						end
-					end
+						error(['CurveInfo.getCurveTitleString: '...
+									'Use FreqTuningInfo subclass']);
+
 				case 'LEVEL'
 					% list of levels, and # of levels tested
 					varlist = obj.varied_values;
@@ -343,17 +320,20 @@ classdef CurveInfo
 					end
 					
 				case 'FREQ+LEVEL'
-					error('Use FRAINfo subclass');
+					error(['CurveInfo.getCurveTitleString: '...
+									'Use FRAINfo subclass']);
 
 				case 'OPTO'
 					% not yet implemented
 					
 				case 'WAVFILE'
-					error('Use WAVInfo subclass');
+						error(['CurveInfo.getCurveTitleString: '...
+									'Use WAVInfo subclass']);
 					
 				otherwise
-					error('%s: unsupported test type %s', mfilename, ...
-									obj.testtype);
+					error('%s: unsupported test type %s', ...
+								'CurveInfo.getCurveTitleString', ...
+								obj.testtype);
 			end
 		end
 		%-------------------------------------------------
@@ -366,14 +346,16 @@ classdef CurveInfo
 		% returns list of variable value and # of vars..
 		%---------------------------------------------------------------------
 			switch upper(obj.testtype)
-				case {'FREQ', 'LEVEL'}
-					% list of frequencies, and # of freqs tested
+				case {'FREQ'}
+					error('CurveInfo.varlist: Use FreqTuningInfo subclass');
+					
+				case {'LEVEL'}
 					% list of levels, and # of levels tested
 					varlist = {obj.varied_values};
 					nvars = length(varlist);
 
 				case 'FREQ+LEVEL'
-					error('Use FRAINfo subclass');
+					error('CurveInfo.varlist: Use FRAINfo subclass');
 
 				case 'OPTO'
 					warning('CurveInfo.varlist: OPTO not yet implemented');
@@ -381,11 +363,12 @@ classdef CurveInfo
 					nvars = length(varlist);
 
 				case 'WAVFILE'
-					error('Use WAVINfo subclass');
+					error('CurveInfo.varlist: Use WAVINfo subclass');
 
 				otherwise
-					error('%s: unsupported test type %s', mfilename, ...
-										cInfo.testtype);
+					error('%s: unsupported test type %s', ...
+								'CurveInfo.varlist', ...
+								cInfo.testtype);
 			end
 		end
 		%-------------------------------------------------
@@ -427,13 +410,7 @@ classdef CurveInfo
 																obj.testname, varied_values(n));
 						events(n).samples = onsetbins(stimindex{n});
 					end
-				case 'FREQ'
-					formatstr = '%s_TONE_%dHz';
-					for n = 1:nevents
-						events(n).name = sprintf(formatstr, obj.testtype, ...
-																 varied_values(n));
-						events(n).samples = onsetbins(stimindex{n});
-					end
+
 				otherwise
 					error('CurveInfo: use subclass or unsupported %s', obj.testtype);
 			end
