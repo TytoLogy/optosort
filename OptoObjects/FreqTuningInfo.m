@@ -174,9 +174,9 @@ classdef FreqTuningInfo < CurveInfo
 		%-------------------------------------------------
 		%-------------------------------------------------
 		function [varlist, nvars] = varlist(obj)
-		%---------------------------------------------------------------------
+		%-------------------------------------------------------------------
 		% returns list of variable value and # of vars..
-		%---------------------------------------------------------------------
+		%-------------------------------------------------------------------
 			switch upper(obj.testtype)
 				case {'FREQ', 'LEVEL'}
 					% list of frequencies, and # of freqs tested
@@ -209,9 +209,9 @@ classdef FreqTuningInfo < CurveInfo
 			onsetbins = obj.stimStartBin;
 % 			offsetbins = obj.stimEndBin;
 
-			%------------------------------------------------------------------------
+			%----------------------------------------------------------------
 			% create eventList as struct array
-			%------------------------------------------------------------------------
+			%----------------------------------------------------------------
 			% get # of events
 			nevents = length(varied_values);
 			% init events struct
