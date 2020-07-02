@@ -222,7 +222,7 @@ classdef FreqTuningInfo < CurveInfo
 			% format string depends on test type
 			switch upper(obj.testtype)
 				case 'FREQ'
-					formatstr = '%s_TONE_%dHz';
+					formatstr = '%s_%dHz';
 					for n = 1:nevents
 						events(n).name = sprintf(formatstr, obj.testtype, ...
 																 varied_values(n));
