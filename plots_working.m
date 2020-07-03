@@ -192,10 +192,10 @@ load(fullfile(nexPath, sfile));
 %------------------------------------------------------------------------
 
 % What test data do you want to plot?
-testToPlot = 'FREQ_TUNING';
+% testToPlot = 'FREQ_TUNING';
 % testToPlot = 'FRA';
 % testToPlot = 'BBN';
-% testToPlot = 'WAV';
+testToPlot = 'WAV';
 
 % figure out file index for this test
 % get list of test names
