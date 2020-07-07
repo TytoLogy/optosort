@@ -37,6 +37,7 @@ classdef WAVInfo < CurveInfo
 %	15 Apr 2020 (SJS): adding code to determine stim onset, offset and wav
 %	onset
 %	18 Jun 2020 (SJS): broadened scope of subclass - overloaded methods
+%	7 Jul 2020 (SJS): added getstimulusTimes method to use for plotting
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -359,6 +360,69 @@ classdef WAVInfo < CurveInfo
 		end
 		%-------------------------------------------------
 		
+		%-------------------------------------------------
+		%-------------------------------------------------
+		function stimulusTimes = getstimulusTimes(obj)
+		%-------------------------------------------------
+		% stimulusTimes = getstimulusTimes(obj)
+		%-------------------------------------------------
+
+			% get unique stimuli in order they appear in stimList using 'stable' option
+			% iA will be indices of first occurrence of each unique stim
+			% iC will identify which of the unique stim is in each row
+			uniqueStim  = unique(obj.Dinf.test.wavlist, 'stable');
+			nStim = numel(uniqueStim);
+			
+			stimulusTimes = cell(nStim, 1);
+
+			% loop through each sweep
+			for s = 1:nStim
+				stimulusTimes{s} = [0 0];
+				% what happens next will depend on stimulus type ('null', 'noise' or
+				% 'wav')
+				switch upper(uniqueStim{s})
+					case 'NULL'
+						% if NULL or NOISE stim, delay and duration are just plain old
+						% values
+						delay_ms = obj.wavInfo.nullstim.Delay;
+						duration_ms = obj.wavInfo.nullstim.Duration; %#ok<NASGU>
+						% onset Time is just the delay time (like in CurveInfo)
+						% offset is delay + duration
+						stimulusTimes{s} = delay_ms + [0 0];
+
+					case {'NOISE', 'BBN'}
+						% if NOISE (BBN) stim, delay and duration are just plain old
+						% values
+						delay_ms = obj.wavInfo.noise.Delay;
+						duration_ms = obj.wavInfo.noise.Duration;
+						% onset Time is just the delay time (like in CurveInfo)
+						% offset is delay + duration
+						stimulusTimes{s} = delay_ms + [0 duration_ms];
+
+					otherwise
+						% ASSUME wav stimulus
+						% for wav stim, delay will be stim.audio.Delay plus the
+						% onset time in the wav file itself
+						% to compute this, we need the data from 
+						% wavInfo about the wav stimulus...
+						
+						% need to append .wav to uniqueStim wav name to match wav
+						% filenames listed in obj.wavInfo.wavs.Filename
+						wavdata = lookup_wav([uniqueStim{s} '.wav'], ...
+									obj.wavInfo.wavs);
+						% convert onset and offset bins to time in ms
+						wavonset_ms = round(bin2ms(wavdata.OnsetBin, ...
+																		wavdata.SampleRate));
+						wavoffset_ms = bin2ms(wavdata.OffsetBin, ...
+																	wavdata.SampleRate);
+						% onset time is overall stimulus delay + wavonset_ms
+						% offset is overall delay + wavoffset_ms
+						stimulusTimes{s} = obj.wavInfo.audio.Delay + ...
+													[wavonset_ms wavoffset_ms];
+				end			
+			end
+		end
+		%-------------------------------------------------
 		
 		%-------------------------------------------------
 		%-------------------------------------------------

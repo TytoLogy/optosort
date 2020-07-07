@@ -1,10 +1,13 @@
 classdef SpikeData
 %------------------------------------------------------------------------
+% SpikeData Class
+%------------------------------------------------------------------------
 % TytoLogy:Experiments:opto...
 %------------------------------------------------------------------------
-% Info		SpikeInfo object
-% Spikes		sorted spikes in table object
-% 				Table Variable Names:
+% Class Properties
+%  Info    SpikeInfo object
+%  Spikes  sorted spikes in table object
+% 	        Table Variable Names:
 % 					Channel		AD channel
 % 					Unit			Unit ID (for given channel! note that units might
 % 									 not have unique IDs across channels)
@@ -12,9 +15,11 @@ classdef SpikeData
 % 					PCA			PCA values (not valid for data imported 
 % 									 directly from plx file
 % 					Wave			Wave snippet data
-% Continuous	Continuous Data
-% plxvar		variable names from Plexon 
+%	Continuous	Continuous Data
+%	plxvar		variable names from Plexon 
 % 					(used when imported exported MAT from OfflineSorter)
+%	hasContinuousData
+% 					1 if continuous data are loaded, 
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -28,8 +33,9 @@ classdef SpikeData
 %	various dates (SJS): altered spikesforanalysis method
 %	22 May, 2020 (SJS): added Continuous to hold continuous data
 %	11 Jun 2020 (SJS): scaling continuous data
+%	7 Jul 2020 (SJS): updated documentation
 %------------------------------------------------------------------------
-% TO DO: how to handle multiple channels?????
+% TO DO: 
 %------------------------------------------------------------------------
 
 	%-------------------------------------------------------
