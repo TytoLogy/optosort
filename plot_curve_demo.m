@@ -27,7 +27,11 @@
 % direct reading of PLX file data in Matlab
 if ~exist('readPLXFileC', 'file')
 	fprintf('plot_curve_demo: adding readPLXFile to path\n');
-	addpath('readPLXFileC');
+	try
+		addpath('readPLXFileC');
+	catch
+		error('Cannot find readPLXFileC function. Please add to path!')
+	end
 end
 
 %------------------------------------------------------------------------
@@ -36,6 +40,7 @@ end
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 % data locations - adjust this for your setup
+%------------------------------------------------------------------------
 
 % location of .plx file (from Plexon OfflineSorter)
 plxFilePath = '/Users/sshanbhag/Work/Data/TestData/working';
@@ -48,6 +53,7 @@ plxFile = '1407_20200309_03_01_1350_MERGEEVENTS2.plx';
 nexInfoFile = '1407_20200309_03_01_1350_MERGEEVENTS2_nexinfo.mat';
 
 sendmsg(sprintf('Using data from file: %s', plxFile));
+
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -138,7 +144,7 @@ alternative: use fileList
 % testToPlot = 'BBN';
 % testToPlot = 'WAV';
 %-------------------------------------------------------
-testToPlot = 'WAV';
+testToPlot = 'BBN';
 
 % specify channel to plot
 channel = 4;
@@ -183,10 +189,102 @@ Dinf = S.Info.FileInfo{findx}.Dinf;
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
-%% plot freq-tuning curves for non-zero units
+%% Two ways to plot waveforms:
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%% to plot spike waveforms for this test
+%------------------------------------------------------------------------
+% (1) vertically concatenate data stored in cell array of sweeps in
+% st.spiketable into a single table
+tmpT = vertcat(st.spiketable{:});
+
+% (2) extract just the wave field 
+tmpwav = tmpT.Wave;
+
+% (3) plot overlaid waveforms
+
+% plot in new figure
+figure
+
+% need time vector for x-axis
+[~, nBins] = size(tmpwav);
+t_ms = (1000/S.Info.Fs) * (0:(nBins - 1));
+
+% plot waveforms, with mean and legend
+% need tmpwav to be in column format - time in rows, indv. units by column
+% so send the function the transpose of the tmpwav matrix.
+plot_spike_waveforms(t_ms, tmpwav', 'MEAN', true, 'LEGEND', true);
+
+% add title to plot
+% create title string with 2 rows:
+%	filename (either from st struct or S.Info.FileInfo{findx}.F.file
+%	channel and unit
+tstr = {	st.fileName, ...
+			sprintf('Channel %d Unit %d', channel, unit)};
+title(tstr, 'Interpreter', 'none');	
+
+
+%------------------------------------------------------------------------
+%% plot this unit for ALL tests in sorted file
+%plot waveforms for this channel and unit - note that these are extracted
+%from entire file
+%------------------------------------------------------------------------
+S.plotUnitWaveforms(channel, unit);
+
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%% LEVEL/BBN tests:
+%	plot rate-level curves (firing rate- level function)
+%------------------------------------------------------------------------
+if any(strcmpi(testToPlot, {'LEVEL', 'BBN'}))
+	% set analysis window to [stimulus onset   stimulus offset]
+	analysisWindow = [Dinf.audio.Delay ...
+									(Dinf.audio.Delay + Dinf.audio.Duration)];
+	% compute rate level function
+	RLF = computeRLF(st.spiketimes, st.unique_stim, analysisWindow);
+	% plot
+	hRLF = plotCurveAndCI(RLF, 'mean');
+	% create title string with 2 rows:
+	%	filenametestToPlot = 'FRA';
+	%	channel and unit
+	tstr = {	st.fileName, ...
+				sprintf('Channel %d Unit %d', channel, unit)};
+	% add title to plot
+	title(tstr, 'Interpreter', 'none');
+	% set filename - use the base from the FreqTuningInfo.F object
+	set(hRLF, 'Name', sprintf('%s_Ch%d_Un%d', ...
+					S.Info.FileInfo{findx}.F.base, st.channel, st.unit));
+end
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%% FREQ_TUNING tests:
+%	plot frequency-tuning curves
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+if any(strcmpi(testToPlot, 'FREQ_TUNING'))
+	% set analysis window to [stimulus onset   stimulus offset]
+	analysisWindow = [Dinf.audio.Delay ...
+									(Dinf.audio.Delay + Dinf.audio.Duration)];
+	% compute rate level function
+	FTC = computeFTC(st.spiketimes, st.unique_stim, analysisWindow);
+	% plot
+	hFTC = plotCurveAndCI(FTC, 'median');
+	% create title string with 2 rows:
+	%	filename
+	%	channel and unit
+	tstr = {	st.fileName, ...
+				sprintf('Channel %d Unit %d', channel, unit)};
+	% add title to plot
+	title(tstr, 'Interpreter', 'none');
+	% set filename - use the base from the FreqTuningInfo.F object
+	set(hFTC, 'Name', ...
+					sprintf('%s_Ch%d_Un%d', S.Info.FileInfo{findx}.F.base, ...
+										st.channel, st.unit));
+end
 
 
 %------------------------------------------------------------------------
@@ -199,17 +297,37 @@ if strcmpi(testToPlot, 'WAV')
 	% plotPSTH is a method in the WAVInfo class, stored at the findx
 	% element within the FileInfo cell array. 'LEVEL' tells the method to
 	% separate plots according to stimulust level
-	H = S.Info.FileInfo{findx}.plotPSTH(st, psth_bin_size, 'LEVEL');
+	hWAV = S.Info.FileInfo{findx}.plotPSTH(st, psth_bin_size, 'LEVEL');
 
 	% rename plots with filename, level, channel and unit
-	for h = 1:length(H)
-		origname = get(H{h}, 'Name');
-		set(H{h}, 'Name', ...
+	for h = 1:length(hWAV)
+		% build on original plot name, since this has the level information
+		% already in it
+		origname = get(hWAV{h}, 'Name');
+		set(hWAV{h}, 'Name', ...
 					sprintf('%s_Ch%d_Un%d', origname, st.channel, st.unit));
 	end
 end
 
 
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%% FRA (frequency-response area) tests:
+%	plot heat map and "waterfall" plot 
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+if any(strcmpi(testToPlot, 'FRA'))
+	% window for spike count
+	frawin = [Dinf.audio.Delay (Dinf.audio.Delay + Dinf.audio.Duration)];
+	% calculate FRA stored in struct FRA
+	FRA = computeFRA(st.spiketimes, st.unique_stim{1}, ...
+															st.unique_stim{2}, frawin);
+	% set fname in FRA struct to data file name
+	FRA.fname = st.fileName;
+	hFRA = plotFRA(FRA, 'dB');	
+	% set filename - use the base from the FreqTuningInfo.F object
+	set(hFRA, 'Name', sprintf('%s_Ch%d_Un%d', ...
+					S.Info.FileInfo{findx}.F.base, st.channel, st.unit));
 
-
+end
 
