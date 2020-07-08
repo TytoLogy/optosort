@@ -819,9 +819,11 @@ classdef SpikeData
 		H = plotUnitWaveforms(obj, channel, varargin)
 		% get spikes (in matlab table) for file, channel and unit
 		[tbl, varargout] = selectSpikes(obj, fileNum, channelNum, unitNum)
-		
+		% get spikes for analysis
 		spikesBySweep = spikesForAnalysisByUnit(obj, fileNum, ...
 																	unitNum, varargin)
+		% plots all data for given channel and unit
+		varargout = plotAllData(obj, channel, unit, varargin)
 	end	% END OF METHODS (general)
 	%------------------------------------------------------------------------
 	%------------------------------------------------------------------------

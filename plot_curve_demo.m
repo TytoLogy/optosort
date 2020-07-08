@@ -214,7 +214,7 @@ t_ms = (1000/S.Info.Fs) * (0:(nBins - 1));
 % plot waveforms, with mean and legend
 % need tmpwav to be in column format - time in rows, indv. units by column
 % so send the function the transpose of the tmpwav matrix.
-plot_spike_waveforms(t_ms, tmpwav', 'MEAN', true, 'LEGEND', true);
+hWF = plot_spike_waveforms(t_ms, tmpwav', 'MEAN', true, 'LEGEND', true);
 
 % add title to plot
 % create title string with 2 rows:
@@ -223,6 +223,10 @@ plot_spike_waveforms(t_ms, tmpwav', 'MEAN', true, 'LEGEND', true);
 tstr = {	st.fileName, ...
 			sprintf('Channel %d Unit %d', channel, unit)};
 title(tstr, 'Interpreter', 'none');	
+
+% set figure filename - use the base from the FreqTuningInfo.F object
+set(gcf, 'Name', sprintf('%s_Ch%d_Un%d', ...
+					S.Info.FileInfo{findx}.F.base, st.channel, st.unit));
 
 
 %------------------------------------------------------------------------
@@ -246,7 +250,7 @@ if any(strcmpi(testToPlot, {'LEVEL', 'BBN'}))
 	% plot
 	hRLF = plotCurveAndCI(RLF, 'mean');
 	% create title string with 2 rows:
-	%	filenametestToPlot = 'FRA';
+	%	filename;
 	%	channel and unit
 	tstr = {	st.fileName, ...
 				sprintf('Channel %d Unit %d', channel, unit)};

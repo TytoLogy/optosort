@@ -1,12 +1,25 @@
-%-------------------------------------------------------
-%-------------------------------------------------------
 function H = plotUnitWaveforms(obj, channel, varargin)
-%-------------------------------------------------------
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 % [plot handles] = obj.plotUnitWaveforms([channels], [units (optional)])
+%------------------------------------------------------------------------
 % Plot sorted waveforms for each identified unit for a given channel
 % This will work for individual channels and either all units for the
 % channel (if unit list is not provided) or a specified unit(s)
 %-------------------------------------------------------
+
+
+%------------------------------------------------------------------------
+%  Sharad Shanbhag
+%   sshanbhag@neomed.edu
+%------------------------------------------------------------------------
+% Created:?? 2020 (SJS)
+%	 
+% Revisions:
+%
+%------------------------------------------------------------------------
+
+
 if length(channel) > 1
 	error('SpikeData.plotUnitWaveforms: single channel only');
 end
