@@ -119,7 +119,15 @@ unit = 3;
 psthBinWidth = 5;
 
 %------------------------------------------------------------------------
-%% plot it!
+%% plot it and save png files
 %------------------------------------------------------------------------
+% create output directory: 
+outputpath = fullfile( plxFilePath, ...
+					        S.Info.FileInfo{1}.F.animal, ...
+					        S.Info.FileInfo{1}.F.datecode ...
+							  );
+S.plotAllData(channel, unit, ...
+					'saveplots', 'plotpath', outputpath, ...
+					'saveformat', 'png')
 
-S.plotAllData(channel, unit, psthBinWidth);
+% S.plotAllData(channel, unit, psthBinWidth);
