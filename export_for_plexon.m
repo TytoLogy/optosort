@@ -237,9 +237,16 @@ if nargin == 1
 else
 	% define path to data file and data file for testing
 	[F, Channels] = defineSampleData();
+	if isempty(F)
+		fprintf('%s: cancelled\n', mfilename);
+		varargout{1} = [];
+	end
 	% for now use default filter - probably want to have UI for user to
 	% specify
 	BPfilt = defaultFilter;
+	resampleData = defaultResampleRate;
+	NexFileName = '';
+	NexFilePath = '';
 end
 
 % # channel(s) of data to obtain
@@ -253,7 +260,9 @@ for f = 1:nFiles
 	fprintf('DataFile{%d} = %s\n', f, F(f).file);
 end
 fprintf('Animal: %s\n', F(1).animal);
-
+fprintf('Channels: ');
+fprintf('%d ', Channels);
+fprintf('\n');
 
 %------------------------------------------------------------------------
 % get the data and information from the raw files
