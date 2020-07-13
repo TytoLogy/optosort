@@ -239,7 +239,10 @@ else
 	[F, Channels] = defineSampleData();
 	if isempty(F)
 		fprintf('%s: cancelled\n', mfilename);
-		varargout{1} = [];
+		for n = 1:nargout
+			varargout{n} = []; %#ok<AGROW>
+		end
+		return
 	end
 	% for now use default filter - probably want to have UI for user to
 	% specify

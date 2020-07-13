@@ -23,7 +23,7 @@ function varargout = defineSampleData(varargin)
 
 
 Channels = [];
-
+nargout
 % check inputs 
 if nargin == 0
 	% initialize path and file arrays
@@ -38,7 +38,9 @@ if nargin == 0
 	% check if user canceled (DataFile will be 0)
 	if isnumeric(tmpfile)
 		if tmpfile == 0
-			varargout{1} = [];
+			for n = 1:nargout
+				varargout{n} = []; %#ok<AGROW>
+			end
 			return;
 		end
 	else
@@ -63,7 +65,9 @@ if nargin == 0
 			[TestFile{f}, ~] = uigetfile(testname, 'Select _testdata.mat file');
 			if isnumeric(TestFile{f})
 				if TestFile{f} == 0
-					varargout{1} = [];
+					for n = 1:nargout
+						varargout{n} = []; %#ok<AGROW>
+					end
 					return
 				end
 			end
@@ -74,8 +78,16 @@ if nargin == 0
 	
 	% get list of channels
 	s = inputdlg('Channels (1-16) (e.g. [1 2:4 6])');
+	
 	if isempty(s)
-		varargout{1} = [];
+		for n = 1:nargout
+			varargout{n} = []; %#ok<AGROW>
+		end
+		return
+	elseif isempty(s{1})
+		for n = 1:nargout
+			varargout{n} = []; %#ok<AGROW>
+		end
 		return
 	else
 		Channels = str2num(s{:}); %#ok<ST2NM>
