@@ -1,6 +1,6 @@
 function varargout = export_raw(varargin)
 %------------------------------------------------------------------------
-% [nD, expInfo] = export_raw(exportInfo)
+% [sweepData, expInfo, params] = export_raw(exportInfo)
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
@@ -11,7 +11,7 @@ function varargout = export_raw(varargin)
 %------------------------------------------------------------------------
 % Input Arguments:
 %	With no inputs provided, a dialog will open to specify a file with a 
-%	list of .dat files to process (not yet implemented!!!!)
+%	list of .dat files to process
 %
 % exportInfo	data file and options struct
 %	see exportTest.m for examples
@@ -80,11 +80,17 @@ function varargout = export_raw(varargin)
 %		rate of 48828.125 samples/second will be converted to resampleData value 
 % 		if empty or not specified, no change will be made to sampling rate.
 % 
+%	exportInfo.testData
+% 		true	fake data will be created
+% 		false	no fake data!
+% 		if not defined, no fake data!
+%
 % Output Arguments:
-% 	nD		NeuroExplorer nex data struct written to output file
-%	expInfo	SpikeInfo object=
+%	sweepData	cell array of raw sweep data for all channels specified
+%	expInfo	SpikeInfo object
+% 	params	spyKing Circus params
 %------------------------------------------------------------------------
-% See also: SpikeInfo, CurveInfo, WAVInfo classes
+% See also: SpikeInfo, CurveInfo, WAVInfo, FRAInfo, SpikeData classes
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -95,6 +101,7 @@ function varargout = export_raw(varargin)
 %
 % Revisions:
 % 9 June 2020 (SJS): added resampleData field to exportOptions
+% 13 Jul 2020 (SJS): updating
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -107,6 +114,8 @@ sepstr = '----------------------------------------------------';
 defaultFilter = [];
 % resample data? default is no
 defaultResampleRate = [];
+% build test data?
+testData = false;
 % valid output formats (binary)
 ValidFormats =	{	'int16', 'uint16', 'int8', ...
 						'float32', 'float64', 'single', 'double'};
@@ -178,6 +187,12 @@ if nargin == 1
 	else
 		resampleData = defaultResampleRate;
 	end
+	% test data?
+	if isfield(tmp, 'testData')
+		testData = tmp.testData;
+	else
+		testData = false;
+	end
 	
 	% define path to data file and data file for testing
 	F = defineSampleData(tmp.DataPath, tmp.DataFile, tmp.TestFile);
@@ -187,7 +202,8 @@ if nargin == 1
 		if ~isempty(tmp.OutputPath)
 			% if not empty, make sure path exists
 			if ~exist(tmp.OutputPath, 'dir')
-				error('%s: output directory %s not found', mfilename, tmp.OutputPath);
+				error('%s: output directory %s not found', mfilename, ...
+									tmp.OutputPath);
 			end
 		end
 		OutputPath = tmp.OutputPath;
@@ -207,6 +223,13 @@ if nargin == 1
 else
 	% define path to data file and data file for testing
 	[F, Channels] = defineSampleData();
+	if isempty(F)
+		fprintf('%s: cancelled\n', mfilename);
+		for n = 1:nargout
+			varargout{n} = []; %#ok<AGROW>
+		end
+		return
+	end
 	% for now use default filter - probably want to have UI for user to
 	% specify
 	BPfilt = defaultFilter;
@@ -225,12 +248,21 @@ for f = 1:nFiles
 	fprintf('DataFile{%d} = %s\n', f, F(f).file);
 end
 fprintf('Animal: %s\n', F(1).animal);
+fprintf('Channels: ');
+fprintf('%d ', Channels);
+fprintf('\n');
 
 
 %------------------------------------------------------------------------
 % get the data and information from the raw files
 %------------------------------------------------------------------------
-[cSweeps, expInfo] = read_data_for_export(F, Channels, BPfilt, resampleData);
+if testData == false
+	[cSweeps, expInfo] = read_data_for_export(F, Channels, BPfilt, ...
+																resampleData);
+else
+	[cSweeps, expInfo] = test_data_for_export(F, Channels, BPfilt, ...
+																resampleData);
+end
 
 %------------------------------------------------------------------------
 % If not provided, create output .nex file name - adjust depending on # of files
@@ -305,6 +337,7 @@ if nargout
 	varargout{1} = cSweeps;
 	if nargout > 1
 		varargout{2} = expInfo;
+		varargout{3} = params;
 	end
 end
 %------------------------------------------------------------------------

@@ -1,9 +1,9 @@
 %------------------------------------------------------------------------
-% exportTestRaw.m
+% export_spyking.m
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
-% sample script to show how to export data for spike sorting
+% sample script - working file for Sharad during development
 % 
 %------------------------------------------------------------------------
 % See also: 
@@ -13,10 +13,9 @@
 %  Sharad J. Shanbhag
 %	sshanbhag@neomed.edu
 %------------------------------------------------------------------------
-% Created: 14 May, 2020 from exportTest (SJS)
-%
+% Created: 13 July, 2020 (SJS)
+%	from export_working
 % Revisions:
-%  13 Jul 2020 (SJS): updating to use new probe (Cambridge NeuroTech) data
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -66,16 +65,15 @@ exportOpts.DataFile = '1429_20200707_01_01_2942_BBN.dat';
 exportOpts.OutputFile = '1429_20200707_01_01_2942_BBN.bin';
 exportOpts.TestFile = '1429_20200707_01_01_2942_BBN_testdata.mat';
 exportOpts.Channels = 1:16;
-
+exportOpts.testData = false;
+%--------------------------------------
 %---------------------------------------
-%---------------------------------------
-
 
 %------------------------------------------------------------------------
 % filter parameters for raw neural data
 %------------------------------------------------------------------------
 % [highpass lowpass] cutoff frequencies in Hz
-exportOpts.BPfilt.Fc = [300 4000];
+exportOpts.BPfilt.Fc = [250 4000];
 % order of filter. note that the filtfilt() function in MATLAB is used,
 % so the effective order is doubled. typically use 5
 exportOpts.BPfilt.forder = 5;
@@ -88,7 +86,11 @@ exportOpts.BPfilt.ramp = 1;
 exportOpts.BPfilt.type = 'butter';
 
 %------------------------------------------------------------------------
+% resample data to nearest lower integer value?
+%------------------------------------------------------------------------
+% exportOpts.resampleData = [];
+
+%------------------------------------------------------------------------
 % run!
 %------------------------------------------------------------------------
 [nD, nI, nP] = export_raw(exportOpts);
-

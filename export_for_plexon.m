@@ -14,7 +14,7 @@ function varargout = export_for_plexon(varargin)
 %------------------------------------------------------------------------
 % Input Arguments:
 %	With no inputs provided, a dialog will open to specify a file with a 
-%	list of .dat files to process (not yet implemented!!!!)
+%	list of .dat files to process
 %
 % exportInfo	data file and options struct
 %	see exportTest.m for examples
@@ -90,6 +90,7 @@ function varargout = export_for_plexon(varargin)
 % 		true	fake data will be created
 % 		false	no fake data!
 % 		if not defined, no fake data!
+%
 % Output Arguments:
 % 	nD		NeuroExplorer nex data struct written to output file
 %	nexInfo	SpikeInfo object
@@ -217,7 +218,8 @@ if nargin == 1
 		if ~isempty(tmp.OutputPath)
 			% if not empty, make sure path exists
 			if ~exist(tmp.OutputPath, 'dir')
-				error('%s: output directory %s not found', mfilename, tmp.OutputPath);
+				error('%s: output directory %s not found', mfilename, ...
+									tmp.OutputPath);
 			end
 		end
 		NexFilePath = tmp.OutputPath;
@@ -274,9 +276,11 @@ fprintf('\n');
 %	nexInfo is an instance of a SpikeInfo object
 %------------------------------------------------------------------------
 if testData == false
-	[cSweeps, nexInfo] = read_data_for_export(F, Channels, BPfilt, resampleData);
+	[cSweeps, nexInfo] = read_data_for_export(F, Channels, BPfilt, ...
+																resampleData);
 else
-	[cSweeps, nexInfo] = test_data_for_export(F, Channels, BPfilt, resampleData);
+	[cSweeps, nexInfo] = test_data_for_export(F, Channels, BPfilt, ...
+																resampleData);
 end
 
 %------------------------------------------------------------------------
