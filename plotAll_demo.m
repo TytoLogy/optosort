@@ -112,22 +112,32 @@ Channels and Unit ID #s:\n
 %}
 
 %------------------------------------------------------------------------
-%% define channel, unit, psth bin width (milliseconds)
+%% define channel, unit, psth bin width (milliseconds), save plot type
 %------------------------------------------------------------------------
+% Channel #
 channel = 4;
+% unit number
 unit = 3;
+% bin width for PSTHs, in milliseconds (used for WAV data plot)
 psthBinWidth = 5;
+% output file type:
+%  'png'	.png file
+%  'jpg'	.jpg file
+%  'fig'	.fig (matlab figure) file
+save_type = 'png';
 
 %------------------------------------------------------------------------
 %% plot it and save png files
 %------------------------------------------------------------------------
 % create output directory: 
+%  [plxFilePath animal# recdate plottype(png,fig,jpg)]
 outputpath = fullfile( plxFilePath, ...
 					        S.Info.FileInfo{1}.F.animal, ...
-					        S.Info.FileInfo{1}.F.datecode ...
+					        S.Info.FileInfo{1}.F.datecode, ...
+							  save_type ...
 							  );
 S.plotAllData(channel, unit, ...
 					'saveplots', 'plotpath', outputpath, ...
-					'saveformat', 'png')
+					'saveformat', save_type)
 
 % S.plotAllData(channel, unit, psthBinWidth);

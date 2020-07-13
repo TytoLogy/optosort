@@ -42,7 +42,7 @@ function varargout = plotAllData(obj, channel, unit, varargin)
 % 		plots channel 6 unit 4 data, saves plots as .png (default) 
 % 		in the E:\Data directory
 %------------------------------------------------------------------------
-% See also: 
+% See also: SpikeData class
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -52,10 +52,10 @@ function varargout = plotAllData(obj, channel, unit, varargin)
 % Created: 7 July, 2020 (SJS)
 %	 
 % Revisions:
-% 
+%	13 Jul 202 (SJS): added docs,  
 %------------------------------------------------------------------------
 % TO DO:
-%	Add save
+%------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -168,9 +168,12 @@ for findx = 1:obj.Info.nFiles
 	[~, nBins] = size(tmpwav);
 	t_ms = (1000/obj.Info.Fs) * (0:(nBins - 1));
 	% plot waveforms, with mean and legend
-	% need tmpwav to be in column format - time in rows, indv. units by column
-	% so send the function the transpose of the tmpwav matrix.
-	hWF = plot_spike_waveforms(t_ms, tmpwav', 'MEAN', true, 'LEGEND', true);
+	% need tmpwav to be in column format - time in rows, indv. 
+	% units by column so send the function the transpose of the 
+	% tmpwav matrix.
+	hWF = figure;
+	hWF_ax = plot_spike_waveforms(t_ms, tmpwav', ...
+									'MEAN', true, 'LEGEND', true); %#ok<NASGU>
 	% add title to plot
 	% create title string with 2 rows:
 	%	filename (either from S struct or S.Info.FileInfo{findx}.F.file
@@ -178,14 +181,14 @@ for findx = 1:obj.Info.nFiles
 	tstr = {	S.fileName, sprintf('Channel %d Unit %d', channel, unit)};
 	title(tstr, 'Interpreter', 'none');
 	% set figure filename - use the base from the FreqTuningInfo.F object
-	set(gcf, 'Name', sprintf('%s_Snips_Ch%d_Un%d', ...
+	set(hWF, 'Name', sprintf('%s_Snips_Ch%d_Un%d', ...
 					obj.Info.FileInfo{findx}.F.base, S.channel, S.unit));
 	drawnow
 	% save waveform plot file
 	if savePlots
 		fprintf('Saving plot:\n  %s...', ...
 							fullfile(plotPath, get(gcf, 'Name')));
-		save_plot(gcf, saveFormat, plotPath);
+		save_plot(hWF, saveFormat, plotPath);
 		fprintf('\n...done\n');
 	end
 					
