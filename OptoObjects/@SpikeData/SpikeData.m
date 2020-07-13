@@ -1,10 +1,13 @@
 classdef SpikeData
 %------------------------------------------------------------------------
+% SpikeData Class
+%------------------------------------------------------------------------
 % TytoLogy:Experiments:opto...
 %------------------------------------------------------------------------
-% Info		SpikeInfo object
-% Spikes		sorted spikes in table object
-% 				Table Variable Names:
+% Class Properties
+%  Info    SpikeInfo object
+%  Spikes  sorted spikes in table object
+% 	        Table Variable Names:
 % 					Channel		AD channel
 % 					Unit			Unit ID (for given channel! note that units might
 % 									 not have unique IDs across channels)
@@ -12,9 +15,11 @@ classdef SpikeData
 % 					PCA			PCA values (not valid for data imported 
 % 									 directly from plx file
 % 					Wave			Wave snippet data
-% Continuous	Continuous Data
-% plxvar		variable names from Plexon 
+%	Continuous	Continuous Data
+%	plxvar		variable names from Plexon 
 % 					(used when imported exported MAT from OfflineSorter)
+%	hasContinuousData
+% 					1 if continuous data are loaded, 
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -28,8 +33,9 @@ classdef SpikeData
 %	various dates (SJS): altered spikesforanalysis method
 %	22 May, 2020 (SJS): added Continuous to hold continuous data
 %	11 Jun 2020 (SJS): scaling continuous data
+%	7 Jul 2020 (SJS): updated documentation
 %------------------------------------------------------------------------
-% TO DO: how to handle multiple channels?????
+% TO DO: 
 %------------------------------------------------------------------------
 
 	%-------------------------------------------------------
@@ -448,7 +454,48 @@ classdef SpikeData
 		end
 		%-------------------------------------------------------		
 
-
+		%{
+		%-------------------------------------------------------
+		function events = stimEventTimesForFile(obj, fileNum, varargin)
+		%-------------------------------------------------------
+		% get array of event structs for given file
+		%	events		struct array with fields:
+		%		name
+		%		samples
+		%		timestamps
+		%-------------------------------------------------------
+			alignMode = 'FILE';
+			
+			if ~isempty(varargin)
+				if any(strcmpi(varargin{1}, {'FILE', 'ORIG'}))
+					alignMode = varargin{1};
+				else
+					error('SpikeData.stimEventTimesForFile: invalid mode %s', ...
+									varargin{1});
+				end
+			end
+			
+			% get events for the given file/test
+			events = obj.Info.FileInfo{fileNum}.geteventList;
+			
+			switch upper(alignMode)
+				case 'FILE'
+					% get onset of file
+					offsetbin = obj.Info.fileStartBin(fileNum);
+					
+				case 'ORIG'
+					offsetbin = 1;
+			end
+			% convert samples to timestamps, aligned
+			% 1) loop through nevents
+			for n = 1:length(events)
+				% 2) event times  are ebins + (filestartbin -1) / sampling rate
+				events(n).timestamps = ((offsetbin - 1) + events(n).samples) ...
+							./ obj.Info.Fs;
+			end
+		end
+		%-------------------------------------------------------
+		%}
 		
 		% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		% % % THESE SHOULD PROBABLY BE PROTECTED METHODS
@@ -772,9 +819,11 @@ classdef SpikeData
 		H = plotUnitWaveforms(obj, channel, varargin)
 		% get spikes (in matlab table) for file, channel and unit
 		[tbl, varargout] = selectSpikes(obj, fileNum, channelNum, unitNum)
-		
+		% get spikes for analysis
 		spikesBySweep = spikesForAnalysisByUnit(obj, fileNum, ...
 																	unitNum, varargin)
+		% plots all data for given channel and unit
+		varargout = plotAllData(obj, channel, unit, varargin)
 	end	% END OF METHODS (general)
 	%------------------------------------------------------------------------
 	%------------------------------------------------------------------------

@@ -257,6 +257,58 @@ classdef FRAInfo < CurveInfo
 		%-------------------------------------------------
 		%-------------------------------------------------
 
+		%-------------------------------------------------
+		% returns eventlist (stimulus type, levels)
+		%-------------------------------------------------
+		function events = geteventList(obj)
+		%-------------------------------------------------
+		% get list of stimuli (wav file names)
+		%-------------------------------------------------
+			% get stimulus indices
+			% for FRA
+			% stimindex = {# levels, # freqs} cell array 
+			%		each element is a [nreps, 1] vector of indices into sweeps
+			% stimlist = {1, 2} cell array
+			% 		stimlist{1} = [nfreqs, 1] list of frequencies tested
+			% 		stimlist{2} = [nlevels, 1] list of levels tested
+			[stimindex, stimlist] = obj.getStimulusIndices;
+			% get varied values
+			%	[2, # freq/level combinations] array of freq/level combinations
+			%	tested
+			varied_values = obj.varied_values;
+			% get stimulus onset offset bins
+			% to align to appended/merged file, will need to add
+			% SpikeInfo.fileStartBin(findx) - 1
+			onsetbins = obj.stimStartBin;
+% 			offsetbins = obj.stimEndBin;
+
+			%--------------------------------------------------------------------
+			% create eventList as struct array
+			%--------------------------------------------------------------------
+			% {# stimulus levels, 2}
+			% 1st col will hold event name, second col will hold event times
+			nevents = numel(stimindex);
+			events = repmat(	struct(	'name', '', ...
+												'samples', [], ...
+												'timestamps', [] ), ...
+									nevents, 1);
+			nfreq = length(stimlist{1});
+			nlev = length(stimlist{2});
+
+			ev = 0;
+			for f = 1:nfreq
+				freq = stimlist{1}(f);
+				for l = 1:nlev
+					ev = ev + 1;
+					level = stimlist{2}(l);
+					events(ev).name = sprintf('%s_%dHz_%ddB', ...
+																obj.testname, freq, level);
+					events(ev).samples = onsetbins(stimindex{l, f});
+				end
+			end
+
+		end
+		%-------------------------------------------------
 		
 		%-------------------------------------------------
 		%-------------------------------------------------

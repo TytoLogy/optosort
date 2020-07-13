@@ -1,8 +1,25 @@
 function varargout = plot_spike_waveforms(tvec, wavematrix, varargin)
-% tvec			[1, nsamples] time vector (in milliseconds... or ... ?)
-% wavematrix	[nsamples, nwaves] matrix of spike waveforms
+%------------------------------------------------------------------------
+% [plot handles] =  plot_spike_waveforms(tvec, wavematrix, 
+%------------------------------------------------------------------------
+% TytoLogy:optoproc
+%------------------------------------------------------------------------
+% 
+% Plots: Data, waveforms, etc for selected channel and unit
+% 
+%------------------------------------------------------------------------
+% Input Arguments:
+%  tvec			[1, nsamples] time vector (in milliseconds... or ... ?)
+%  wavematrix	[nsamples, nwaves] matrix of spike waveforms
+%  Optional:
+%	 'mean'		plot mean waveform (default: true)
 %
-%	'mean'		plot mean waveform (default: true)
+% Output Arguments:
+% 	 [plot handles]		array of plot handles
+% 
+%------------------------------------------------------------------------
+
+
 
 PLOTMEAN = true;
 PLOTLEGEND = true;

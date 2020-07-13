@@ -8,6 +8,12 @@ function [obj, varargout] = buildStimOnOffData(obj)
 % builds vector of stimulus onset and offset bins referenced to start
 % of file
 % 
+% computes 
+% obj.stimStartBin = onsetI;	onset of stimulus (accounts for delay in
+% wavfile)
+% obj.stimEndBin = offsetI;	offset of stimulus (accounts for delay in
+% wavfile)
+% obj.wavOnsetBin = wavonsetI; start of wav playback
 %------------------------------------------------------------------------
 % Input Arguments:
 % 	Dinf			data information struct from opto program output file
@@ -18,6 +24,7 @@ function [obj, varargout] = buildStimOnOffData(obj)
 %					for each sweep
 % 	offsetI	[# sweeps, 1] array with each element stimulus onset timestamp 
 %					for each sweep
+%	
 %------------------------------------------------------------------------
 % See also: CurveInfo, WAVInfo, buildChannelData, export_for_plexon
 %------------------------------------------------------------------------

@@ -37,6 +37,7 @@ classdef WAVInfo < CurveInfo
 %	15 Apr 2020 (SJS): adding code to determine stim onset, offset and wav
 %	onset
 %	18 Jun 2020 (SJS): broadened scope of subclass - overloaded methods
+%	7 Jul 2020 (SJS): added getstimulusTimes method to use for plotting
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -282,13 +283,18 @@ classdef WAVInfo < CurveInfo
 		% shortcut methods to values
 		%-------------------------------------------------
 		%-------------------------------------------------
+		
+		%-------------------------------------------------
 		% returns wavList
+		%-------------------------------------------------
 		function wavlist = getwavList(obj)
-			% get list of stimuli (wav file names)
-			nwavs = length(obj.Dinf.stimList);
-			wavlist = cell(nwavs, 1);
-			stimindex = cell(nwavs, 1);
-			for w = 1:nwavs
+		%-------------------------------------------------
+		% get list of stimuli (wav file names)
+		%-------------------------------------------------
+			nstimuli = length(obj.Dinf.stimList);
+			wavlist = cell(nstimuli, 1);
+% 			stimindex = cell(nstimuli, 1);
+			for w = 1:nstimuli
 				stype = obj.Dinf.stimList(w).audio.signal.Type;
 				if strcmpi(stype, 'null')
 					wavlist{w} = 'null';
@@ -299,10 +305,124 @@ classdef WAVInfo < CurveInfo
 				else
 					error('%s: unknown type %s', mfilename, stype);
 				end
-				stimindex{w} = find(obj.Dinf.test.stimIndices == w);
+% 				stimindex{w} = find(obj.Dinf.test.stimIndices == w);
 			end
 		end
+		%-------------------------------------------------
 
+		%-------------------------------------------------
+		% returns levelList (stimulus levels)
+		%-------------------------------------------------
+		function levellist = getlevelList(obj)
+		%-------------------------------------------------
+		% get list of stimuli (wav file names)
+		%-------------------------------------------------
+			nstimuli = length(obj.Dinf.stimList);
+			levellist = cell(nstimuli, 1);
+			for l = 1:nstimuli
+				levellist{l} = obj.Dinf.stimList(l).audio.Level;
+			end
+		end
+		
+		%-------------------------------------------------
+		% returns eventlist (stimulus type, levels)
+		%-------------------------------------------------
+		function events = geteventList(obj)
+		%-------------------------------------------------
+		% get list of stimuli (wav file names)
+		%-------------------------------------------------
+			% get stimulus indices
+			[stimindex, ~] = obj.getStimulusIndices;
+			% get varied values (wav files)
+			varied_values = obj.getwavList;
+			% get levels for each value
+			varied_levels = cell2mat(obj.getlevelList);
+			% get stimulus onset offset bins
+			% to align to appended/merged file, will need to add
+			% SpikeInfo.fileStartBin(findx) - 1
+			onsetbins = obj.stimStartBin;
+% 			offsetbins = obj.stimEndBin;
+
+			%------------------------------------------------------------------------
+			% create eventList as struct array
+			%------------------------------------------------------------------------
+			% get # of events
+			nevents = length(varied_values);
+			% init events struct
+			events = repmat(	struct(	'name', '', ...
+												'samples', [], ...
+												'timestamps', [] ), ...
+									nevents, 1);
+			for n = 1:nevents
+				events(n).name = sprintf('%s_%s_%ddB', obj.testname, varied_values{n}, varied_levels(n));
+				events(n).samples = onsetbins(stimindex{n});
+			end
+		end
+		%-------------------------------------------------
+		
+		%-------------------------------------------------
+		%-------------------------------------------------
+		function stimulusTimes = getstimulusTimes(obj)
+		%-------------------------------------------------
+		% stimulusTimes = getstimulusTimes(obj)
+		%-------------------------------------------------
+
+			% get unique stimuli in order they appear in stimList using 'stable' option
+			% iA will be indices of first occurrence of each unique stim
+			% iC will identify which of the unique stim is in each row
+			uniqueStim  = unique(obj.Dinf.test.wavlist, 'stable');
+			nStim = numel(uniqueStim);
+			
+			stimulusTimes = cell(nStim, 1);
+
+			% loop through each sweep
+			for s = 1:nStim
+				stimulusTimes{s} = [0 0];
+				% what happens next will depend on stimulus type ('null', 'noise' or
+				% 'wav')
+				switch upper(uniqueStim{s})
+					case 'NULL'
+						% if NULL or NOISE stim, delay and duration are just plain old
+						% values
+						delay_ms = obj.wavInfo.nullstim.Delay;
+						duration_ms = obj.wavInfo.nullstim.Duration; %#ok<NASGU>
+						% onset Time is just the delay time (like in CurveInfo)
+						% offset is delay + duration
+						stimulusTimes{s} = delay_ms + [0 0];
+
+					case {'NOISE', 'BBN'}
+						% if NOISE (BBN) stim, delay and duration are just plain old
+						% values
+						delay_ms = obj.wavInfo.noise.Delay;
+						duration_ms = obj.wavInfo.noise.Duration;
+						% onset Time is just the delay time (like in CurveInfo)
+						% offset is delay + duration
+						stimulusTimes{s} = delay_ms + [0 duration_ms];
+
+					otherwise
+						% ASSUME wav stimulus
+						% for wav stim, delay will be stim.audio.Delay plus the
+						% onset time in the wav file itself
+						% to compute this, we need the data from 
+						% wavInfo about the wav stimulus...
+						
+						% need to append .wav to uniqueStim wav name to match wav
+						% filenames listed in obj.wavInfo.wavs.Filename
+						wavdata = lookup_wav([uniqueStim{s} '.wav'], ...
+									obj.wavInfo.wavs);
+						% convert onset and offset bins to time in ms
+						wavonset_ms = round(bin2ms(wavdata.OnsetBin, ...
+																		wavdata.SampleRate));
+						wavoffset_ms = bin2ms(wavdata.OffsetBin, ...
+																	wavdata.SampleRate);
+						% onset time is overall stimulus delay + wavonset_ms
+						% offset is overall delay + wavoffset_ms
+						stimulusTimes{s} = obj.wavInfo.audio.Delay + ...
+													[wavonset_ms wavoffset_ms];
+				end			
+			end
+		end
+		%-------------------------------------------------
 		
 		%-------------------------------------------------
 		%-------------------------------------------------

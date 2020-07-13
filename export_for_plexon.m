@@ -31,21 +31,23 @@ function varargout = export_for_plexon(varargin)
 % 		or single path that applies to all files specified:
 % 			exportInfo.DataPath = '~/Work/Data/TestData/MT_IC';
 % 			exportInfo.DataPath = 
-% 								'/Volumes/Wenstrup Laboratory/By User/SJS/Data/SpikeSort';
+% 					'/Volumes/Wenstrup Laboratory/By User/SJS/Data/SpikeSort';
 % 
 % 	exportInfo.DataFile:
 % 	 list (cell array) of data files to export (and merge)
-% 		exportInfo.DataFile = {'1372_20191126_03_01_1500_FREQ_TUNING.dat'; ...
+% 		exportInfo.DataFile = ...
+% 						{'1372_20191126_03_01_1500_FREQ_TUNING.dat'; ...
 % 						'1372_20191126_03_01_1500_BBN.dat'; ...
 % 						'1372_20191126_03_01_1500_FRA.dat'; ...
 % 						'1372_20191126_03_01_1500_WAV.dat'; };
 % 
 % 	exportInfo.TestFile:
 % 	 list (cell array) of test data files corresponding to DataFiles;
-%		exportInfo.TestFile = {'1372_20191126_03_01_1500_FREQ_TUNING_testdata.mat'; ...
-% 										'1372_20191126_03_01_1500_BBN_testdata.mat'; ...
-% 										'1372_20191126_03_01_1500_FRA_testdata.mat'; ...
-% 										''; };
+%		exportInfo.TestFile = ...
+%					{'1372_20191126_03_01_1500_FREQ_TUNING_testdata.mat'; ...
+% 					'1372_20191126_03_01_1500_BBN_testdata.mat'; ...
+% 					'1372_20191126_03_01_1500_FRA_testdata.mat'; ...
+% 					''; };
 % 
 %	exportInfo.OutputPath, exportInfo.OutputFile
 % 	 you can specify an output path and nex file name, or just leave blank
@@ -68,8 +70,8 @@ function varargout = export_for_plexon(varargin)
 % 		order of filter. note that the filtfilt() function in MATLAB is used,
 % 		so the effective order is doubled. typically use 5:
 % 		 exportOpts.BPfilt.forder = 5;
-% 		ramp time (ms) to apply to each sweep in order to cutdown on onset/offset
-% 		transients from filtering:
+% 		ramp time (ms) to apply to each sweep in order to cutdown on
+% 		onset/offset transients from filtering:
 % 		 exportOpts.BPfilt.ramp = 1;
 %		filter type is either 'bessel' or 'butter' (butterworth)
 %		 exportOpts.BPfilet.type = 'bessel';
@@ -77,10 +79,11 @@ function varargout = export_for_plexon(varargin)
 %	exportInfo.resampleData
 % 		change data sampling rate to resampleData rate (samples/second)
 %		Default: no resampling
-% 		For exporting to many software packages for sorting, integer values are
-% 		needed.
-% 		if value is provided, A/D data will be resampled i.e., original
-%		rate of 48828.125 samples/second will be converted to resampleData value 
+% 		For exporting to many software packages for sorting, integer values
+% 		are needed. if value is provided, A/D data will be resampled i.e.,
+% 		original
+%		rate of 48828.125 samples/second will be converted to resampleData
+%		value
 % 		if empty or not specified, no change will be made to sampling rate.
 % 
 %	exportInfo.testData
@@ -91,7 +94,7 @@ function varargout = export_for_plexon(varargin)
 % 	nD		NeuroExplorer nex data struct written to output file
 %	nexInfo	SpikeInfo object
 %------------------------------------------------------------------------
-% See also: SpikeInfo, CurveInfo, WAVInfo classes
+% See also: SpikeInfo, CurveInfo, WAVInfo, FRAInfo, SpikeData classes
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -112,6 +115,7 @@ function varargout = export_for_plexon(varargin)
 %	to update downstream code.
 % 9 June 2020 (SJS): added resampleData field to exportOptions
 % 16 Jun 2020 (SJS): added testData as option to build test data for plx
+% 29 Jun 2020 (SJS): add stimulus specific event timestamps to nex file
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -233,9 +237,19 @@ if nargin == 1
 else
 	% define path to data file and data file for testing
 	[F, Channels] = defineSampleData();
+	if isempty(F)
+		fprintf('%s: cancelled\n', mfilename);
+		for n = 1:nargout
+			varargout{n} = []; %#ok<AGROW>
+		end
+		return
+	end
 	% for now use default filter - probably want to have UI for user to
 	% specify
 	BPfilt = defaultFilter;
+	resampleData = defaultResampleRate;
+	NexFileName = '';
+	NexFilePath = '';
 end
 
 % # channel(s) of data to obtain
@@ -249,10 +263,15 @@ for f = 1:nFiles
 	fprintf('DataFile{%d} = %s\n', f, F(f).file);
 end
 fprintf('Animal: %s\n', F(1).animal);
-
+fprintf('Channels: ');
+fprintf('%d ', Channels);
+fprintf('\n');
 
 %------------------------------------------------------------------------
 % get the data and information from the raw files
+%	cSweeps is a {nfiles, 1} cell array with each element holding an
+% 	{nChannels X ntrials} cell array of data for each file
+%	nexInfo is an instance of a SpikeInfo object
 %------------------------------------------------------------------------
 if testData == false
 	[cSweeps, nexInfo] = read_data_for_export(F, Channels, BPfilt, resampleData);
@@ -333,6 +352,17 @@ end
 % add stimulus onset and offset times
 nD = nexAddEvent(nD, force_col(nexInfo.stimStartTimeVector), 'stimstart');
 nD = nexAddEvent(nD, force_col(nexInfo.stimEndTimeVector), 'stimend');
+
+% add stimulus-specific onset times
+for f = 1:nFiles
+	events = nexInfo.stimEventTimesForFile(f);
+	fprintf('Adding events from file %s\n', nexInfo.FileInfo{f}.F.file);
+	for n = 1:length(events)
+		fprintf('\t%s\n', events(n).name);
+		nD = nexAddEvent(nD, force_col(events(n).timestamps), events(n).name);
+	end
+end
+
 % write to nexfile
 sendmsg(sprintf('Writing nex file %s:', nexInfo.FileName));
 writeNexFile(nD, nexInfo.FileName);
