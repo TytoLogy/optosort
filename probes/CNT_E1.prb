@@ -1,0 +1,72 @@
+# SpyKING CIRCUS .prb configuration file
+# for Cambridge NeuroTech E1 16 channel probe
+
+Omnetics Header/AD Channel
+Probe sites?
+1	6
+3	2
+5	3
+7	7
+9	16
+11	15
+13	10
+15	11
+2	8
+4	4
+6	1
+8	5
+10	14
+12	12
+14	13
+16	9
+
+
+channel_groups = {
+    # Shank index.
+    0:
+        {
+            # List of channels to keep for spike detection.
+            'channels': list(range(16)),
+
+            # Adjacency graph. Dead channels will be automatically discarded
+            # by considering the corresponding subgraph.
+            'graph': [
+                (0, 1), (0, 2),
+                (1, 2), (1, 3),
+                (2, 3), (2, 4),
+                (3, 4), (3, 5),
+                (4, 5), (4, 6),
+                (5, 6), (5, 7),
+                (6, 7), (6, 8),
+                (7, 8), (7, 9),
+                (8, 9), (8, 10),
+                (9, 10), (9, 11),
+                (10, 11), (10, 12),
+                (11, 12), (11, 13),
+                (12, 13), (12, 14),
+                (13, 14), (13, 15),
+                (14, 15)
+            ],
+
+            # 2D positions of the channels, only for visualization purposes
+            # in KlustaViewa. The unit doesn't matter.
+            'geometry': {
+                15: (-20, 160),
+                14: (21, 170),
+                13: (-22, 180),
+                12: (23, 190),
+                11: (-24, 200),
+                10: (25, 210),
+                9: (-26, 220),
+                8: (27, 230),
+                7: (-28, 240),
+                6: (29, 250),
+                5: (-30, 260),
+                4: (31, 270),
+                3: (-32, 280),
+                2: (33, 290),
+                1: (-34, 300),
+                0: (35, 310),
+            }
+    }
+}

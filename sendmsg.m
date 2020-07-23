@@ -1,4 +1,4 @@
-function sendmsg(msgstr)
+function sendmsg(varargin)
 %------------------------------------------------------------------------
 % sendmsg(msgstr)
 %------------------------------------------------------------------------
@@ -10,5 +10,10 @@ function sendmsg(msgstr)
 % 	none
 %------------------------------------------------------------------------
 sepstr = '----------------------------------------------------';
-fprintf('%s\n%s\n%s\n', sepstr, msgstr, sepstr);
+
+fprintf('%s\n', sepstr);
+if nargin
+	fprintf('%s\n', varargin{1});
+end
+fprintf('%s\n', sepstr);
 

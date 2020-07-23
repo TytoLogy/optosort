@@ -109,7 +109,6 @@ function varargout = export_raw(varargin)
 %------------------------------------------------------------------------
 % Initial things to define
 %------------------------------------------------------------------------
-sepstr = '----------------------------------------------------';
 % filter info
 defaultFilter = [];
 % resample data? default is no
@@ -122,9 +121,8 @@ ValidFormats =	{	'int16', 'uint16', 'int8', ...
 %------------------------------------------------------------------------
 % Setup
 %------------------------------------------------------------------------
-fprintf('\n%s\n%s\n', sepstr, sepstr);
-fprintf('%s running...\n', mfilename);
-fprintf('\n%s\n%s\n', sepstr, sepstr);
+sendmsg();
+sendmsg(sprintf('%s running...\n', mfilename));
 sendmsg('Checking paths');
 % check for path to readOptoData
 if ~exist('readOptoData', 'file')
@@ -143,16 +141,19 @@ if nargin == 1
 	end
 	% assign values, fixing some things as necessary
 	% if file elements are not cells (i.e., just strings), convert to cell.
+	% path to data
 	if ~iscell(tmp.DataPath)
 		tmp.DataPath = {tmp.DataPath};
 	else
 		tmp.DataPath = tmp.DataPath;
 	end
+	% .dat datafile
 	if ~iscell(tmp.DataFile)
 		tmp.DataFile = {tmp.DataFile};
 	else
 		tmp.DataFile = tmp.DataFile;
 	end
+	% testinfo file
 	if ~iscell(tmp.TestFile)
 		tmp.TestFile = {tmp.TestFile};
 	else
@@ -233,6 +234,7 @@ else
 	% for now use default filter - probably want to have UI for user to
 	% specify
 	BPfilt = defaultFilter;
+	resampleData = defaultResampleRate;
 	% default output format is 32 bit floating point
 	OutputFormat = 'float32';
 end
@@ -255,6 +257,9 @@ fprintf('\n');
 
 %------------------------------------------------------------------------
 % get the data and information from the raw files
+%	cSweeps is a {nfiles, 1} cell array with each element holding an
+% 	{nChannels X ntrials} cell array of data for each file
+%	nexInfo is an instance of a SpikeInfo object
 %------------------------------------------------------------------------
 if testData == false
 	[cSweeps, expInfo] = read_data_for_export(F, Channels, BPfilt, ...
@@ -265,8 +270,8 @@ else
 end
 
 %------------------------------------------------------------------------
-% If not provided, create output .nex file name - adjust depending on # of files
-%	assume data from first file is consistent with others!!!!!!!!!
+% If not provided, create output .bin file name - adjust depending on # of
+% files assume data from first file is consistent with others!!!!!!!!!
 %------------------------------------------------------------------------
 if isempty(RawFileName)
 	if nFiles > 1
@@ -284,6 +289,7 @@ expInfo.InfoFileName = fullfile(OutputPath, [baseName '_info.mat']);
 
 %------------------------------------------------------------------------
 % create spyking params file
+% should probably create separate "default params" function
 %------------------------------------------------------------------------
 % get default params struct
 % filename is <output path>/<filename>.params
@@ -304,6 +310,19 @@ write_spyking_params(params);
 %------------------------------------------------------------------------
 % convert (concatenate) cSweeps to [nchannels, nsamples] matrix and write
 % to binary output file
+% From SpyKING Circus docs:
+% Raw binary File
+% The simplest file format is the raw_binary one. Suppose you have 
+% N channels
+%             C0,C1,...,CN
+% And if you assume that 
+%             Ci(t) 
+% is the value of channel Ci at time t, 
+% then your datafile should be a raw file with values
+%             C0(0),C1(0),CN(0),C0(1),...CN(1),...CN(T)
+% This is simply the flattened version of your recordings matrix, 
+% with size N x T
+% 
 %------------------------------------------------------------------------
 sendmsg(sprintf('Exporting raw binary data to %s', expInfo.FileName));
 
@@ -314,6 +333,7 @@ fp = fopen(expInfo.FileName, 'wb');
 for f = 1:nFiles
 	fprintf('Writing data for %s\n', F(f).file);
 	% write data for this file
+	% format is 
 	nw = fwrite(fp, cell2mat([cSweeps{f}]), OutputFormat);
 	% could also:
 	%	concatenate: tmp = [cVector{:}];

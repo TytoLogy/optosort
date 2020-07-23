@@ -124,7 +124,6 @@ function varargout = export_for_plexon(varargin)
 %------------------------------------------------------------------------
 % Initial things to define
 %------------------------------------------------------------------------
-sepstr = '----------------------------------------------------';
 NEX_UTIL_PATH = ['~/Work/Code/Matlab/stable/Toolbox/NeuroExplorer' ...
 					'/NexTools'];
 % filter info
@@ -137,9 +136,8 @@ testData = false;
 %------------------------------------------------------------------------
 % Setup
 %------------------------------------------------------------------------
-fprintf('\n%s\n%s\n', sepstr, sepstr);
-fprintf('%s running...\n', mfilename);
-fprintf('\n%s\n%s\n', sepstr, sepstr);
+sendmsg();
+sendmsg(sprintf('%s running...\n', mfilename));
 sendmsg('Checking paths');
 % add path to .nex file utils
 if ~exist('nexCreateFileData', 'file')
@@ -169,16 +167,19 @@ if nargin == 1
 	end
 	% assign values, fixing some things as necessary
 	% if file elements are not cells (i.e., just strings), convert to cell.
+	% path to data
 	if ~iscell(tmp.DataPath)
 		tmp.DataPath = {tmp.DataPath};
 	else
 		tmp.DataPath = tmp.DataPath;
 	end
+	% .dat datafile
 	if ~iscell(tmp.DataFile)
 		tmp.DataFile = {tmp.DataFile};
 	else
 		tmp.DataFile = tmp.DataFile;
 	end
+	% testinfo file
 	if ~iscell(tmp.TestFile)
 		tmp.TestFile = {tmp.TestFile};
 	else
@@ -284,8 +285,8 @@ else
 end
 
 %------------------------------------------------------------------------
-% If not provided, create output .nex file name - adjust depending on # of files
-%	assume data from first file is consistent with others!!!!!!!!!
+% If not provided, create output .nex file name - adjust depending on # of
+% files assume data from first file is consistent with others!!!!!!!!!
 %------------------------------------------------------------------------
 if isempty(NexFileName)
 	if nFiles > 1
