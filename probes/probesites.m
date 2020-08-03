@@ -32,9 +32,27 @@ ylim([150 320])
 % probe site ID from probe layout pdf: 
 %    CambridgeNeuroTech_Acute16ChProbe_Pinouts.pdf
 % data also in E1_ProbeLayout.xls
-
-% *** these sites are listed from proximal (top of probe) to
-% distal (tip of probe) ***
+%{
+ *** these sites are listed from proximal (top of probe) to
+ *** distal (tip of probe)
+  9
+      11
+   13
+      10
+   12
+      15
+   14
+      16
+   8
+      6
+   4
+      2
+   1
+      3
+   5
+      7
+    
+%}
 prb.id = [ ...
 	9; ...
 	11; ...
@@ -53,7 +71,21 @@ prb.id = [ ...
 	5; ...
 	7	];
 
-% probe site (column 1) to AD channel (column 2) map:
+% print out in mock layout
+for n = 1:prb.nsites
+	if isodd(n)
+		fprintf('   %d\n', prb.id(n));
+	else
+		fprintf('      %d\n', prb.id(n));
+	end
+end
+
+% map from probe site ID (1st col) to Omnetics connector (2nd col) map
+prb.site_to_omnetics_map = [ ...
+	9, 
+	
+
+% define probe site (column 1) to AD channel (column 2) map:
 prb.site_to_channel_map = [ ...
 	6,	1; ...
 	2,	3; ...
@@ -71,6 +103,8 @@ prb.site_to_channel_map = [ ...
 	12,	12; ...
 	13,	14; ...
 	9,	16 ];
+
+
 
 % for each probe_id site, find the corresponding A/D channel
 % so, loop through the sites as listed in prb.id
@@ -104,7 +138,11 @@ plot(xyud(:, 1), xyud(:, 2), '.b')
 hold on
 plot(xylr(:, 1), xylr(:, 2), '.r')
 hold off
-text(xylr(:, 1)*(1 + 0.05), xylr(:, 2), num2cell(prb.id))
+ctxt = cell(length(prb.id), 1);
+for n = 1:length(prb.id)
+	ctxt{n} = sprintf('c%d', prb.id(n));
+end
+text(xylr(:, 1)*(1 + 0.05), xylr(:, 2), ctxt, 'Color', 'r')
 ylim([150 320])
 
 %{
