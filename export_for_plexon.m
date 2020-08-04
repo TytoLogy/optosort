@@ -145,15 +145,15 @@ if ~exist('nexCreateFileData', 'file')
 		fprintf('%s: Adding NEX file utility path\n', mfilename)
 		addpath(NEX_UTIL_PATH);
 	else
-		fprintf('¡¡¡¡¡NEX utilities not found!!!!!!!\n');
-		fprintf('Please add to path');
+		fprintf('¡¡¡¡¡NeuroExplorer NEX utilities not found!!!!!!!\n');
+		fprintf('Please add to path\n');
 		error('%s: NEX utils not found', mfilename);
 	end
 end
 % check for path to readOptoData
 if ~exist('readOptoData', 'file')
 	fprintf('¡¡¡¡¡readOptoData function not found!!!!!!!\n');
-	fprintf('Please add to MATLAB path\n');
+	fprintf('Please add the opto directory to MATLAB path\n');
 	error('%s: readOptoData (in Opto project folder) not found', mfilename);
 end
 
