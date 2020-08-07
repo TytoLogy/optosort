@@ -47,7 +47,7 @@ plxFilePath = '/Users/sshanbhag/Work/Data/TestData/working/1417';
 nexInfoPath = plxFilePath;
 
 % sorted data file name
-plxFile = '1417_20200518_02_01_950_MERGE.plx';
+plxFile = '1417_20200518_02_01_950_MERGE-sorted.plx';
 % nexinfo file
 nexInfoFile = '1417_20200518_02_01_950_MERGE_nexinfo.mat';
 
