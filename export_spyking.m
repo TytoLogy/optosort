@@ -3,6 +3,7 @@
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
+% exports data in raw format for use with spyKing CIRCUS sorting program
 % sample script - working file for Sharad during development
 % 
 %------------------------------------------------------------------------
@@ -59,8 +60,8 @@ end
 %---------------------------------------
 % 1429 Cambridge NeuroTech Probe
 %---------------------------------------
-exportOpts.DataPath = '/Users/sshanbhag/Work/Data/TestData/1429/20200707';
-exportOpts.OutputPath = '/Users/sshanbhag/Work/Data/TestData/exports/1429';
+exportOpts.DataPath = '/Users/sshanbhag/Work/Data/TestData/working/1429/20200707';
+exportOpts.OutputPath = '/Users/sshanbhag/Work/Data/TestData/working/exports/1429/spyk';
 exportOpts.DataFile = '1429_20200707_01_01_2942_BBN.dat';
 exportOpts.OutputFile = '1429_20200707_01_01_2942_BBN.bin';
 exportOpts.TestFile = '1429_20200707_01_01_2942_BBN_testdata.mat';
@@ -85,6 +86,9 @@ exportOpts.BPfilt.ramp = 1;
 % the raw data
 exportOpts.BPfilt.type = 'butter';
 
+if ~exist(exportOpts.OutputPath)
+	mkdir(exportOpts.OutputPath);
+end
 %------------------------------------------------------------------------
 % resample data to nearest lower integer value?
 %------------------------------------------------------------------------

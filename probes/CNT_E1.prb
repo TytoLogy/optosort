@@ -1,6 +1,6 @@
 # SpyKING CIRCUS .prb configuration file
 # for Cambridge NeuroTech E1 16 channel probe
-# Date: 04-Aug-2020
+# Date: 11-Aug-2020
 total_nb_channels = 16
 radius = 200
 channel_groups = {

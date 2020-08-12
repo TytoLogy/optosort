@@ -158,6 +158,24 @@ prb.probetable = table(prb.id, prb.channel, prb.xy, 'VariableNames', {'SiteID', 
 % Write to mat file
 save('CNT_E1_probestruct.mat', 'prb', '-MAT');
 
+% check using plot xy coordinates and site id
+figure(3)
+plot(prb.xy(:, 1), prb.xy(:, 2), '.k')
+ctxt = cell(prb.nsites, 1);
+for n = 1:prb.nsites
+    ctxt{n} = sprintf('id %d', prb.channel(n)-1);
+    if prb.xy(n, 1) < 0
+        text(prb.xy(n, 1)*(1 - 0.05), prb.xy(n, 2), ctxt{n}, 'Color', 'k')
+    else
+        text(prb.xy(n, 1)*(1 + 0.05), prb.xy(n, 2), ctxt{n}, 'Color', 'k')
+    end
+end
+xlim([-40 45])
+ylim([150 320])
+xlabel('x')
+ylabel('y (depth)')
+title('AD (spyk) channel tweaked locations');
+
 %% Write channel and xy locations in prb format
 % This is essentially writing python code to define the geometry of the probe. 
 
@@ -212,8 +230,8 @@ channel_groups = {
 %}
 
 % probe file filename
-prbfile = 'CNT_E1.prb';
-% prbfile = '';
+% prbfile = 'CNT_E1.prb';
+prbfile = '';
 
 if isempty(prbfile)
     fp = 1;
