@@ -61,7 +61,7 @@ end
 % 1429 Cambridge NeuroTech Probe
 %---------------------------------------
 exportOpts.DataPath = '/Users/sshanbhag/Work/Data/TestData/working/1429/20200707';
-exportOpts.OutputPath = '/Users/sshanbhag/Work/Data/TestData/working/exports/1429/spyk';
+exportOpts.OutputPath = '/Users/sshanbhag/Work/Data/TestData/exports/1429';
 exportOpts.DataFile = '1429_20200707_01_01_2942_BBN.dat';
 exportOpts.OutputFile = '1429_20200707_01_01_2942_BBN.bin';
 exportOpts.TestFile = '1429_20200707_01_01_2942_BBN_testdata.mat';
@@ -86,7 +86,13 @@ exportOpts.BPfilt.ramp = 1;
 % the raw data
 exportOpts.BPfilt.type = 'butter';
 
-if ~exist(exportOpts.OutputPath)
+% !!!for raw (.bin) data to be used with spyKING CIRCUS, use no filter
+exportOpts.BPfilt = [];
+
+if ~exist(exportOpts.OutputPath, 'dir')
+	sendmsg('Output Directory not found');
+	fprintf('Creating output directory:\n');
+	fprintf('\t%s\n', exportOpts.OutputPath);
 	mkdir(exportOpts.OutputPath);
 end
 %------------------------------------------------------------------------

@@ -87,6 +87,8 @@ exportOpts.BPfilt.ramp = 1;
 % the raw data
 exportOpts.BPfilt.type = 'butter';
 
+% for raw (.bin) data to be used with spyKING CIRCUS, use no filter
+exportOpts.BPfilt = [];
 %------------------------------------------------------------------------
 % run!
 %------------------------------------------------------------------------
