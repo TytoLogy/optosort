@@ -379,6 +379,8 @@ function varargout = write_spyking_params(varargin)
 % write_spyking_params
 %------------------------------------------------------------------------
 % writes params file for Spyking Circus sorting
+% fields are:
+%
 % RAW_BINARY (read/parallel write)
 % 
 % | The parameters for RAW_BINARY file format are:
@@ -408,19 +410,19 @@ function varargout = write_spyking_params(varargin)
 	end
 	
 	fprintf(fp, '[data]\n');
-	fprintf(fp, 'file_format   = raw_binary\n');
+	fprintf(fp, 'file_format   = %s\n', params.data.file_format);
 	% samples/second
-	fprintf(fp, 'sampling_rate = %.4f\n', params.Fs);
+	fprintf(fp, 'sampling_rate = %.4f\n', params.data.Fs);
 	% should be int16,uint16,float32,...
-	fprintf(fp, 'data_dtype    = %s\n', params.OutputFormat);
+	fprintf(fp, 'data_dtype    = %s\n', params.data.OutputFormat);
 	% # of channels of output data (for demux the data)
-	fprintf(fp, 'nb_channels   = %d\n', params.nChannels);
+	fprintf(fp, 'nb_channels   = %d\n', params.data.nChannels);
 	% Optional, if a header with a fixed size is present
-	fprintf(fp, 'data_offset   = %d\n', params.DataOffset);
+	fprintf(fp, 'data_offset   = %d\n', params.data.DataOffset);
 	% Optional, if a header with a fixed size is present
-	fprintf(fp, 'dtype_offset  = %s\n', params.DataOffsetFormat);
+	fprintf(fp, 'dtype_offset  = %s\n', params.data.DataOffsetFormat);
 	% Optional, if you want a non unitary gain for the channels
-	fprintf(fp, 'gain          = %d\n', params.Gain);
+	fprintf(fp, 'gain          = %d\n', params.data.Gain);
 	if fp ~= 1
 		fclose(fp);
 	end
@@ -431,22 +433,42 @@ end
 %------------------------------------------------------------------------
 function params = default_spyking_params(varargin)
 %------------------------------------------------------------------------
-% params = default_spyking_params(varargin)
+% params = default_spyking_params(param_filename)
 %------------------------------------------------------------------------
 % create default params file for Spyking Circus sorting
 %------------------------------------------------------------------------
-% Input: (optional) params filename
+% Input: 
+%	param_filename			(optional) params filename
+% Output:
+%	P		params struct with fields:
+% 	 Filename = varargin{1};
+%
+%	 data (struct):
+%		data.file_format = 'raw_binary';
+% 		data.Fs = 48828.1250;
+% 		data.OutputFormat = 'float32';
+% 		data.nChannels = 16;
+% 		data.DataOffset = 0;
+% 		data.DataOffsetFormat = 'auto';
+% 		data.Gain = 1;
 %------------------------------------------------------------------------
+
+%
 	if isempty(varargin)
 		params.Filename = 'config_default.params';
 	else
 		params.Filename = varargin{1};
 	end
-	params.Fs = 48828.1250;
-	params.OutputFormat = 'float32';
-	params.nChannels = 16;
-	params.DataOffset = 0;
-	params.DataOffsetFormat = 'auto';
-	params.Gain = 1;
+	
+	% data parameters
+	data.file_format = 'raw_binary';
+	data.Fs = 48828.1250;
+	data.OutputFormat = 'float32';
+	data.nChannels = 16;
+	data.DataOffset = 0;
+	data.DataOffsetFormat = 'auto';
+	data.Gain = 1;
+	
+	params.data = data;
 end
 
