@@ -1,0 +1,2 @@
+2020-09-21 16:14:28,824 DEBUG    [circus.shared.parser] Creating a Circus Parser for datafile /Users/sshanbhag/Work/Code/Matlab/dev/TytoLogy/Experiments/optosort/1429_20200707_01_01_2942_BBN.bin
+2020-09-21 16:14:28,829 DEBUG    [circus.shared.probes] Reading the probe file /media/sshanbhag/Data/exports/1429/spyk/CNT_E1.prb
