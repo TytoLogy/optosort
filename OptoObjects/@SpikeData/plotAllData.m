@@ -56,7 +56,7 @@ function varargout = plotAllData(obj, channel, unit, varargin)
 % Revisions:
 %	13 Jul 202 (SJS): added docs,  
 %  7 Oct 2020 (SJS): added closePlots option
-%  9 Oct 2020 (SJS): added plotSnips option
+%  8 Oct 2020 (SJS): added plotSnips option, maxSnipsToPlot option
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -78,6 +78,8 @@ saveFormat = 'PNG';
 closePlots = false;
 % default plotSnips
 plotSnips = true;
+% default max # of snippets to plot
+maxSnipsToPlot = 5000;
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -156,6 +158,19 @@ while argN <= nvararg
 					plotSnips = false;
 				end
 				argN = argN + 2;
+
+			case {'MAXSNIPSTOPLOT', 'MAXSNIPS'}
+				val = varargin{argN + 1};
+				if ~isnumeric(val)
+					error('%s: arg to maxSnipsToPlot must be number', ...
+						      mfilename);
+				elseif val < 1
+					error('%s: arg to maxSnipsToPlot must be >= 1', ...
+						      mfilename);
+				else
+					maxSnipsToPlot = val;
+				end
+				argN = argN + 2;
 				
 			otherwise
 				error('SpikeData.plotAllData: unknown option %s', ...
@@ -199,31 +214,31 @@ for findx = 1:obj.Info.nFiles
 	%----------------------------------------------
 	% plot waveforms
 	%----------------------------------------------
-	% (1) vertically concatenate data stored in cell array of sweeps in
-	% st.spiketable into a single table
-	tmpT = vertcat(S.spiketable{:});
-	% (2) extract just the wave field 
-	tmpwav = tmpT.Wave;
-	% (3) plot overlaid waveforms
-	% plot in new figure
-	% need time vector for x-axis
-	[~, nBins] = size(tmpwav);
-	t_ms = (1000/obj.Info.Fs) * (0:(nBins - 1));
-	% plot waveforms, with mean and legend
-	% need tmpwav to be in column format - time in rows, indv. 
-	% units by column so send the function the transpose of the 
-	% tmpwav matrix.
-	hWF = figure;
-	hWF_ax = plot_spike_waveforms(t_ms, tmpwav', ...
-									'MEAN', true, 'LEGEND', true); %#ok<NASGU>
-	% add title to plot
-	% create title string with 2 rows:
-	%	filename (either from S struct or S.Info.FileInfo{findx}.F.file
-	%	channel and unit
-	tstr = {	S.fileName, sprintf('Channel %d Unit %d', channel, unit)};
-	title(tstr, 'Interpreter', 'none');
-	
 	if plotSnips
+		% (1) vertically concatenate data stored in cell array of sweeps in
+		% st.spiketable into a single table
+		tmpT = vertcat(S.spiketable{:});
+		% (2) extract just the wave field 
+		tmpwav = tmpT.Wave;
+		% (3) plot overlaid waveforms
+		% plot in new figure
+		% need time vector for x-axis
+		[~, nBins] = size(tmpwav);
+		t_ms = (1000/obj.Info.Fs) * (0:(nBins - 1));
+		% plot waveforms, with mean and legend
+		% need tmpwav to be in column format - time in rows, indv. 
+		% units by column so send the function the transpose of the 
+		% tmpwav matrix.
+		hWF = figure;
+		hWF_ax = plot_spike_waveforms(t_ms, tmpwav', ...
+										'MEAN', true, 'LEGEND', true); %#ok<NASGU>
+		% add title to plot
+		% create title string with 2 rows:
+		%	filename (either from S struct or S.Info.FileInfo{findx}.F.file
+		%	channel and unit
+		tstr = {	S.fileName, sprintf('Channel %d Unit %d', channel, unit)};
+		title(tstr, 'Interpreter', 'none');
+
 		% set figure filename - use the base from the FreqTuningInfo.F object
 		set(hWF, 'Name', sprintf('%s_Snips_Ch%d_Un%d', ...
 						obj.Info.FileInfo{findx}.F.base, S.channel, S.unit));
