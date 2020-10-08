@@ -22,7 +22,10 @@ function varargout = plotAllData(obj, channel, unit, varargin)
 % 				'PDF'		.pdf
 % 				'FIG'		.fig (saves MATLAB figure)
 %	 'closePlots'  if true, close plots after saving (if not saving plots
-%					   will remain open); default is false
+%					   will remain open); default is true
+%   'plotSnips'   if true, spike waveform 'snips" will be plotted for 
+%                 for each unit. default = true
+%   'maxSnipsToPlot'  max # of snippets to plot default is 5000
 %
 % Output Arguments:
 % 	 H		array of plot handles
@@ -218,9 +221,21 @@ for findx = 1:obj.Info.nFiles
 		% (1) vertically concatenate data stored in cell array of sweeps in
 		% st.spiketable into a single table
 		tmpT = vertcat(S.spiketable{:});
-		% (2) extract just the wave field 
-		tmpwav = tmpT.Wave;
-		% (3) plot overlaid waveforms
+		% (2) check number of spikes - if greater than maxSnipsToPlot, reduce
+		% sample size, and
+		% (3) extract just the wave field 
+		nspikes = height(tmpT);
+		if nspikes > maxSnipsToPlot
+			fprintf(['%s: Number of spikes (%d) is greater' ...
+							'than maxSnipsToPlot (%d)\n'], mfilename, nspikes,...
+							maxSnipsToPlot);
+			fprintf('Taking random sample of snippets\n');
+			% just get a limited range of random wavs
+			tmpwav = tmpT.Wave(randi(nspikes, maxSnipsToPlot, 1), :);
+		else
+			tmpwav = tmpT.Wave;
+		end
+		% (4) plot overlaid waveforms
 		% plot in new figure
 		% need time vector for x-axis
 		[~, nBins] = size(tmpwav);
