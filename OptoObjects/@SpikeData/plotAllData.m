@@ -56,6 +56,7 @@ function varargout = plotAllData(obj, channel, unit, varargin)
 % Revisions:
 %	13 Jul 202 (SJS): added docs,  
 %  7 Oct 2020 (SJS): added closePlots option
+%  9 Oct 2020 (SJS): added plotSnips option
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -75,6 +76,8 @@ plotPath = pwd;
 saveFormat = 'PNG';
 % default closePlots
 closePlots = false;
+% default plotSnips
+plotSnips = true;
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -123,6 +126,35 @@ while argN <= nvararg
 			case 'CLOSEPLOTS'
 				% set closePlots to true
 				closePlots = true;
+				argN = argN + 2;
+
+			case 'PSTHBINWIDTH'
+				val = varargin{argN + 1};
+				if isnumeric(val)
+					if val > 0
+						% this should be psth Bin size
+						psthBinWidth = varargin{1};
+					else
+						error('%s: psthBinWidth must be greater than 0', ...
+									mfilename);
+					end
+				else
+					error('%s: psthBinWidth must be a number', ...
+									mfilename);
+				end
+				argN = argN + 2;
+				
+			case {'PLOTSNIPS', 'PLOTWAVFORM', 'PLOTSPIKES'}
+				val = varargin{argN + 1};
+				if all([~isnumeric(val) ~islogical(val)])
+					error('%s: arg to plotSnips must be numeric or logical', ...
+						      mfilename);
+				end
+				if val
+					plotSnips = true;
+				else
+					plotSnips = false;
+				end
 				argN = argN + 2;
 				
 			otherwise
@@ -190,21 +222,24 @@ for findx = 1:obj.Info.nFiles
 	%	channel and unit
 	tstr = {	S.fileName, sprintf('Channel %d Unit %d', channel, unit)};
 	title(tstr, 'Interpreter', 'none');
-	% set figure filename - use the base from the FreqTuningInfo.F object
-	set(hWF, 'Name', sprintf('%s_Snips_Ch%d_Un%d', ...
-					obj.Info.FileInfo{findx}.F.base, S.channel, S.unit));
-	drawnow
-	% save waveform plot file
-	if savePlots
-		fprintf('Saving plot:\n  %s...', ...
-							fullfile(plotPath, get(gcf, 'Name')));
-		save_plot(hWF, saveFormat, plotPath);
-		fprintf('\n...done\n');
-		if closePlots
-			close(hWF);
+	
+	if plotSnips
+		% set figure filename - use the base from the FreqTuningInfo.F object
+		set(hWF, 'Name', sprintf('%s_Snips_Ch%d_Un%d', ...
+						obj.Info.FileInfo{findx}.F.base, S.channel, S.unit));
+		drawnow
+		% save waveform plot file
+		if savePlots
+			fprintf('Saving plot:\n  %s...', ...
+								fullfile(plotPath, get(gcf, 'Name')));
+			save_plot(hWF, saveFormat, plotPath);
+			fprintf('\n...done\n');
+			if closePlots
+				close(hWF);
+			end
 		end
 	end
-					
+	
 	%----------------------------------------------
 	% plot data according to test
 	%----------------------------------------------
@@ -237,7 +272,6 @@ for findx = 1:obj.Info.nFiles
 					close(hRLF);
 				end
 			end
-
 			
 		case 'FREQ_TUNING'
 			% set analysis window to [stimulus onset   stimulus offset]
