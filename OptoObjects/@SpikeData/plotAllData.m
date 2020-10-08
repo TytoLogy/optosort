@@ -21,6 +21,8 @@ function varargout = plotAllData(obj, channel, unit, varargin)
 % 				'PNG'		.png (default)
 % 				'PDF'		.pdf
 % 				'FIG'		.fig (saves MATLAB figure)
+%	 'closePlots'  if true, close plots after saving (if not saving plots
+%					   will remain open); default is false
 %
 % Output Arguments:
 % 	 H		array of plot handles
@@ -53,6 +55,7 @@ function varargout = plotAllData(obj, channel, unit, varargin)
 %	 
 % Revisions:
 %	13 Jul 202 (SJS): added docs,  
+%  7 Oct 2020 (SJS): added closePlots option
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -70,7 +73,8 @@ savePlots = false;
 plotPath = pwd;
 % default plot format
 saveFormat = 'PNG';
-
+% default closePlots
+closePlots = false;
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -115,6 +119,12 @@ while argN <= nvararg
 					error('SpikeData.plotAllData: unknown save format %s', ...
 								varargin{argN + 1});
 				end
+				
+			case 'CLOSEPLOTS'
+				% set closePlots to true
+				closePlots = true;
+				argN = argN + 2;
+				
 			otherwise
 				error('SpikeData.plotAllData: unknown option %s', ...
 							varargin{argN});
@@ -190,6 +200,9 @@ for findx = 1:obj.Info.nFiles
 							fullfile(plotPath, get(gcf, 'Name')));
 		save_plot(hWF, saveFormat, plotPath);
 		fprintf('\n...done\n');
+		if closePlots
+			close(hWF);
+		end
 	end
 					
 	%----------------------------------------------
@@ -220,6 +233,9 @@ for findx = 1:obj.Info.nFiles
 									fullfile(plotPath, get(hRLF, 'Name')));
 				save_plot(hRLF, saveFormat, plotPath);
 				fprintf('\n...done\n');
+				if closePlots
+					close(hRLF);
+				end
 			end
 
 			
@@ -249,6 +265,9 @@ for findx = 1:obj.Info.nFiles
 									fullfile(plotPath, get(hFTC, 'Name')));
 				save_plot(hFTC, saveFormat, plotPath);
 				fprintf('\n...done\n');
+				if closePlots
+					close(hFTC);
+				end
 			end
 
 		
@@ -273,6 +292,9 @@ for findx = 1:obj.Info.nFiles
 										fullfile(plotPath, get(hWAV{h}, 'Name')));
 					save_plot(hWAV{h}, saveFormat, plotPath);
 					fprintf('\n...done\n');
+					if closePlots
+						close(hWAV{h});
+					end
 				end
 			end
 			
@@ -295,6 +317,9 @@ for findx = 1:obj.Info.nFiles
 									fullfile(plotPath, get(hFRA, 'Name')));
 				save_plot(hFRA, saveFormat, plotPath);
 				fprintf('\n...done\n');
+				if closePlots
+					close(hFRA);
+				end
 			end
 	
 		otherwise
@@ -309,5 +334,9 @@ end
 % eventually need to add all handles to this output
 %------------------------------------------------------------------------
 if nargout
-	varargout{1} = hWF;
+	if ~closePlots
+		varargout{1} = hWF;
+	else
+		varargout{1} = [];
+	end
 end
