@@ -225,7 +225,7 @@ exportOpts.OutputFile = 'FRA.nex';
 %}
 
 
-
+%{
 %---------------------------------------
 % 1407 multichannel, all files
 %---------------------------------------
@@ -248,8 +248,7 @@ exportOpts.Channels = [4, 5, 7, 15];
 exportOpts.testData = false;
 %--------------------------------------
 %---------------------------------------
-
-%{
+%}
 
 %---------------------------------------
 % 1407 multichannel, test with smaller files
@@ -265,10 +264,9 @@ exportOpts.TestFile = { '1407_20200309_03_01_1350_BBN_testdata.mat', ...
 								'1407_20200309_03_01_1350_FREQ_TUNING_testdata.mat'	};
 exportOpts.OutputFile = '1407_20200309_03_01_1350_MERGEEVENTS_BBNFREQ.nex';
 exportOpts.Channels = [4, 5, 7, 15];
-exportOpts.testData = false;r
+exportOpts.testData = false;
 %---------------------------------------
 %---------------------------------------
-%}
 
 %{
 %---------------------------------------

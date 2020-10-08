@@ -21,6 +21,11 @@ function varargout = plotAllData(obj, channel, unit, varargin)
 % 				'PNG'		.png (default)
 % 				'PDF'		.pdf
 % 				'FIG'		.fig (saves MATLAB figure)
+%	 'closePlots'  if true, close plots after saving (if not saving plots
+%					   will remain open); default is true
+%   'plotSnips'   if true, spike waveform 'snips" will be plotted for 
+%                 for each unit. default = true
+%   'maxSnipsToPlot'  max # of snippets to plot default is 5000
 %
 % Output Arguments:
 % 	 H		array of plot handles
@@ -53,6 +58,8 @@ function varargout = plotAllData(obj, channel, unit, varargin)
 %	 
 % Revisions:
 %	13 Jul 202 (SJS): added docs,  
+%  7 Oct 2020 (SJS): added closePlots option
+%  8 Oct 2020 (SJS): added plotSnips option, maxSnipsToPlot option
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -70,7 +77,12 @@ savePlots = false;
 plotPath = pwd;
 % default plot format
 saveFormat = 'PNG';
-
+% default closePlots
+closePlots = false;
+% default plotSnips
+plotSnips = true;
+% default max # of snippets to plot
+maxSnipsToPlot = 5000;
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -115,6 +127,54 @@ while argN <= nvararg
 					error('SpikeData.plotAllData: unknown save format %s', ...
 								varargin{argN + 1});
 				end
+				
+			case 'CLOSEPLOTS'
+				% set closePlots to true
+				closePlots = true;
+				argN = argN + 2;
+
+			case 'PSTHBINWIDTH'
+				val = varargin{argN + 1};
+				if isnumeric(val)
+					if val > 0
+						% this should be psth Bin size
+						psthBinWidth = varargin{1};
+					else
+						error('%s: psthBinWidth must be greater than 0', ...
+									mfilename);
+					end
+				else
+					error('%s: psthBinWidth must be a number', ...
+									mfilename);
+				end
+				argN = argN + 2;
+				
+			case {'PLOTSNIPS', 'PLOTWAVFORM', 'PLOTSPIKES'}
+				val = varargin{argN + 1};
+				if all([~isnumeric(val) ~islogical(val)])
+					error('%s: arg to plotSnips must be numeric or logical', ...
+						      mfilename);
+				end
+				if val
+					plotSnips = true;
+				else
+					plotSnips = false;
+				end
+				argN = argN + 2;
+
+			case {'MAXSNIPSTOPLOT', 'MAXSNIPS'}
+				val = varargin{argN + 1};
+				if ~isnumeric(val)
+					error('%s: arg to maxSnipsToPlot must be number', ...
+						      mfilename);
+				elseif val < 1
+					error('%s: arg to maxSnipsToPlot must be >= 1', ...
+						      mfilename);
+				else
+					maxSnipsToPlot = val;
+				end
+				argN = argN + 2;
+				
 			otherwise
 				error('SpikeData.plotAllData: unknown option %s', ...
 							varargin{argN});
@@ -157,41 +217,59 @@ for findx = 1:obj.Info.nFiles
 	%----------------------------------------------
 	% plot waveforms
 	%----------------------------------------------
-	% (1) vertically concatenate data stored in cell array of sweeps in
-	% st.spiketable into a single table
-	tmpT = vertcat(S.spiketable{:});
-	% (2) extract just the wave field 
-	tmpwav = tmpT.Wave;
-	% (3) plot overlaid waveforms
-	% plot in new figure
-	% need time vector for x-axis
-	[~, nBins] = size(tmpwav);
-	t_ms = (1000/obj.Info.Fs) * (0:(nBins - 1));
-	% plot waveforms, with mean and legend
-	% need tmpwav to be in column format - time in rows, indv. 
-	% units by column so send the function the transpose of the 
-	% tmpwav matrix.
-	hWF = figure;
-	hWF_ax = plot_spike_waveforms(t_ms, tmpwav', ...
-									'MEAN', true, 'LEGEND', true); %#ok<NASGU>
-	% add title to plot
-	% create title string with 2 rows:
-	%	filename (either from S struct or S.Info.FileInfo{findx}.F.file
-	%	channel and unit
-	tstr = {	S.fileName, sprintf('Channel %d Unit %d', channel, unit)};
-	title(tstr, 'Interpreter', 'none');
-	% set figure filename - use the base from the FreqTuningInfo.F object
-	set(hWF, 'Name', sprintf('%s_Snips_Ch%d_Un%d', ...
-					obj.Info.FileInfo{findx}.F.base, S.channel, S.unit));
-	drawnow
-	% save waveform plot file
-	if savePlots
-		fprintf('Saving plot:\n  %s...', ...
-							fullfile(plotPath, get(gcf, 'Name')));
-		save_plot(hWF, saveFormat, plotPath);
-		fprintf('\n...done\n');
+	if plotSnips
+		% (1) vertically concatenate data stored in cell array of sweeps in
+		% st.spiketable into a single table
+		tmpT = vertcat(S.spiketable{:});
+		% (2) check number of spikes - if greater than maxSnipsToPlot, reduce
+		% sample size, and
+		% (3) extract just the wave field 
+		nspikes = height(tmpT);
+		if nspikes > maxSnipsToPlot
+			fprintf(['%s: Number of spikes (%d) is greater' ...
+							'than maxSnipsToPlot (%d)\n'], mfilename, nspikes,...
+							maxSnipsToPlot);
+			fprintf('Taking random sample of snippets\n');
+			% just get a limited range of random wavs
+			tmpwav = tmpT.Wave(randi(nspikes, maxSnipsToPlot, 1), :);
+		else
+			tmpwav = tmpT.Wave;
+		end
+		% (4) plot overlaid waveforms
+		% plot in new figure
+		% need time vector for x-axis
+		[~, nBins] = size(tmpwav);
+		t_ms = (1000/obj.Info.Fs) * (0:(nBins - 1));
+		% plot waveforms, with mean and legend
+		% need tmpwav to be in column format - time in rows, indv. 
+		% units by column so send the function the transpose of the 
+		% tmpwav matrix.
+		hWF = figure;
+		hWF_ax = plot_spike_waveforms(t_ms, tmpwav', ...
+										'MEAN', true, 'LEGEND', true); %#ok<NASGU>
+		% add title to plot
+		% create title string with 2 rows:
+		%	filename (either from S struct or S.Info.FileInfo{findx}.F.file
+		%	channel and unit
+		tstr = {	S.fileName, sprintf('Channel %d Unit %d', channel, unit)};
+		title(tstr, 'Interpreter', 'none');
+
+		% set figure filename - use the base from the FreqTuningInfo.F object
+		set(hWF, 'Name', sprintf('%s_Snips_Ch%d_Un%d', ...
+						obj.Info.FileInfo{findx}.F.base, S.channel, S.unit));
+		drawnow
+		% save waveform plot file
+		if savePlots
+			fprintf('Saving plot:\n  %s...', ...
+								fullfile(plotPath, get(gcf, 'Name')));
+			save_plot(hWF, saveFormat, plotPath);
+			fprintf('\n...done\n');
+			if closePlots
+				close(hWF);
+			end
+		end
 	end
-					
+	
 	%----------------------------------------------
 	% plot data according to test
 	%----------------------------------------------
@@ -220,8 +298,10 @@ for findx = 1:obj.Info.nFiles
 									fullfile(plotPath, get(hRLF, 'Name')));
 				save_plot(hRLF, saveFormat, plotPath);
 				fprintf('\n...done\n');
+				if closePlots
+					close(hRLF);
+				end
 			end
-
 			
 		case 'FREQ_TUNING'
 			% set analysis window to [stimulus onset   stimulus offset]
@@ -249,6 +329,9 @@ for findx = 1:obj.Info.nFiles
 									fullfile(plotPath, get(hFTC, 'Name')));
 				save_plot(hFTC, saveFormat, plotPath);
 				fprintf('\n...done\n');
+				if closePlots
+					close(hFTC);
+				end
 			end
 
 		
@@ -273,6 +356,9 @@ for findx = 1:obj.Info.nFiles
 										fullfile(plotPath, get(hWAV{h}, 'Name')));
 					save_plot(hWAV{h}, saveFormat, plotPath);
 					fprintf('\n...done\n');
+					if closePlots
+						close(hWAV{h});
+					end
 				end
 			end
 			
@@ -295,6 +381,9 @@ for findx = 1:obj.Info.nFiles
 									fullfile(plotPath, get(hFRA, 'Name')));
 				save_plot(hFRA, saveFormat, plotPath);
 				fprintf('\n...done\n');
+				if closePlots
+					close(hFRA);
+				end
 			end
 	
 		otherwise
@@ -309,5 +398,9 @@ end
 % eventually need to add all handles to this output
 %------------------------------------------------------------------------
 if nargout
-	varargout{1} = hWF;
+	if ~closePlots
+		varargout{1} = hWF;
+	else
+		varargout{1} = [];
+	end
 end

@@ -398,11 +398,9 @@ classdef SpikeData
 		%-------------------------------------------------------
 		%-------------------------------------------------------
 		function tbl = spikesForChannel(obj, chanNum, varargin)
-		%-------------------------------------------------------
-		% tbl = spikesForChannel(channelNum, <unitNum>)
 		% get table of spikes for a specific unit and channel
 		% ¡NOTE: channels will match the AD channel from  TDT!
-		%-------------------------------------------------------
+
 		% check inputs
 			if length(chanNum) ~= 1
 				error(['SpikeData.spikesForChannel: requires single,' ...
@@ -428,9 +426,8 @@ classdef SpikeData
 		
 		%-------------------------------------------------------
 		%-------------------------------------------------------
+		function [tbl, varargout] = spikesForFile(obj, fileNum)
 		% get table of spikes for a specific file
-		%-------------------------------------------------------
-		function tbl = spikesForFile(obj, fileNum)
 			if ~between(fileNum, 1, obj.Info.nFiles)
 				error('requested file %d out of range [1 %d]', ...
 										fileNum, obj.Info.nFiles);
@@ -439,16 +436,17 @@ classdef SpikeData
 				valid_rows = (obj.Spikes.TS >= obj.Info.fileStartTime(fileNum)) & ...
 									(obj.Spikes.TS <= obj.Info.fileEndTime(fileNum));
 				tbl = obj.Spikes(valid_rows, :);
+				varargout{1} = valid_rows;
 			end
 		end
 		%-------------------------------------------------------
 
 
 		%-------------------------------------------------------
+		%-------------------------------------------------------
 		function arr = spikesAsMatrix(obj)
-		%-------------------------------------------------------
 		% get spike information as original matrix (as exported from Plexon)
-		%-------------------------------------------------------
+		
 			% return Spikes table in original form
 			arr = table2array(obj.Spikes);
 		end
@@ -502,11 +500,10 @@ classdef SpikeData
 		%-------------------------------------------------------
 		%-------------------------------------------------------		
 		function [channelNum, unitNum] = get_default_channel_and_unit(obj)
-		%-------------------------------------------------------
 		% [channelNum, unitNum] = SpikeData.get_default_channel_and_unit
 		%	looks for first non-zero unit within lowest channel number
 		%	returns empty value ([]) if channel and/or unit is not found.
-		%-------------------------------------------------------
+	
 		% get list of channels and units
 			channelList = obj.listChannels;
 			unitList = obj.listUnits;
@@ -532,11 +529,10 @@ classdef SpikeData
 		%-------------------------------------------------------
 		%-------------------------------------------------------		
 		function channelNum = get_default_channel(obj)
-		%-------------------------------------------------------
 		% [channelNum] = SpikeData.get_default_channel
 		%	looks for first non-zero unit within lowest channel number
 		%	returns empty value ([]) if channel and/or unit is not found.
-		%-------------------------------------------------------
+
 			% setup: set channel and unit to empty
 			channelNum = [];
 			% get list of channels and units
@@ -575,11 +571,10 @@ classdef SpikeData
 		%-------------------------------------------------------
 		%-------------------------------------------------------		
 		function unitNum = get_default_unit(obj, channelNum)
-		%-------------------------------------------------------
 		% [channelNum] = SpikeData.get_default_unit(channelNum)
 		%	looks for first non-zero unit within given channelNum
 		%	returns empty value ([]) if channel and/or unit is not found.
-		%-------------------------------------------------------
+		
 			% setup: set unit to empty
 			unitNum = [];
 			% need index of channel in channelList
@@ -601,7 +596,6 @@ classdef SpikeData
 		%-------------------------------------------------
 		%-------------------------------------------------
 		function indx = indexForFile(obj, filename)
-		%-------------------------------------------------
 		% index_number = SpikeData.indexForFile(filename)
 		%-------------------------------------------------
 		% given a filename (with or without path), returns index to that
@@ -621,7 +615,6 @@ classdef SpikeData
 		%-------------------------------------------------
 		%-------------------------------------------------
 		function indx = indexForChannel(obj, channel_number)
-		%-------------------------------------------------
 		% index_number = indexForChannel(obj, channel_number)
 		%-------------------------------------------------
 		% given a channel_number, returns index_number for accessing
@@ -645,7 +638,7 @@ classdef SpikeData
 		%-------------------------------------------------
 		% given a test name, returns index_number for accessing
 		% that file in various SpikeData arrays (e.g.,
-		% SpikeData.Info.FileInfo{}
+		% SpikeData.Info.FileInfo{})
 		% if file is not found, empty value will be returned
 		%-------------------------------------------------		
 			indx = find(strcmpi(test_name, obj.listTestNames));			
