@@ -111,6 +111,8 @@ end
 
 % get stimulusTimes {onset, offset} by stimulus - need to do this AFTER
 % getting obj.Dinf.test.wavlist values
+%
+% 12 Oct 2020: note that this doesn't account for the 
 stimulusTimes = obj.getstimulusTimes;
 
 
