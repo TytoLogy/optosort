@@ -250,6 +250,7 @@ exportOpts.testData = false;
 %---------------------------------------
 %}
 
+%{
 %---------------------------------------
 % 1407 multichannel, test with smaller files
 %---------------------------------------
@@ -267,6 +268,7 @@ exportOpts.Channels = [4, 5, 7, 15];
 exportOpts.testData = false;
 %---------------------------------------
 %---------------------------------------
+%}
 
 %{
 %---------------------------------------
@@ -284,6 +286,28 @@ exportOpts.Channels = [4, 5, 7, 15];
 exportOpts.testData = false;
 %}
 
+
+%---------------------------------------
+% 1458 Opto data
+%---------------------------------------
+
+exportOpts.DataPath = '/media/Data/NeuroData/Raw/1458/20210506';
+% write to D drive on PETROL for testing with Plexon OFS
+% exportOpts.OutputPath = '/Volumes/D/1407';
+% local working dir
+exportOpts.OutputPath = '/home/sshanbhag/Work/Data/Test';
+exportOpts.DataFile = {	'1458_20210506_01_0_3300_BBN.dat', ...
+								'1458_20210506_01_0_3300_OPTO-AMP-100ms.dat' 	};
+exportOpts.TestFile = { ...
+                  '1458_20210506_01_0_3300_BBN_testdata.mat', ...
+               	'1458_20210506_01_0_3300_OPTO-AMP-100ms_testdata.mat'	};
+exportOpts.OutputFile = '1458_20210506_01_0_3300_MERGE.nex';
+exportOpts.Channels = [8, 15];
+exportOpts.testData = false;
+
+
+%---------------------------------------
+%---------------------------------------
 %------------------------------------------------------------------------
 % filter parameters for raw neural data
 %------------------------------------------------------------------------
