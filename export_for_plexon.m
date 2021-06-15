@@ -116,6 +116,8 @@ function varargout = export_for_plexon(varargin)
 % 9 June 2020 (SJS): added resampleData field to exportOptions
 % 16 Jun 2020 (SJS): added testData as option to build test data for plx
 % 29 Jun 2020 (SJS): add stimulus specific event timestamps to nex file
+% 15 Jun 2021 (SJS): moving NEX_UTIL_PATH out of here - should be defined
+% in user's path!
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -124,8 +126,8 @@ function varargout = export_for_plexon(varargin)
 % Initial things to define
 %------------------------------------------------------------------------
 sepstr = '----------------------------------------------------';
-NEX_UTIL_PATH = ['~/Work/Code/Matlab/stable/Toolbox/NeuroExplorer' ...
-					'/NexTools'];
+% NEX_UTIL_PATH = ['~/Work/Code/Matlab/stable/Toolbox/NeuroExplorer' ...
+% 					'/NexTools'];
 % filter info
 defaultFilter = [];
 % resample data? default is no
@@ -140,6 +142,7 @@ fprintf('\n%s\n%s\n', sepstr, sepstr);
 fprintf('%s running...\n', mfilename);
 fprintf('\n%s\n%s\n', sepstr, sepstr);
 sendmsg('Checking paths');
+%{
 % add path to .nex file utils
 if ~exist('nexCreateFileData', 'file')
 	if exist(NEX_UTIL_PATH, 'dir')
@@ -147,14 +150,22 @@ if ~exist('nexCreateFileData', 'file')
 		addpath(NEX_UTIL_PATH);
 	else
 		fprintf('¡¡¡¡¡NEX utilities not found!!!!!!!\n');
-		fprintf('Please add to path');
+		fprintf('Please add to path\n');
 		error('%s: NEX utils not found', mfilename);
 	end
+end
+%}
+% check for nex utilities (to read/write nex files)
+% add path to .nex file utils
+if ~exist('writeNexFile.m', 'file')
+	fprintf('¡¡¡¡¡NEX utilities not found!!!!!!!\n');
+	fprintf('Please add NeuroExplorer NexTools to path\n');
+	error('%s: NEX utils not found', mfilename);
 end
 % check for path to readOptoData
 if ~exist('readOptoData', 'file')
 	fprintf('¡¡¡¡¡readOptoData function not found!!!!!!!\n');
-	fprintf('Please add to MATLAB path\n');
+	fprintf('Please add Opto folder to MATLAB path\n');
 	error('%s: readOptoData (in Opto project folder) not found', mfilename);
 end
 

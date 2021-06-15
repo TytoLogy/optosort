@@ -24,7 +24,7 @@
 % check to make sure tytoLogy (esp opto) things are on path
 if ~exist('readOptoData', 'file')
 	fprintf(['readOptoData (and possibly other TytoLogy/opto functions' ...
-						'not found!\n'])
+						' not found!\n'])
 	fprintf('Please check Matlab path(s)\n');
 	fprintf(['e.g.:\n' ...
 				'addpath(''~/Work/Code/Matlab/dev/TytoLogy/Experiments/Opto'')\n']);
