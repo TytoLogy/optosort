@@ -216,18 +216,15 @@ classdef CurveInfo
 					error('%s: Please use FRAInfo class for these data', ...
 								mfilename);
 
-			% for OPTO test...
-				case 'OPTO'
-					fprintf('\t%s test, finding indices\n', obj.testtype);
-
 			% for WavFile, tell user to use WAVInfo class.
 				case 'WAVFILE'
 					error('%s: Please use WAVInfo class for these data', ...
 								mfilename);
                      
 			% for OPTO-AMP test...
-				case 'OPTO-AMP'
-					fprintf('\t%s test, finding indices\n', obj.testtype);
+				case {'OPTO', 'OPTO-AMP'}
+					error('%s: Please use OptoInfo class for these data', ...
+								mfilename);
 				
 			% unknown type
 				otherwise
