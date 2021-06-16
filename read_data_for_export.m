@@ -131,9 +131,12 @@ for f = 1:nFiles
 	
 	% CurveInfo (or WavInfo) to hold everything for each file
 	switch(upper(tmpDinf.test.Type))
-		case {'LEVEL', 'OPTO', 'OPTO-AMP'}
+		case 'LEVEL'
 			cInfo{f} = CurveInfo(tmpDinf);
-			
+         
+      case {'OPTO', 'OPTO-AMP'}
+			cInfo{f} = OptoInfo(tmpDinf);
+         
 		case {'FREQ'}
 			cInfo{f} = FreqTuningInfo(tmpDinf);
 		

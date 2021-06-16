@@ -327,12 +327,11 @@ classdef CurveInfo
 					error(['CurveInfo.getCurveTitleString: '...
 									'Use FRAInfo subclass']);
 
-				case 'OPTO'
-					% not yet implemented
-					
-				case 'OPTO-AMP'
+				case {'OPTO', 'OPTO-AMP'}
+               % lumping opto and opto-amp together. this might
+               % be stupid or brilliant...
 					error(['CurveInfo.getCurveTitleString: '...
-									'Use OptoAmpInfo subclass']);
+									'Use OptoInfo subclass']);
                
 				case 'WAVFILE'
 						error(['CurveInfo.getCurveTitleString: '...
