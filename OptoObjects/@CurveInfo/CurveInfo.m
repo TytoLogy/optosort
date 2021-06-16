@@ -60,6 +60,8 @@ classdef CurveInfo
 %	15 Jun 2020 (SJS): fixed issue with trying to directly index into 
 %							varied_values dependent property
 %	2 Jul 2020 (SJS): pulled out FREQTUNING specific code into subclass
+%  16 Jun 2021 (SJS): subclass OptoInfo to handle OPTO and OPTO-AMP,
+%                     altered code here to deal with this
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------

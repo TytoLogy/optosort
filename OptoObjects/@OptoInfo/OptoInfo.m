@@ -215,6 +215,14 @@ classdef OptoInfo < CurveInfo
 			onsetbins = obj.stimStartBin;
 % 			offsetbins = obj.stimEndBin;
 
+%{
+some notes:
+
+opto-amp will run ntrials * nlevels 
+
+
+
+%}
 			%------------------------------------------------------------------------
 			% create eventList as struct array
 			%------------------------------------------------------------------------
