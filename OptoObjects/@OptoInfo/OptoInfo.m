@@ -107,7 +107,7 @@ classdef OptoInfo < CurveInfo
 		%-------------------------------------------------		
 			% make sure Dinf is initialized
          if isempty(obj.Dinf)
-            error(['CurveInfo.getStimulusIndices: ' ...
+            error(['OptoInfo.getStimulusIndices: ' ...
                    'Dinf not defined/is empty']);
          end
 			
