@@ -117,8 +117,9 @@ classdef OptoInfo < CurveInfo
 			% amplitude
 				case 'OPTO-AMP'
 					fprintf('\t%s test, finding indices\n', obj.testtype);
-					% list of levels by sweep, levels and # of levels tested
-					levellist = obj.levels_bysweep;
+					% list of amplitudes by sweep, amplitudes and 
+               % # of amplitudes tested
+					levellist = obj.optoAmp_bysweep;
 					levels = obj.varied_values;
 					nlevels = length(levels);
 					% locate where trials for each level are located in the
@@ -256,6 +257,24 @@ opto-amp will run ntrials * nlevels
 		%-------------------------------------------------
 		%-------------------------------------------------
 		
+		%-------------------------------------------------
+      % returns all values of test.stimcache.opto.amp
+		%-------------------------------------------------
+      function val = optoAmp_bysweep(obj)
+         if obj.has_stimcache
+            % opto is a cell array of structs... 
+            %    why??? I don't remember...
+            % so, will have to do a little machination
+            % convert cell array of structs to an array 
+            % of structs
+            tmp = cell2mat(obj.Dinf.test.stimcache.opto);
+            % then get all amplitude values
+            val = [tmp.Amp]';
+         else
+            val = [];
+         end
+      end
+      
 		%-------------------------------------------------
 		%-------------------------------------------------
 		% get/set access for dependent properties
