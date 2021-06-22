@@ -129,10 +129,15 @@ for f = 1:nFiles
 		[D, tmpDinf] = resample_data(D, tmpDinf, resampleRate);
 	end
 	
-	% CurveInfo (or WavInfo) to hold everything for each file
+	% Initialize CurveInfo (or WavInfo) to hold everything for each file
 	switch(upper(tmpDinf.test.Type))
 		case 'LEVEL'
-			cInfo{f} = CurveInfo(tmpDinf);
+         % check if test.Name is CLICK
+         if strcmpi(tmpDinf.test.Name, 'CLICK')
+            cInfo{f} = ClickInfo(tmpDinf);
+         else
+   			cInfo{f} = CurveInfo(tmpDinf);
+         end
          
       case {'OPTO', 'OPTO-AMP'}
 			cInfo{f} = OptoInfo(tmpDinf);
