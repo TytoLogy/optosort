@@ -114,6 +114,8 @@ classdef ClickInfo < CurveInfo
 			% for OPTO-AMP test, find indices of stimuli with same opto
 			% amplitude
 				case 'LEVEL'
+               % from opto_build_clickstimList.m :
+               % stim properties are stored in stimList. 
                
 					fprintf('\t%s test, finding indices\n', obj.testtype);
 					% list of amplitudes by sweep, amplitudes and 
@@ -235,16 +237,21 @@ opto-amp will run ntrials * nlevels
 									nevents, 1);
 			% format string depends on test type
 			switch upper(obj.testtype)
-				case {'OPTO', 'OPTO-AMP'}
-					formatstr = '%s_%dmV';
-					for n = 1:nevents
-						events(n).name = sprintf(formatstr, obj.testtype, ...
-																varied_values(n));
-						events(n).samples = onsetbins(stimindex{n});
-					end
+				case {'LEVEL'}
+               if strcmpi(obj.testname, 'CLICK')
+                  formatstr = '%s_%dmV';
+                  for n = 1:nevents
+                     events(n).name = sprintf(formatstr, obj.testtype, ...
+                                                   varied_values(n));
+                     events(n).samples = onsetbins(stimindex{n});
+                  end
+               else
+                  error('ClickInfo: unsupported testname %s', ...
+                           obj.testname);
+               end
 
 				otherwise
-					error('OptoInfo: use subclass or unsupported %s', ...
+					error('ClickInfo: unsupported testtype %s (LEVEL)', ...
                        obj.testtype);
 			end
 		end
