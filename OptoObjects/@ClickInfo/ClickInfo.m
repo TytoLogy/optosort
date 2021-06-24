@@ -111,13 +111,18 @@ classdef ClickInfo < CurveInfo
 			
          % look for levels, indices
 			switch upper(obj.testtype)
-			% for OPTO-AMP test, find indices of stimuli with same opto
+			% for click test, find indices of stimuli with same opto
 			% amplitude
 				case 'LEVEL'
+    				fprintf('\t%s test, finding indices\n', obj.testtype);
+
                % from opto_build_clickstimList.m :
-               % stim properties are stored in stimList. 
+               % stim properties are stored in stimList for newer 
+               % data (post 23 Jun 2021!)
                
-					fprintf('\t%s test, finding indices\n', obj.testtype);
+               % for data with empty stimList, need to take a different
+               % approach
+               
 					% list of amplitudes by sweep, amplitudes and 
                % # of amplitudes tested
 					levellist = obj.optoAmp_bysweep;
@@ -262,7 +267,34 @@ opto-amp will run ntrials * nlevels
 		% shortcut methods to stimcache values
 		%-------------------------------------------------
 		%-------------------------------------------------
-		
+%{
+		ci.Dinf.test
+
+ans = 
+
+  struct with fields:
+
+             Type: 'LEVEL'
+             Name: 'CLICK'
+       ScriptType: [83 84 65 78 68 65 76 79 78 69]
+             Reps: 20
+        Randomize: 1
+            Block: 0
+         saveStim: 0
+            Level: 70
+         NullStim: 1
+        NoiseStim: 0
+      AcqDuration: 250
+      SweepPeriod: 255
+      stimIndices: [40×1 double]
+    nCombinations: 2
+     optovar_name: [65 109 112]
+          optovar: 0
+    audiovar_name: [67 108 105 99 107 76 101 118 101 108]
+         audiovar: [76 101 118 101 108]
+        curvetype: [76 69 86 69 76 43 79 112 116 111 79 70 70]
+      %}
+      
 		%-------------------------------------------------
       % returns all values of test.stimcache.opto.amp
 		%-------------------------------------------------
@@ -281,7 +313,23 @@ opto-amp will run ntrials * nlevels
          end
       end
       
-		%-------------------------------------------------
+		% returns test.stimcache.nreps: # of reps for each stimulus
+		function val = nreps(obj)
+			if obj.has_stimcache
+				val = obj.Dinf.test.stimcache.nreps;
+			else
+				val = obj.Dinf.test.Reps;
+			end
+      end
+		% returns test.stimcache.ntrials: # of stimulus types
+		function val = ntrials(obj)
+			if obj.has_stimcache
+				val = obj.Dinf.test.stimcache.ntrials;
+         else
+            val = 1;
+			end
+      end
+      %-------------------------------------------------
 		%-------------------------------------------------
 		% get/set access for dependent properties
 		%-------------------------------------------------

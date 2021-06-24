@@ -73,6 +73,7 @@ exportOpts.Channels = [8, 15];
 exportOpts.testData = false;
 
 
+%{
 %---------------------------------------
 %---------------------------------------
 % 000 Opto, Click data
@@ -103,6 +104,7 @@ exportOpts.TestFile = { ...
 exportOpts.OutputFile = '000_20210623_0_0_0_MERGE.nex';
 exportOpts.Channels = [8, 15];
 exportOpts.testData = false;
+%}
 
 %---------------------------------------
 %---------------------------------------
@@ -125,11 +127,13 @@ exportOpts.BPfilt.type = 'butter';
 %------------------------------------------------------------------------
 % resample data to nearest lower integer value?
 %------------------------------------------------------------------------
-% exportOpts.resampleData = [];
+exportOpts.resampleData = [];
 
 %------------------------------------------------------------------------
-% run!
+% run export_for_plexon!
 %------------------------------------------------------------------------
 [nD, nI] = export_for_plexon(exportOpts);
 
-save('testobj.mat', 'nD', 'nI', '-MAT')
+ci = nI.FileInfo{1}
+% 
+% save('testobj.mat', 'nD', 'nI', '-MAT')
