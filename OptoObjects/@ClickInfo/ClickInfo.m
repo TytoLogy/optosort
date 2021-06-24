@@ -191,15 +191,14 @@ classdef ClickInfo < CurveInfo
 		% returns list of variable value and # of vars..
 		%---------------------------------------------------------------------
 			switch upper(obj.testtype)
-  				case {'OPTO', 'OPTO-AMP'}
-					warning('CurveInfo.varlist: OPTO not yet implemented');
+  				case {'CLICK'}
 					varlist = {obj.varied_values};
 					nvars = length(varlist);
 
 				otherwise
 					error('%s: unsupported test type %s', ...
-								'CurveInfo.varlist', ...
-								cInfo.testtype);
+								'ClickInfo.varlist', ...
+								obj.testtype);
 			end
 		end
 		%-------------------------------------------------
@@ -241,18 +240,19 @@ opto-amp will run ntrials * nlevels
 			% format string depends on test type
 			switch upper(obj.testtype)
 				case {'LEVEL'}
-               if strcmpi(obj.testname, 'CLICK')
-                  formatstr = '%s_%dmV';
-                  for n = 1:nevents
-                     events(n).name = sprintf(formatstr, obj.testtype, ...
-                                                   varied_values(n));
-                     events(n).samples = onsetbins(stimindex{n});
-                  end
-               else
+               % make sure we have click test
+               if ~strcmpi(obj.testname, 'CLICK')
                   error('ClickInfo: unsupported testname %s', ...
                            obj.testname);
                end
-
+               
+               formatstr = '%s_%dmV';
+               for n = 1:nevents
+                  events(n).name = sprintf(formatstr, obj.testtype, ...
+                                                varied_values(n));
+                  events(n).samples = onsetbins(stimindex{n});
+               end
+                  
 				otherwise
 					error('ClickInfo: unsupported testtype %s (LEVEL)', ...
                        obj.testtype);
@@ -290,7 +290,31 @@ opto-amp will run ntrials * nlevels
          audiovar: [76 101 118 101 108]
         curvetype: [76 69 86 69 76 43 79 112 116 111 79 70 70]
       %}
-      
+
+		% returns test.stimcache.vname, char string identifying
+		% variable(s) for curve (similar to test.Name)
+		function val = varied_parameter(obj)
+			if obj.has_stimcache
+				val = char(obj.Dinf.test.stimcache.vname);
+         else
+            % might not need char() conversion, but do it anyway just in
+            % case...
+				val = char(obj.Dinf.test.Name);
+			end
+		end
+		% returns test.stimcache.vrange, values of varied parameter
+		function val = varied_values(obj)
+			if obj.has_stimcache
+				val = obj.Dinf.test.stimcache.vrange;
+         else
+            % return level(s) of stimulus
+            val = obj.Dinf.test.Level;
+            % if null stimulus was played, add it as level == 0 
+            if obj.Dinf.test.NullStim
+               val = [0 val];
+            end
+			end
+		end      
 		% returns test.stimcache.nreps: # of reps for each stimulus
 		function val = nreps(obj)
 			if obj.has_stimcache

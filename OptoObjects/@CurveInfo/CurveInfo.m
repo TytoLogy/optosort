@@ -375,7 +375,7 @@ classdef CurveInfo
 				otherwise
 					error('%s: unsupported test type %s', ...
 								'CurveInfo.varlist', ...
-								cInfo.testtype);
+								obj.testtype);
 			end
 		end
 		%-------------------------------------------------
@@ -451,7 +451,7 @@ classdef CurveInfo
 			end
 		end
 		% returns test.stimcache.vname, char string identifying
-		% variable(s) for curve (similar to test.Name
+		% variable(s) for curve (similar to test.Name)
 		function val = varied_parameter(obj)
 			if obj.has_stimcache
 				val = char(obj.Dinf.test.stimcache.vname);
