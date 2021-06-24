@@ -216,20 +216,18 @@ classdef ClickInfo < CurveInfo
 			[stimindex, ~] = obj.getStimulusIndices;
 			% get varied values (wav files)
 			varied_values = obj.varied_values;
-			% get stimulus onset offset bins
+			% get stimulus onset bins
 			% to align to appended/merged file, will need to add
 			% SpikeInfo.fileStartBin(findx) - 1
 			onsetbins = obj.stimStartBin;
-% 			offsetbins = obj.stimEndBin;
 
 %{
 some notes:
 
 opto-amp will run ntrials * nlevels 
 
-
-
 %}
+         
 			%------------------------------------------------------------------------
 			% create eventList as struct array
 			%------------------------------------------------------------------------
@@ -270,8 +268,6 @@ opto-amp will run ntrials * nlevels
 %{
 		ci.Dinf.test
 
-ans = 
-
   struct with fields:
 
              Type: 'LEVEL'
@@ -294,24 +290,6 @@ ans =
          audiovar: [76 101 118 101 108]
         curvetype: [76 69 86 69 76 43 79 112 116 111 79 70 70]
       %}
-      
-		%-------------------------------------------------
-      % returns all values of test.stimcache.opto.amp
-		%-------------------------------------------------
-      function val = optoAmp_bysweep(obj)
-         if obj.has_stimcache
-            % opto is a cell array of structs... 
-            %    why??? I don't remember...
-            % so, will have to do a little machination
-            % convert cell array of structs to an array 
-            % of structs
-            tmp = cell2mat(obj.Dinf.test.stimcache.opto);
-            % then get all amplitude values
-            val = [tmp.Amp]';
-         else
-            val = [];
-         end
-      end
       
 		% returns test.stimcache.nreps: # of reps for each stimulus
 		function val = nreps(obj)
