@@ -364,11 +364,6 @@ end
 nD = nexAddEvent(nD, force_col(nexInfo.stimStartTimeVector), 'stimstart');
 nD = nexAddEvent(nD, force_col(nexInfo.stimEndTimeVector), 'stimend');
 
-
-% %%%%%%% TEMP
-ci = nexInfo.FileInfo{1};
-save('nI.mat', 'nexInfo', 'ci');
-
 % add stimulus-specific onset times
 for f = 1:nFiles
 	events = nexInfo.stimEventTimesForFile(f);

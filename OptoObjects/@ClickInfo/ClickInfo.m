@@ -181,7 +181,7 @@ classdef ClickInfo < CurveInfo
 			fname = [fname '.' fext];
 			switch obj.testtype
 
-				case {'OPTO', 'OPTO-AMP'}
+				case {'LEVEL'}
                % lumping opto and opto-amp together. this might
                % be stupid or brilliant...
 					% list of levels, and # of levels tested
@@ -189,19 +189,14 @@ classdef ClickInfo < CurveInfo
 					nvars = length(varlist);
 					titleString = cell(nvars, 1);
                for v = 1:nvars
-                  if v == 1
                      titleString{v} = {   fname, ...
-                                          sprintf('Light = %d mV', ...
+                                          sprintf('Click %d dB', ...
                                           varlist(v))};
-                  else
-                     titleString{v} = sprintf('Light = %d mV', ...
-                                                varlist(v));
-                  end
                end
                					
 				otherwise
 					error('%s: unsupported test type %s', ...
-								'CurveInfo.getCurveTitleString', ...
+								'ClickInfo.getCurveTitleString', ...
 								obj.testtype);
 			end
 		end
@@ -243,13 +238,6 @@ classdef ClickInfo < CurveInfo
 			% to align to appended/merged file, will need to add
 			% SpikeInfo.fileStartBin(findx) - 1
 			onsetbins = obj.stimStartBin;
-
-%{
-some notes:
-
-opto-amp will run ntrials * nlevels 
-
-%}
          
 			%------------------------------------------------------------------------
 			% create eventList as struct array
