@@ -42,12 +42,12 @@ end
 %------------------------------------------------------------------------
 
 
-
+%{
 %---------------------------------------
 %---------------------------------------
 % 1458 Opto, Click data
 %---------------------------------------
-% use this for working with the older click data files
+% use this for working with the older click data files without stimList
 %---------------------------------------
 % this is for data on SJS's Linux machine
 exportOpts.DataPath = '/media/Data/NeuroData/Raw/1458/20210506';
@@ -71,9 +71,9 @@ exportOpts.TestFile = { ...
 exportOpts.OutputFile = '1458_20210506_01_0_3300_MERGE.nex';
 exportOpts.Channels = [8, 15];
 exportOpts.testData = false;
+%}
 
 
-%{
 %---------------------------------------
 %---------------------------------------
 % 000 Opto, Click data
@@ -102,9 +102,9 @@ exportOpts.TestFile = { ...
                   ...
                   };
 exportOpts.OutputFile = '000_20210623_0_0_0_MERGE.nex';
-exportOpts.Channels = [8, 15];
+exportOpts.Channels = [8];
 exportOpts.testData = false;
-%}
+
 
 %---------------------------------------
 %---------------------------------------
@@ -137,3 +137,25 @@ exportOpts.resampleData = [];
 ci = nI.FileInfo{1}
 % 
 % save('testobj.mat', 'nD', 'nI', '-MAT')
+
+
+
+%%
+
+if isempty(ci.Dinf.stimList)
+   % no stimList, so we need to make some assumptions
+   % get varied values
+   levels = ci.varied_values;
+   % check if NULL stimulus was played
+   if ci.Dinf.test.NullStim
+      % since null stim was played, ASSUME that stimindex == 1 is null,
+      % stimindex == 2 is click
+      % create list of levels by sweep
+      levellist = zeros(size(ci.Dinf.test.stimIndices));
+      % set levels for stimIndices == 1(null) to 0;
+      levellist(ci.Dinf.test.stimIndices == 1) = levels(1);
+      % set levels for stimIndices == 2 (click) to level
+      levellist(ci.Dinf.test.stimIndices == 2) = levels(2);      
+      
+   end
+end

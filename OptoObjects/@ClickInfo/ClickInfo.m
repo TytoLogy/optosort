@@ -125,7 +125,7 @@ classdef ClickInfo < CurveInfo
                
 					% list of amplitudes by sweep, amplitudes and 
                % # of amplitudes tested
-					levellist = obj.optoAmp_bysweep;
+					levellist = obj.getLevels;
 					levels = obj.varied_values;
 					nlevels = length(levels);
 					% locate where trials for each level are located in the
@@ -147,6 +147,30 @@ classdef ClickInfo < CurveInfo
 		end	% END getStimulusIndices method
 		%-------------------------------------------------
 
+      function levellist = getLevels(obj)
+         % get varied values
+         levels = obj.varied_values;
+         % check if NULL stimulus was played
+         if obj.Dinf.test.NullStim
+            % since null stim was played, ASSUME that 
+            % stimindex == 1 is null,
+            % stimindex == 2 is click
+            % create list of levels by sweep
+            levellist = zeros(size(obj.Dinf.test.stimIndices));
+            % set levels for stimIndices == 1(null) to 0;
+            levellist(obj.Dinf.test.stimIndices == 1) = levels(1);
+            % set levels for stimIndices == 2 (click) to level
+            levellist(obj.Dinf.test.stimIndices == 2) = levels(2);
+         else
+            % since no null stim was played, ASSUME that 
+            % stimindex == 1 is click
+            % create list of levels by sweep
+            levellist = zeros(size(obj.Dinf.test.stimIndices));
+            % set levels for stimIndices == 1 (click) to levels(1);
+            levellist(obj.Dinf.test.stimIndices == 1) = levels(1);
+         end
+      end
+      
 		%-------------------------------------------------
 		%-------------------------------------------------
 		function titleString = getCurveTitleString(obj)
