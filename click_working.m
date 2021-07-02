@@ -41,7 +41,6 @@ end
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
-
 %{
 %---------------------------------------
 %---------------------------------------
@@ -56,7 +55,7 @@ exportOpts.DataPath = '/media/Data/NeuroData/Raw/1458/20210506';
 % exportOpts.OutputPath = '/Volumes/D/1407';
 % local working dir
 % exportOpts.OutputPath = '/home/sshanbhag/Work/Data/Test';
-exportOpts.OutputPath = '/media/Data/NeuroData/TestData/sort/export/1458';
+exportOpts.OutputPath = '/media/Data/NeuroData/TestData/click';
 exportOpts.DataFile = {	%'1458_20210506_01_0_3300_BBN.dat', ...
 								%'1458_20210506_01_0_3300_OPTO-AMP-100ms.dat', ...
                         '1458_20210506_01_0_3300_CLICK.dat', ...
@@ -68,8 +67,8 @@ exportOpts.TestFile = { ...
               '1458_20210506_01_0_3300_CLICK_testdata.mat', ...
                   ...
                   };
-exportOpts.OutputFile = '1458_20210506_01_0_3300_MERGE.nex';
-exportOpts.Channels = [8, 15];
+exportOpts.OutputFile = '1458_20210506_01_0_3300_oldclick_MERGE.nex';
+exportOpts.Channels = [8];
 exportOpts.testData = false;
 %}
 
@@ -89,7 +88,7 @@ exportOpts.DataPath = '/media/Data/NeuroData/TestData/click/20210623';
 % exportOpts.OutputPath = '/Volumes/D/1407';
 % local working dir
 % exportOpts.OutputPath = '/home/sshanbhag/Work/Data/Test';
-exportOpts.OutputPath = '/media/Data/NeuroData/TestData/sort/export/1458';
+exportOpts.OutputPath = '/media/Data/NeuroData/TestData/click';
 exportOpts.DataFile = {	%'1458_20210506_01_0_3300_BBN.dat', ...
 								%'1458_20210506_01_0_3300_OPTO-AMP-100ms.dat', ...
                         '000_20210623_0_0_0_CLICK.dat', ...
@@ -101,10 +100,10 @@ exportOpts.TestFile = { ...
               '000_20210623_0_0_0_CLICK.dat_testdata.mat', ...
                   ...
                   };
-exportOpts.OutputFile = '000_20210623_0_0_0_MERGE.nex';
+exportOpts.OutputFile = '000_20210623_0_0_0_newclick_MERGE.nex';
 exportOpts.Channels = [8];
 exportOpts.testData = false;
-
+%}
 
 %---------------------------------------
 %---------------------------------------
