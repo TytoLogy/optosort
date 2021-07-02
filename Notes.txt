@@ -1,0 +1,4 @@
+todo.txt
+
+- no filestart at beginning of file... ? double check this
+- also no start sweep
