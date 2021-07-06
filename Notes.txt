@@ -2,3 +2,6 @@ todo.txt
 
 - no filestart at beginning of file... ? double check this
 - also no start sweep
+
+6 Jul 21:
+issue with the events seems to be for values of time == 0.
