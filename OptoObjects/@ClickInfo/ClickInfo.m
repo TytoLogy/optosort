@@ -258,9 +258,9 @@ classdef ClickInfo < CurveInfo
                            obj.testname);
                end
                
-               formatstr = '%s_%dmV';
+               formatstr = '%s_%ddB';
                for n = 1:nevents
-                  events(n).name = sprintf(formatstr, obj.testtype, ...
+                  events(n).name = sprintf(formatstr, 'CLICK', ...
                                                 varied_values(n));
                   events(n).samples = onsetbins(stimindex{n});
                end
