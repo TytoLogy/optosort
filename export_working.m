@@ -298,7 +298,7 @@ exportOpts.DataPath = '/media/Data/NeuroData/Raw/1458/20210506';
 % local working dir
 % exportOpts.OutputPath = '/home/sshanbhag/Work/Data/Test';
 % on myotis (ubuntu linux desktop):
-exportOpts.OutputPath = '/media/Data/NeuroData/TestData/sort/export/1458';
+exportOpts.OutputPath = '/media/Data/NeuroData/TestData/sort/1458';
 % on NAS:
 % exportOpts.OutputPath = '/media/NAS/By User/SJS/tmp'
 %{
