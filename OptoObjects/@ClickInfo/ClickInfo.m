@@ -111,16 +111,21 @@ classdef ClickInfo < CurveInfo
 			
          % look for levels, indices
 			switch upper(obj.testtype)
-			% for OPTO-AMP test, find indices of stimuli with same opto
+			% for click test, find indices of stimuli with same opto
 			% amplitude
 				case 'LEVEL'
+    				fprintf('\t%s test, finding indices\n', obj.testtype);
+
                % from opto_build_clickstimList.m :
-               % stim properties are stored in stimList. 
+               % stim properties are stored in stimList for newer 
+               % data (post 23 Jun 2021!)
                
-					fprintf('\t%s test, finding indices\n', obj.testtype);
+               % for data with empty stimList, need to take a different
+               % approach
+               
 					% list of amplitudes by sweep, amplitudes and 
                % # of amplitudes tested
-					levellist = obj.optoAmp_bysweep;
+					levellist = obj.getLevels;
 					levels = obj.varied_values;
 					nlevels = length(levels);
 					% locate where trials for each level are located in the
@@ -142,6 +147,30 @@ classdef ClickInfo < CurveInfo
 		end	% END getStimulusIndices method
 		%-------------------------------------------------
 
+      function levellist = getLevels(obj)
+         % get varied values
+         levels = obj.varied_values;
+         % check if NULL stimulus was played
+         if obj.Dinf.test.NullStim
+            % since null stim was played, ASSUME that 
+            % stimindex == 1 is null,
+            % stimindex == 2 is click
+            % create list of levels by sweep
+            levellist = zeros(size(obj.Dinf.test.stimIndices));
+            % set levels for stimIndices == 1(null) to 0;
+            levellist(obj.Dinf.test.stimIndices == 1) = levels(1);
+            % set levels for stimIndices == 2 (click) to level
+            levellist(obj.Dinf.test.stimIndices == 2) = levels(2);
+         else
+            % since no null stim was played, ASSUME that 
+            % stimindex == 1 is click
+            % create list of levels by sweep
+            levellist = zeros(size(obj.Dinf.test.stimIndices));
+            % set levels for stimIndices == 1 (click) to levels(1);
+            levellist(obj.Dinf.test.stimIndices == 1) = levels(1);
+         end
+      end
+      
 		%-------------------------------------------------
 		%-------------------------------------------------
 		function titleString = getCurveTitleString(obj)
@@ -152,7 +181,7 @@ classdef ClickInfo < CurveInfo
 			fname = [fname '.' fext];
 			switch obj.testtype
 
-				case {'OPTO', 'OPTO-AMP'}
+				case {'LEVEL'}
                % lumping opto and opto-amp together. this might
                % be stupid or brilliant...
 					% list of levels, and # of levels tested
@@ -160,19 +189,14 @@ classdef ClickInfo < CurveInfo
 					nvars = length(varlist);
 					titleString = cell(nvars, 1);
                for v = 1:nvars
-                  if v == 1
                      titleString{v} = {   fname, ...
-                                          sprintf('Light = %d mV', ...
+                                          sprintf('Click %d dB', ...
                                           varlist(v))};
-                  else
-                     titleString{v} = sprintf('Light = %d mV', ...
-                                                varlist(v));
-                  end
                end
                					
 				otherwise
 					error('%s: unsupported test type %s', ...
-								'CurveInfo.getCurveTitleString', ...
+								'ClickInfo.getCurveTitleString', ...
 								obj.testtype);
 			end
 		end
@@ -186,15 +210,14 @@ classdef ClickInfo < CurveInfo
 		% returns list of variable value and # of vars..
 		%---------------------------------------------------------------------
 			switch upper(obj.testtype)
-  				case {'OPTO', 'OPTO-AMP'}
-					warning('CurveInfo.varlist: OPTO not yet implemented');
+  				case {'CLICK'}
 					varlist = {obj.varied_values};
 					nvars = length(varlist);
 
 				otherwise
 					error('%s: unsupported test type %s', ...
-								'CurveInfo.varlist', ...
-								cInfo.testtype);
+								'ClickInfo.varlist', ...
+								obj.testtype);
 			end
 		end
 		%-------------------------------------------------
@@ -211,20 +234,11 @@ classdef ClickInfo < CurveInfo
 			[stimindex, ~] = obj.getStimulusIndices;
 			% get varied values (wav files)
 			varied_values = obj.varied_values;
-			% get stimulus onset offset bins
+			% get stimulus onset bins
 			% to align to appended/merged file, will need to add
 			% SpikeInfo.fileStartBin(findx) - 1
 			onsetbins = obj.stimStartBin;
-% 			offsetbins = obj.stimEndBin;
-
-%{
-some notes:
-
-opto-amp will run ntrials * nlevels 
-
-
-
-%}
+         
 			%------------------------------------------------------------------------
 			% create eventList as struct array
 			%------------------------------------------------------------------------
@@ -238,18 +252,19 @@ opto-amp will run ntrials * nlevels
 			% format string depends on test type
 			switch upper(obj.testtype)
 				case {'LEVEL'}
-               if strcmpi(obj.testname, 'CLICK')
-                  formatstr = '%s_%dmV';
-                  for n = 1:nevents
-                     events(n).name = sprintf(formatstr, obj.testtype, ...
-                                                   varied_values(n));
-                     events(n).samples = onsetbins(stimindex{n});
-                  end
-               else
+               % make sure we have click test
+               if ~strcmpi(obj.testname, 'CLICK')
                   error('ClickInfo: unsupported testname %s', ...
                            obj.testname);
                end
-
+               
+               formatstr = '%s_%ddB';
+               for n = 1:nevents
+                  events(n).name = sprintf(formatstr, 'CLICK', ...
+                                                varied_values(n));
+                  events(n).samples = onsetbins(stimindex{n});
+               end
+                  
 				otherwise
 					error('ClickInfo: unsupported testtype %s (LEVEL)', ...
                        obj.testtype);
@@ -262,26 +277,73 @@ opto-amp will run ntrials * nlevels
 		% shortcut methods to stimcache values
 		%-------------------------------------------------
 		%-------------------------------------------------
-		
-		%-------------------------------------------------
-      % returns all values of test.stimcache.opto.amp
-		%-------------------------------------------------
-      function val = optoAmp_bysweep(obj)
-         if obj.has_stimcache
-            % opto is a cell array of structs... 
-            %    why??? I don't remember...
-            % so, will have to do a little machination
-            % convert cell array of structs to an array 
-            % of structs
-            tmp = cell2mat(obj.Dinf.test.stimcache.opto);
-            % then get all amplitude values
-            val = [tmp.Amp]';
+%{
+		ci.Dinf.test
+
+  struct with fields:
+
+             Type: 'LEVEL'
+             Name: 'CLICK'
+       ScriptType: [83 84 65 78 68 65 76 79 78 69]
+             Reps: 20
+        Randomize: 1
+            Block: 0
+         saveStim: 0
+            Level: 70
+         NullStim: 1
+        NoiseStim: 0
+      AcqDuration: 250
+      SweepPeriod: 255
+      stimIndices: [40×1 double]
+    nCombinations: 2
+     optovar_name: [65 109 112]
+          optovar: 0
+    audiovar_name: [67 108 105 99 107 76 101 118 101 108]
+         audiovar: [76 101 118 101 108]
+        curvetype: [76 69 86 69 76 43 79 112 116 111 79 70 70]
+      %}
+
+		% returns test.stimcache.vname, char string identifying
+		% variable(s) for curve (similar to test.Name)
+		function val = varied_parameter(obj)
+			if obj.has_stimcache
+				val = char(obj.Dinf.test.stimcache.vname);
          else
-            val = [];
-         end
+            % might not need char() conversion, but do it anyway just in
+            % case...
+				val = char(obj.Dinf.test.Name);
+			end
+		end
+		% returns test.stimcache.vrange, values of varied parameter
+		function val = varied_values(obj)
+			if obj.has_stimcache
+				val = obj.Dinf.test.stimcache.vrange;
+         else
+            % return level(s) of stimulus
+            val = obj.Dinf.test.Level;
+            % if null stimulus was played, add it as level == 0 
+            if obj.Dinf.test.NullStim
+               val = [0 val];
+            end
+			end
+		end      
+		% returns test.stimcache.nreps: # of reps for each stimulus
+		function val = nreps(obj)
+			if obj.has_stimcache
+				val = obj.Dinf.test.stimcache.nreps;
+			else
+				val = obj.Dinf.test.Reps;
+			end
       end
-      
-		%-------------------------------------------------
+		% returns test.stimcache.ntrials: # of stimulus types
+		function val = ntrials(obj)
+			if obj.has_stimcache
+				val = obj.Dinf.test.stimcache.ntrials;
+         else
+            val = 1;
+			end
+      end
+      %-------------------------------------------------
 		%-------------------------------------------------
 		% get/set access for dependent properties
 		%-------------------------------------------------

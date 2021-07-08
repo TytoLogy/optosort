@@ -1,0 +1,14 @@
+todo.txt
+
+- no filestart at beginning of file... ? double check this
+- also no start sweep
+
+6 Jul 21:
+issue with the events seems to be for values of time == 0.
+
+not sure why the merged 1458 data fails to save as plx in PFS when
+two opto time data plus click are included. get "invalid value" error
+from OFS. 
+
+single opto plus click is okay. ????
+
