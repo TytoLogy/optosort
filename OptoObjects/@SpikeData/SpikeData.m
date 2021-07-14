@@ -67,7 +67,8 @@ classdef SpikeData
 	% protected contants
 	%-------------------------------------------------------
 	properties (Access = protected, Constant = true)
-		VALID_TESTNAMES =  {'BBN', 'FREQ_TUNING', 'WAV', 'FRA'};
+		VALID_TESTNAMES =  {'BBN', 'FREQ_TUNING', 'WAV', 'FRA', ...
+                           'OPTO-AMP', 'CLICK'};
 	end
 	
 	%-------------------------------------------------------
