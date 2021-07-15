@@ -286,15 +286,12 @@ exportOpts.Channels = [4, 5, 7, 15];
 exportOpts.testData = false;
 %}
 
-
+%{
 %---------------------------------------
 % 1458 Opto data
 %---------------------------------------
 % this is for data on SJS's Linux machine
 exportOpts.DataPath = '/media/Data/NeuroData/Raw/1458/20210506';
-
-% write to D drive on PETROL for testing with Plexon OFS
-% exportOpts.OutputPath = '/Volumes/D/1407';
 % local working dir
 % exportOpts.OutputPath = '/home/sshanbhag/Work/Data/Test';
 % on myotis (ubuntu linux desktop):
@@ -341,7 +338,49 @@ exportOpts.TestFile = { '1458_20210506_01_0_3300_BBN_testdata.mat', ...
 exportOpts.OutputFile = '1458_20210506_01_0_3300_MERGE_sgloptoclick.nex';
 exportOpts.Channels = [8, 10, 15];
 exportOpts.testData = false;
+%}
 
+%---------------------------------------
+% 1459 Opto data
+%---------------------------------------
+exportOpts.testData = false;
+% this is for data on SJS's Linux machine
+exportOpts.DataPath = '/media/Data/NeuroData/Raw/1459/20210422';
+% local working dir
+% exportOpts.OutputPath = '/home/sshanbhag/Work/Data/Test';
+% on myotis (ubuntu linux desktop):
+exportOpts.OutputPath = '/media/Data/NeuroData/TestData/sort/1459';
+% on NAS:
+% exportOpts.OutputPath = '/media/NAS/By User/SJS/tmp'
+exportOpts.DataFile = {	'1459_20210422_02_0_3500_BBN.dat', ...
+                        '1459_20210422_02_0_3500_FREQ_TUNING.dat', ...
+                        '1459_20210422_02_0_3500_FRA.dat', ...
+                        '1459_20210422_02_0_3500_WAV.dat', ...
+                        '1459_20210422_02_0_3500_OPTO-AMP.dat', ...
+                        '1459_20210422_02_0_3500_CLICK.dat', ...
+                        ...
+                        };
+exportOpts.TestFile = { '1459_20210422_02_0_3500_BBN_testdata.mat', ...
+                        '1459_20210422_02_0_3500_FREQ_TUNING_testdata.mat', ...
+                        '1459_20210422_02_0_3500_FRA_testdata.mat', ...
+                        '1459_20210422_02_0_3500_WAV_testdata.mat', ...
+                        '1459_20210422_02_0_3500_OPTO-AMP_testdata.mat', ...
+                        '1459_20210422_02_0_3500_CLICK_testdata.mat', ...
+                        ...
+                        };
+exportOpts.OutputFile = '1459_20210422_02_0_3500_MERGE_allchan.nex';
+exportOpts.Channels = 1:16;
+% exportOpts.Channels = [6, 7, 14, 16];
+%{
+% just export opto for now to see what channels to export for real
+exportOpts.DataFile = {	'1459_20210422_02_0_3500_OPTO-AMP.dat' ...
+                        };
+exportOpts.TestFile = { '1459_20210422_02_0_3500_OPTO-AMP_testdata.mat' ...
+                        ...
+                        };
+exportOpts.OutputFile = '1459_20210422_02_0_3500_MERGE_optoonly.nex';
+exportOpts.Channels = 1:16;
+%}
 
 %---------------------------------------
 %---------------------------------------
