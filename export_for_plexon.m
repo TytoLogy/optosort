@@ -228,7 +228,11 @@ if nargin == 1
 		if ~isempty(tmp.OutputPath)
 			% if not empty, make sure path exists
 			if ~exist(tmp.OutputPath, 'dir')
-				error('%s: output directory %s not found', mfilename, tmp.OutputPath);
+				warning('%s: output directory %s not found', mfilename, ...
+                          tmp.OutputPath);
+            sendmsg('Creating output directory')
+            mkdir(tmp.OutputPath);
+                       
 			end
 		end
 		NexFilePath = tmp.OutputPath;
