@@ -382,44 +382,53 @@ end
 %------------------------------------------------------------------------
 % Add Events (aka timestamps, markers)
 %------------------------------------------------------------------------
-if any(strcmpi(eventsToWrite, {'all', 'startsweep'}))
-   % add start sweep time stamps as event - assume consistent across channels!
+% add start sweep time stamps as event - assume consistent across channels!
+if any(strcmpi('all', eventsToWrite) | ...
+               strcmpi('startsweep', eventsToWrite))
    %  [nexFile] = nexAddEvent( nexFile, timestamps, name )
    % events must be in column format...?
    nD = nexAddEvent(nD, force_col(nexInfo.startTimeVector), 'startsweep');
 end
 
-if any(strcmpi(eventsToWrite, {'all', 'endsweep'}))
-   % add end sweep time stamps as event - assume consistent across channels!
-   % this is technically redundant, as startsweep event should be 1 sample or
-   % time interval greater than endsweep. there is little overhead involved in
-   % adding it so for now keep it here
+% add end sweep time stamps as event - assume consistent across channels!
+% this is technically redundant, as startsweep event should be 1 sample or
+% time interval greater than endsweep. there is little overhead involved in
+% adding it so for now keep it here
+if any(strcmpi('all', eventsToWrite) | ...
+               strcmpi('endsweep', eventsToWrite))
    nD = nexAddEvent(nD, force_col(nexInfo.endTimeVector), 'endsweep');
 end
-if any(strcmpi(eventsToWrite, {'all', 'filestart'}))
-   % add file start/end times as single event type
+
+% add file start times as single event type
+if any(strcmpi('all', eventsToWrite) | strcmpi('filestart', eventsToWrite))
    nD = nexAddEvent(nD, force_col(nexInfo.fileStartTime), 'filestart');
 end
-if any(strcmpi(eventsToWrite, {'all', 'fileend'}))
+
+% add file end times as single event type
+if any(strcmpi('all', eventsToWrite) | strcmpi('fileend', eventsToWrite))
    nD = nexAddEvent(nD, force_col(nexInfo.fileEndTime), 'fileend');
 end
-if any(strcmpi(eventsToWrite, {'all', 'filename'}))
-   % Add individual event for each file with filename as event name
+
+% Add individual event for each file with filename as event name
+if any(strcmpi('all', eventsToWrite) | strcmpi('filename', eventsToWrite))
    for f = 1:nFiles
       nD = nexAddEvent(nD, nexInfo.fileStartTime(f), ...
                         nexInfo.FileInfo{f}.F.base);
    end
 end
-if any(strcmpi(eventsToWrite, {'all', 'stimstart'}))
-   % add stimulus onset and offset times
+
+% add stimulus onset ...
+if any(strcmpi('all', eventsToWrite) | strcmpi('stimstart', eventsToWrite))
    nD = nexAddEvent(nD, force_col(nexInfo.stimStartTimeVector), ...
                         'stimstart');
 end
-if any(strcmpi(eventsToWrite, {'all', 'stimend'}))
+% ... and offset times
+if any(strcmpi('all', eventsToWrite) | strcmpi('stimend', eventsToWrite))
    nD = nexAddEvent(nD, force_col(nexInfo.stimEndTimeVector), 'stimend');
 end
-if any(strcmpi(eventsToWrite, {'all', 'stim_id'}))
-   % add stimulus-specific onset times
+
+% add stimulus-specific onset times
+if any(strcmpi('all', eventsToWrite) | strcmpi('stim_id', eventsToWrite))
    for f = 1:nFiles
       events = nexInfo.stimEventTimesForFile(f);
       fprintf('Adding events from file %s\n', nexInfo.FileInfo{f}.F.file);
@@ -429,6 +438,7 @@ if any(strcmpi(eventsToWrite, {'all', 'stim_id'}))
       end
    end
 end
+
 %------------------------------------------------------------------------
 % write to nexfile
 %------------------------------------------------------------------------

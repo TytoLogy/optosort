@@ -95,8 +95,10 @@ exportOpts.TestFile = { ...
    '1466_20210617_01_0_550_WAV_postAnest_testdata.mat', ...
    '1466_20210617_01_0_550_CLICK_postAnest_testdata.mat', ...
    };
-exportOpts.OutputFile = '1466_20210617_01_0_550_MERGE_allchan.nex';
-exportOpts.Channels = 1:8;
+exportOpts.OutputFile = '1466_20210617_01_0_550_MERGE_C1_filestimstart.nex';
+% specify which events to write
+exportOpts.eventsToWrite = {'filestart', 'stimstart'};
+exportOpts.Channels = 1;
 
 %---------------------------------------
 %---------------------------------------
