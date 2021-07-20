@@ -469,6 +469,10 @@ end
 end
 
 
+%------------------------------------------------------------------------
+% Checks input eventsToWrite string or cell array for valid events to 
+% write to output .nex file
+%------------------------------------------------------------------------
 function eventsToWrite = checkEventsToWrite(tmp)
 % Valid event names:
 %    'all'             write all events
