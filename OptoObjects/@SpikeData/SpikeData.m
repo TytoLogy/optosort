@@ -20,6 +20,42 @@ classdef SpikeData
 % 					(used when imported exported MAT from OfflineSorter)
 %	hasContinuousData
 % 					1 if continuous data are loaded, 
+%
+%------------------------------------------------------------------------
+% Methods for class SpikeData:
+% 
+%    SpikeData
+%     constructor
+%    addContinuousDataFromPLXObj
+%    addPlexonInfo
+%    addPlexonSpikesFromMat
+%    addPlexonSpikesFromPLXObj
+%    check_channels
+%    check_units
+%    getSpikesByStim
+%    get_default_channel
+%    get_default_channel_and_unit
+%    get_default_unit
+%    indexForChannel
+%    indexForFile
+%    indexForTestName
+%    listChannels
+%    listFiles
+%    listInfo
+%    listTestNames
+%    listTestTypes
+%    listUnits
+%    nUnits
+%    plotAllData
+%    plotUnitWaveforms
+%    printInfo
+%    selectSpikes
+%    spikesAsMatrix
+%    spikesForAnalysis
+%    spikesForAnalysisByUnit
+%    spikesForChannel
+%    spikesForFile
+%    validTestNames
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
