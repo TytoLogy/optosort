@@ -90,6 +90,25 @@ function varargout = export_for_plexon(varargin)
 % 		true	fake data will be created
 % 		false	no fake data!
 % 		if not defined, no fake data!
+%
+%  exportInfo.eventsToWrite
+%       Specify the events to write to the file. Can be a single item
+%       or a cell array of items.
+%       If an empty cell or string is specified, then no events will be 
+%       written to the file
+%       Default: all
+%       Valid event names:
+%          'all'             write all events
+%          'startsweep'      start of each sweep (aka trial, rep)
+%          'endsweep'        end of each sweep
+%          'filestart'       beginning of each file's data
+%          'fileend'         end of each file's data
+%          'filename'        event with source .dat file name at start of 
+%                            that files' data
+%          'stimstart'       stimulus onset
+%          'stimend'         stimulus end
+%          'stim_id'         name & properties of stimulus at onset
+%       
 % Output Arguments:
 % 	nD		NeuroExplorer nex data struct written to output file
 %	nexInfo	SpikeInfo object
@@ -118,6 +137,11 @@ function varargout = export_for_plexon(varargin)
 % 29 Jun 2020 (SJS): add stimulus specific event timestamps to nex file
 % 15 Jun 2021 (SJS): moving NEX_UTIL_PATH out of here - should be defined
 % in user's path!
+% 19 Jul 2021 (SJS): adding option to change which events get written to
+% .nex file. This is to (1) enable testing/probing of errors in writing
+% the imported .nex file to .plx format within Plexon OFS (offline sorter)
+% and (2) to allow user to control the event entries that are written to
+% the .nex file
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -214,12 +238,12 @@ if nargin == 1
 		resampleData = defaultResampleRate;
 	end
 	% test data?
-	if isfield(tmp, 'testData')
-		testData = tmp.testData;
-	else
-		testData = false;
-	end
-	
+   if isfield(tmp, 'testData')
+      testData = tmp.testData;
+   else
+      testData = false;
+   end
+   	
 	% define path to data file and data file for testing
 	F = defineSampleData(tmp.DataPath, tmp.DataFile, tmp.TestFile);
 	
@@ -241,13 +265,17 @@ if nargin == 1
 		NexFilePath = '';
 	end
 	
-	if isfield(tmp, 'OutputFile')
-		NexFileName = tmp.OutputFile;
-	else
-		% if no OutputFile field, create empty field
-		NexFileName = '';
-	end
-	
+   if isfield(tmp, 'OutputFile')
+      NexFileName = tmp.OutputFile;
+   else
+   % if no OutputFile field, create empty field
+      NexFileName = '';
+   end
+
+   % events
+   eventsToWrite = checkEventsToWrite(tmp);
+      
+   % clear tmp var
 	clear tmp
 else
 	% define path to data file and data file for testing
@@ -289,14 +317,16 @@ fprintf('\n');
 %	nexInfo is an instance of a SpikeInfo object
 %------------------------------------------------------------------------
 if testData == false
-	[cSweeps, nexInfo] = read_data_for_export(F, Channels, BPfilt, resampleData);
+	[cSweeps, nexInfo] = read_data_for_export(F, Channels, ...
+                                                BPfilt, resampleData);
 else
-	[cSweeps, nexInfo] = test_data_for_export(F, Channels, BPfilt, resampleData);
+	[cSweeps, nexInfo] = test_data_for_export(F, Channels, ...
+                                                BPfilt, resampleData);
 end
 
 %------------------------------------------------------------------------
-% If not provided, create output .nex file name - adjust depending on # of files
-%	assume data from first file is consistent with others!!!!!!!!!
+% If not provided, create output .nex file name - adjust depending on # of
+% files. assume data from first file is consistent with others!!!!!!!!!
 %------------------------------------------------------------------------
 if isempty(NexFileName)
 	if nFiles > 1
@@ -340,7 +370,8 @@ for c = 1:nChannels
 	%	concatenate: tmp = [cVector{:}];
 	%	tmpVector = cell2mat(tmp);
 	%  add to nex struct:
-	%	[nexFile] = nexAddContinuous( nexFile, startTime, adFreq, values, name)
+	%     [nexFile] = nexAddContinuous(nexFile, startTime, ...
+   %                                    adFreq, values, name)
 	nD = nexAddContinuous(nD, nexInfo.fileStartTime(1), nexInfo.Fs, ...
 									cell2mat([cVector{:}]), ...
 									sprintf('spikechan_%d', Channels(c)));
@@ -348,37 +379,59 @@ for c = 1:nChannels
 	clear cVector
 end
 
-% add start sweep time stamps as event - assume consistent across channels!
-%  [nexFile] = nexAddEvent( nexFile, timestamps, name )
-% events must be in column format...?
-nD = nexAddEvent(nD, force_col(nexInfo.startTimeVector), 'startsweep');
-% add end sweep time stamps as event - assume consistent across channels!
-% this is technically redundant, as startsweep event should be 1 sample or
-% time interval greater than endsweep. there is little overhead involved in
-% adding it so for now keep it here
-nD = nexAddEvent(nD, force_col(nexInfo.endTimeVector), 'endsweep');
-% add file start/end times as single event type
-nD = nexAddEvent(nD, force_col(nexInfo.fileStartTime), 'filestart');
-nD = nexAddEvent(nD, force_col(nexInfo.fileEndTime), 'fileend');
-% Add individual event for each file with filename as event name
-for f = 1:nFiles
-	nD = nexAddEvent(nD, nexInfo.fileStartTime(f), nexInfo.FileInfo{f}.F.base);
-end
-% add stimulus onset and offset times
-nD = nexAddEvent(nD, force_col(nexInfo.stimStartTimeVector), 'stimstart');
-nD = nexAddEvent(nD, force_col(nexInfo.stimEndTimeVector), 'stimend');
-
-% add stimulus-specific onset times
-for f = 1:nFiles
-	events = nexInfo.stimEventTimesForFile(f);
-	fprintf('Adding events from file %s\n', nexInfo.FileInfo{f}.F.file);
-	for n = 1:length(events)
-		fprintf('\t%s\n', events(n).name);
-		nD = nexAddEvent(nD, force_col(events(n).timestamps), events(n).name);
-	end
+%------------------------------------------------------------------------
+% Add Events (aka timestamps, markers)
+%------------------------------------------------------------------------
+if any(strcmpi(eventsToWrite, {'all', 'startsweep'}))
+   % add start sweep time stamps as event - assume consistent across channels!
+   %  [nexFile] = nexAddEvent( nexFile, timestamps, name )
+   % events must be in column format...?
+   nD = nexAddEvent(nD, force_col(nexInfo.startTimeVector), 'startsweep');
 end
 
+if any(strcmpi(eventsToWrite, {'all', 'endsweep'}))
+   % add end sweep time stamps as event - assume consistent across channels!
+   % this is technically redundant, as startsweep event should be 1 sample or
+   % time interval greater than endsweep. there is little overhead involved in
+   % adding it so for now keep it here
+   nD = nexAddEvent(nD, force_col(nexInfo.endTimeVector), 'endsweep');
+end
+if any(strcmpi(eventsToWrite, {'all', 'filestart'}))
+   % add file start/end times as single event type
+   nD = nexAddEvent(nD, force_col(nexInfo.fileStartTime), 'filestart');
+end
+if any(strcmpi(eventsToWrite, {'all', 'fileend'}))
+   nD = nexAddEvent(nD, force_col(nexInfo.fileEndTime), 'fileend');
+end
+if any(strcmpi(eventsToWrite, {'all', 'filename'}))
+   % Add individual event for each file with filename as event name
+   for f = 1:nFiles
+      nD = nexAddEvent(nD, nexInfo.fileStartTime(f), ...
+                        nexInfo.FileInfo{f}.F.base);
+   end
+end
+if any(strcmpi(eventsToWrite, {'all', 'stimstart'}))
+   % add stimulus onset and offset times
+   nD = nexAddEvent(nD, force_col(nexInfo.stimStartTimeVector), ...
+                        'stimstart');
+end
+if any(strcmpi(eventsToWrite, {'all', 'stimend'}))
+   nD = nexAddEvent(nD, force_col(nexInfo.stimEndTimeVector), 'stimend');
+end
+if any(strcmpi(eventsToWrite, {'all', 'stim_id'}))
+   % add stimulus-specific onset times
+   for f = 1:nFiles
+      events = nexInfo.stimEventTimesForFile(f);
+      fprintf('Adding events from file %s\n', nexInfo.FileInfo{f}.F.file);
+      for n = 1:length(events)
+         fprintf('\t%s\n', events(n).name);
+         nD = nexAddEvent(nD, force_col(events(n).timestamps), events(n).name);
+      end
+   end
+end
+%------------------------------------------------------------------------
 % write to nexfile
+%------------------------------------------------------------------------
 sendmsg(sprintf('Writing nex file %s:', nexInfo.FileName));
 writeNexFile(nD, nexInfo.FileName);
 
@@ -403,4 +456,63 @@ end
 %------------------------------------------------------------------------
 % END OF MAIN FUNCTION DEFINITION
 %------------------------------------------------------------------------
+end
 
+
+function eventsToWrite = checkEventsToWrite(tmp)
+% Valid event names:
+%    'all'             write all events
+%    'startsweep'      start of each sweep (aka trial, rep)
+%    'endsweep'        end of each sweep
+%    'filestart'       beginning of each file's data
+%    'fileend'         end of each file's data
+%    'filename'        event with source .dat file name at start of 
+%                      that files' data
+%    'stimstart'       stimulus onset
+%    'stimend'         stimulus end
+%    'stim_id'         name & properties of stimulus at onset
+% 
+   % valid event names
+   validEvents = {'all', 'startsweep', 'endsweep', ...
+                     'filestart', 'fileend', 'filename', ...
+                     'stimstart', 'stimend', 'stim_id'};
+
+   % events
+   if isfield(tmp, 'eventsToWrite')
+      if isempty(tmp.eventsToWrite)
+         % if empty, do not write any events
+         sendmsg('No events will be written to .nex file')
+         eventsToWrite = {};
+         
+      elseif isstring(tmp.eventsToWrite)
+         % if a single string, don't need to do much except check if it
+         % is valid
+         if any(strcmpi(tmp.eventsToWrite, validEvents))
+            eventsToWrite = {tmp.eventsToWrite};
+         else
+            sendmsg(tmp.eventsToWrite);
+            error('%s: Unknown value for eventsToWrite', mfilename);
+         end
+      elseif iscell(tmp.eventsToWrite)
+         % initialize eventsToWrite as a cell
+         eventsToWrite = cell(size(tmp.eventsToWrite));
+         % loop through input eventsToWrite and confirm that each one is
+         % valid entry
+         for n = 1:length(tmp.eventsToWrite)
+            if any(strcmpi(tmp.eventsToWrite{n}, validEvents))
+               eventsToWrite{n} = tmp.eventsToWrite{n};
+            else
+               sendmsg(tmp.eventsToWrite{n});
+               error('%s: Unknown value for eventsToWrite', mfilename);
+            end
+         end
+      else
+         tmp.eventsToWrite
+         error('%s: Unknown value for eventsToWrite', mfilename);
+      end
+   else
+      % default: write all events
+      sendmsg('Writing all events')
+      eventsToWrite = {'all'};
+   end
+end
