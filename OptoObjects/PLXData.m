@@ -109,13 +109,13 @@ classdef PLXData
 		% load data from file, without continuous data, store in P property
 		%------------------------------------------------------------------------
 		function obj = loadPLX_nocontinuous(obj)
-			plxfile = obj.plxfile;
-			if isempty(plxfile)
+			pfile = obj.plxfile;
+			if isempty(pfile)
 				error('PLXData: filename not defined');
 			end
 			% read in data using readPLXFileC
-			obj.P = readPLXFileC(plxfile, 'all', 'nocontinuous');
-			obj.P.PLXFile = plxfile;
+			obj.P = readPLXFileC(pfile, 'all', 'nocontinuous');
+			obj.P.PLXFile = pfile;
 		end
 		%------------------------------------------------------------------------
 
@@ -124,13 +124,13 @@ classdef PLXData
 		% load data from file, with continuous data, store in P property
 		%------------------------------------------------------------------------
 		function obj = loadPLX_continuous(obj)
-			plxfile = obj.plxfile;
-			if isempty(plxfile)
+			pfile = obj.plxfile;
+			if isempty(pfile)
 				error('PLXData: filename not defined');
 			end
 			% read in data using readPLXFileC
-			obj.P = readPLXFileC(plxfile, 'all', 'continuous');
-			obj.P.PLXFile = plxfile;
+			obj.P = readPLXFileC(pfile, 'all', 'continuous');
+			obj.P.PLXFile = pfile;
 		end
 		%------------------------------------------------------------------------
 
@@ -173,10 +173,20 @@ classdef PLXData
 			% create cell array
 			Carr = cell(obj.P.NumSpikeChannels, 1);
 			% loop through channels
-			for c = 1:obj.P.NumSpikeChannels
-				Carr{c} = export_channel_as_mat(obj, c);
-			end
-			
+         for c = 1:obj.P.NumSpikeChannels
+            Carr{c} = export_channel_as_mat(obj, c);
+         end
+         
+         [tmpC, fullCell] = scrub_empty_cells(Carr);
+         if any(fullCell == false)
+            sendmsg(['PLXData.export_as_mat: some cells are empty,' ...
+                       'some channels might be unsorted!']);
+            Carr = tmpC;
+         elseif all(fullCell == false)
+            error(['PLXData.export_as_mat: all cells are empty,' ...
+                       'are data unsorted?']);
+         end
+            
 			if ~isempty(varargin)
 				if strcmpi(varargin{1}, 'sort_by_timestamp')
 					val = sortrows(cell2mat(Carr), 3);
