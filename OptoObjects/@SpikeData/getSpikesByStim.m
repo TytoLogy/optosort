@@ -150,7 +150,15 @@ if nargin < 4
 end
 
 % file index
-if (fIndx < 1) || (fIndx > obj.Info.nFiles)
+% check if no, or multiple files in fIndx - if so throw error
+if (fIndx >  1)
+   sendmsg('fIndx has more than 1 file!')
+   error('%s: fIndx out of bounds', mname);
+elseif fIndx < 1
+   sendmsg('fIndx < 1')
+   error('%s: fIndx out of bounds', mname);
+elseif (fIndx > obj.Info.nFiles)
+   sendmsg('fIndx is larger than nFiles in SpikeData.Info');
 	error('%s: fIndx out of bounds', mname);
 end
 

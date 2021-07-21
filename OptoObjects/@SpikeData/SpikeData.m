@@ -25,11 +25,13 @@ classdef SpikeData
 % Methods for class SpikeData:
 % 
 %    SpikeData
-%     constructor
+%        constructor method
 %    addContinuousDataFromPLXObj
+%        add continuous data from PLXdata object
 %    addPlexonInfo
 %    addPlexonSpikesFromMat
 %    addPlexonSpikesFromPLXObj
+%        add sorted spike data from PLXdata object
 %    check_channels
 %    check_units
 %    getSpikesByStim
@@ -45,6 +47,7 @@ classdef SpikeData
 %    listTestNames
 %    listTestTypes
 %    listUnits
+%        display list of units and channels
 %    nUnits
 %    plotAllData
 %    plotUnitWaveforms
@@ -70,6 +73,10 @@ classdef SpikeData
 %	22 May, 2020 (SJS): added Continuous to hold continuous data
 %	11 Jun 2020 (SJS): scaling continuous data
 %	7 Jul 2020 (SJS): updated documentation
+%  21 Jul 2021 (SJS):
+%     - added code to scrub unsorted (putative) spike channels from
+%       data exported via getSpikesBySt
+%     - updated documentation
 %------------------------------------------------------------------------
 % TO DO: 
 %------------------------------------------------------------------------
