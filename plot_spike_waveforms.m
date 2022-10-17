@@ -2,7 +2,7 @@ function varargout = plot_spike_waveforms(tvec, wavematrix, varargin)
 %------------------------------------------------------------------------
 % [plot handles] =  plot_spike_waveforms(tvec, wavematrix, 
 %------------------------------------------------------------------------
-% TytoLogy:optoproc
+% TytoLogy:optosort
 %------------------------------------------------------------------------
 % 
 % Plots: Data, waveforms, etc for selected channel and unit
@@ -18,8 +18,6 @@ function varargout = plot_spike_waveforms(tvec, wavematrix, varargin)
 % 	 [plot handles]		array of plot handles
 % 
 %------------------------------------------------------------------------
-
-
 
 PLOTMEAN = true;
 PLOTLEGEND = true;
@@ -67,7 +65,7 @@ xlabel('time (ms)')
 
 if PLOTLEGEND
 	% legend
-	legend([aH(1), mH], {'indvidual', 'mean'}, ...
+	legend([aH(1), mH], {'indv.', 'mean'}, ...
 									'Box', 'off', 'Location', 'best');
 end
 
