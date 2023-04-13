@@ -172,9 +172,11 @@ for f = 1:nFiles
 		BPfilt.Fnyq = cInfo{f}.Dinf.indev.Fs / 2;
 		BPfilt.cutoff = BPfilt.Fc / BPfilt.Fnyq;
 		if strcmpi(BPfilt.type, 'bessel')
-			[BPfilt.b, BPfilt.a] = besself(BPfilt.forder, BPfilt.cutoff, 'bandpass');
+			[BPfilt.b, BPfilt.a] = besself(BPfilt.forder, BPfilt.cutoff, ...
+                                          'bandpass');
 		elseif strcmpi(BPfilt.type, 'butter')
-			[BPfilt.b, BPfilt.a] = butter(BPfilt.forder, BPfilt.cutoff, 'bandpass');
+			[BPfilt.b, BPfilt.a] = butter(BPfilt.forder, BPfilt.cutoff, ...
+                                          'bandpass');
 		else
 			error('%s: unknown filter type %s', mfilename, BPfilt.type)
 		end
