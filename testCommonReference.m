@@ -28,6 +28,13 @@ Things to do:
 3) display and compare pre/post data across channels
 questions:
 - how to exclude channels?
+- idea: 
+   select a channel
+   export three "channels" of data
+      raw
+      c.a.r.
+      c.m.r.
+   then sort and compare
 %}
 
 %------------------------------------------------------------------------
@@ -57,7 +64,13 @@ BPfilt = [];
 resampleData = [];
 [cSweeps, nexInfo] = read_data_for_export(F, Channels, ...
                                                 [], []);
+
 %%
+% get stimulus information
+onset = nexInfo.FileInfo{1}.Dinf.audio.Delay;
+offset = onset + nexInfo.FileInfo{1}.Dinf.audio.Duration;
+%%
+%{
 % set up raw data plot
 [r.fH, ar.X, r.pH] = tracePlot([], cell2mat(cSweeps{1}(:, 1))', nexInfo.Fs);
 r.fH.Name = 'RAW';
@@ -67,17 +80,17 @@ a.fH.Name = 'AVG';
 % set up med data plot
 [m.fH, m.aX, m.pH] = tracePlot([], cell2mat(cSweeps{1}(:, 1))', nexInfo.Fs);
 m.fH.Name = 'MED';
-
-%% plot raw data
-
-
-
-trialN = 13;
-
-D = cSweeps{1}(:, trialN);
+%}
 
 % define filter
 BPfilt = buildFilter(nexInfo.Fs);
+
+%% process data
+
+% select trial
+trialN = 15;
+D = cSweeps{1}(:, trialN);
+
 % filter the data
 for c = 1:length(D)
    D{c} = filtfilt(BPfilt.b, BPfilt.a, ...
@@ -86,19 +99,48 @@ end
 
 % get data for one trial, all channels (rows)
 T = cell2mat(D)';
-
-% plot data
-
-tracePlot(r.pH, T, nexInfo.Fs)
-
-
+% apply common average referencing to data
 Ta = common_avg_ref(T);
-tracePlot(a.pH, Ta, nexInfo.Fs)
+% apply common median referencing to data
 Tm = common_med_ref(T);
-tracePlot(m.pH, Tm, nexInfo.Fs)
 
+% Plot data
+figure(1)
+tl = tiledlayout(1, 3);
+tl.TileSpacing = 'compact';
+tl.Padding = 'compact';
 
+% plot raw data
+nexttile
+[r.pH, r.aX, r.fH] = tracePlot(T, nexInfo.Fs);
+title(r.aX, 'RAW');
+% draw onset/offset lines
+line([onset onset], r.aX.YLim, 'Color', 'g');
+line([offset offset], r.aX.YLim, 'Color', 'r');
 
+% plot avg data
+nexttile
+[a.fH, a.aX, a.pH] = tracePlot(Ta, nexInfo.Fs);
+title(a.aX, 'AVG');
+line([onset onset], r.aX.YLim, 'Color', 'g');
+line([offset offset], r.aX.YLim, 'Color', 'r');
+% plot med data
+nexttile;
+[m.fH, m.aX, m.pH] = tracePlot(Tm, nexInfo.Fs);
+title(m.aX, 'MED');
+line([onset onset], r.aX.YLim, 'Color', 'g');
+line([offset offset], r.aX.YLim, 'Color', 'r');
+
+%{
+   % assign data to plot
+   for c = 1:nchan
+      % update plot
+      set(pH(c), 'YData', T(:, c) + c*yabsmax);
+   end
+   % update plots
+   refreshdata(ancestor(pH(1), 'figure'));
+end
+%}
 
 
 function Tout = common_avg_ref(Tin)
@@ -121,22 +163,57 @@ end
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+function varargout = tracePlot(T, Fs, varargin)
+   % figure and axes background grey level ( 0 = black, 1 = white)
+   bgcol = 1;
+   % max range for each trace
+   yabsmax = 5;
+   
+   % size of T
+   [npts, nchan] = size(T);
+   
+   % time vector for xdata
+   tv = timevec(npts, Fs, 'ms');
+   % generate shifted channel data
+   Ts = zeros(size(T));
+   for c = 1:nchan
+      Ts(:, c) = c*(yabsmax) + T(:, c);
+   end
+   % and plot it, storing handles to lines
+   pH = plot(tv, Ts, 'k-');
+   % get handles to axes and figure
+   aX = gca;
+   fH = gcf;
+   
+   % rename/scale ticks
+   yticks_yvals = yabsmax*(1:nchan);
+   yticks_txt = cell(nchan, 1);
+   for n = 1:nchan
+      yticks_txt{n} = num2str(n);
+   end
+   set(aX, 'YTick', yticks_yvals);
+   set(aX, 'YTickLabel', yticks_txt);
+   set(aX, 'TickDir', 'out');
+   
+   set(aX, 'Box', 'off');
+   
+   % adjust x, y limits
+   xlim([0 ceil(max(pH(1).XData))]);
+   ylim(yabsmax*[0 nchan+1]);
+   
+   % labels for axes
+   xlabel('Time (ms)')
+   ylabel('Channel')
+   % set bg color
+   set(aX, 'Color', bgcol*[1 1 1]);
+   set(fH, 'Color', bgcol*[1 1 1]);
+   % turn off toolbar
+   % set(fH, 'ToolBar', 'none');
+   
+   varargout{1} = pH;
+   varargout{2} = aX;
+   varargout{3} = fH;
+end
 
 function BPfilt = buildFilter(Fs)
    %---------------------------------------------------------------------
