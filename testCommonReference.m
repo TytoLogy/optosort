@@ -88,7 +88,7 @@ BPfilt = buildFilter(nexInfo.Fs);
 %% process data
 
 % select trial
-trialN = 15;
+trialN = 100;
 D = cSweeps{1}(:, trialN);
 
 % filter the data
@@ -97,7 +97,7 @@ for c = 1:length(D)
 							sin2array(D{c}, nexInfo.Fs, BPfilt.ramp));
 end
 
-% get data for one trial, all channels (rows)
+% transform cell array to matrix with time bins in rows, channels by column
 T = cell2mat(D)';
 % apply common average referencing to data
 Ta = common_avg_ref(T);
@@ -120,17 +120,20 @@ line([offset offset], r.aX.YLim, 'Color', 'r');
 
 % plot avg data
 nexttile
-[a.fH, a.aX, a.pH] = tracePlot(Ta, nexInfo.Fs);
+[a.pH, a.aX, a.fH] = tracePlot(Ta, nexInfo.Fs);
 title(a.aX, 'AVG');
 line([onset onset], r.aX.YLim, 'Color', 'g');
 line([offset offset], r.aX.YLim, 'Color', 'r');
 % plot med data
 nexttile;
-[m.fH, m.aX, m.pH] = tracePlot(Tm, nexInfo.Fs);
+[m.pH, m.aX, m.fH] = tracePlot(Tm, nexInfo.Fs);
 title(m.aX, 'MED');
 line([onset onset], r.aX.YLim, 'Color', 'g');
 line([offset offset], r.aX.YLim, 'Color', 'r');
 
+r.fH.Name = sprintf('%s_Sweep%d', F.base, trialN);
+r.fH.FileName = sprintf('%s_Sweep%d', F.base, trialN);
+r.fH.PaperOrientation = 'landscape';
 %{
    % assign data to plot
    for c = 1:nchan
@@ -142,17 +145,6 @@ line([offset offset], r.aX.YLim, 'Color', 'r');
 end
 %}
 
-
-function Tout = common_avg_ref(Tin)
-   A = mean(Tin, 2);
-   Tout = Tin - A;
-end
-
-
-function Tout = common_med_ref(Tin)
-   A = median(Tin, 2);
-   Tout = Tin - A;
-end
 
 
 %------------------------------------------------------------------------
@@ -201,6 +193,8 @@ function varargout = tracePlot(T, Fs, varargin)
    xlim([0 ceil(max(pH(1).XData))]);
    ylim(yabsmax*[0 nchan+1]);
    
+   grid on
+
    % labels for axes
    xlabel('Time (ms)')
    ylabel('Channel')
@@ -214,6 +208,22 @@ function varargout = tracePlot(T, Fs, varargin)
    varargout{2} = aX;
    varargout{3} = fH;
 end
+
+
+% apply common average reference to matrix of channel data [samples,
+% channels]
+function Tout = common_avg_ref(Tin)
+   A = mean(Tin, 2);
+   Tout = Tin - A;
+end
+
+% apply common median reference to matrix of channel data [samples,
+% channels]
+function Tout = common_med_ref(Tin)
+   A = median(Tin, 2);
+   Tout = Tin - A;
+end
+
 
 function BPfilt = buildFilter(Fs)
    %---------------------------------------------------------------------
