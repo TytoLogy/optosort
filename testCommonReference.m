@@ -42,6 +42,7 @@ questions:
 % path, dat file, _testdata.mat file
 %------------------------------------------------------------------------
 dpath = '/media/sshanbhag/SSData/Data/Mouse/Raw/BLA/1500/20230213';
+dpath = '/Volumes/SSData/Data/Mouse/Raw/BLA/1500/20230213';
 dname = '1500_20230213_01_0_3352_BBN.dat';
 tname = '1500_20230213_01_0_3352_BBN_testdata.mat';
 
