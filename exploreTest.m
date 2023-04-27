@@ -142,49 +142,54 @@ Tm = common_med_ref(T);
 %}
 
 
-% get a single trial data in a matrix
-data = cell2mat(cSweeps{fNum}(:, trialN))';
-size(data)
-srate = nexInfo.Fs;
-winLen = size(data, 1)
+
+Fs = 0.001*nexInfo.Fs;
 
 %% this is essentially multichanplot code
 
-% set up plot
+% get a single trial data in a matrix
+data = cell2mat(cSweeps{fNum}(:, trialN))';
 
-% find overall data min, max to set ylimits
-yLim = [min(data(:)) max(data(:))]
-% get n channels
+yLim = [min(data(:)) max(data(:))];
 channels = 1:size(data,2);
-% set initial sample rate to 1
-srate = 1;
-% length of data sweeps
-L = size(data, 1);
-%  initialize window "location"
+% srate = 1;
+
+L = size(data,1);
 loc = 1;
-% some storage
 yInterv = [];
 yTotal = [];
 nChan = [];
-winLen = round(winLen * srate);
-if winLen > L
-  warning(['Window size set to more than the length of the data:' ...
-               'setting it to maximum window size (' num2str(L/srate) ').']);
-  winLen = L;
-end
-% time vector
+% x (time) axis vector
 T = (1:L) / srate;
 
+select_on = false;
+curr_select = 0;
 
-    function update_data
-        yInterv = yLim(2)-yLim(1);
-        nChan = length(channels);
-        yTotal = yInterv * nChan;
-        plotfig;
-    end
+% plot data
 
 
+h_fig = figure;
+% set(h_fig,'KeyPressFcn',@f_KeyPress);
 
+% this is from update_data
+yInterv = yLim(2)-yLim(1);
+nChan = length(channels);
+yTotal = yInterv * nChan;
+
+% this is from plotfig
+
+yStart = (nChan:-1:1)*yInterv-(yInterv/2);
+
+dataWin = bsxfun(@plus, data, yStart);
+
+% create axes
+h_ax = axes(h_fig, 'Position',[0.1 0.125 0.8 0.75]);
+plot(h_ax, T, dataWin);
+set(h_ax,'ytick',yStart(end:-1:1),'yticklabel',channels(end:-1:1))
+ylim([0 yTotal]);
+xlim([T(1) T(end)]);
+
+set(get(h_ax,'children'),'hittest','off');
 
 
 
