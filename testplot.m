@@ -6,15 +6,16 @@ end
 fileN = 1;
 nFiles = length(cSweeps);
 [nchannels, ntrials] = size(cSweeps{fileN});
+channels = 1:nchannels;
 trialN = 1;
 
 % get a single trial data in a matrix
-data = cell2mat(cSweeps{fNum}(:, trialN))';
+data = cell2mat(cSweeps{fileN}(:, trialN))';
 
 L = size(data, 1);
 
 % x (time) axis vector
-T = (1:L) / srate;
+T = (1:L) / Fs;
 
 h_fig = figure;
 
@@ -35,9 +36,14 @@ set(h_ax,'ytick',yStart(end:-1:1),'yticklabel',channels(end:-1:1))
 ylim([0 yTotal]);
 xlim([T(1) T(end)]);
 
+h_tUp = uicontrol('Style','pushbutton','Parent',h_fig,...
+      'Units','normalized','Position',[0.01 0.01 0.05 0.05],...
+      'Value',0,'Callback',{@next_trial});
+
+
 %% Nested Functions
 
-function next_trial
+function next_trial(hObject, eventdata, handles)
    if trialN + 1 > ntrials
       warning('at last trial');
    else
@@ -46,7 +52,7 @@ function next_trial
 end
 
 
-function prev_trial
+function prev_trial(hObject, eventdata, handles)
    if trialN - 1 < 1
       warning('at first trial');
    else

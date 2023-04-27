@@ -141,11 +141,20 @@ Ta = common_avg_ref(T);
 Tm = common_med_ref(T);
 %}
 
+%%
 
 
 Fs = 0.001*nexInfo.Fs;
 
+testplot(cSweeps, Fs)
+
+
+
+%%
+
+%{
 %% this is essentially multichanplot code
+
 
 % get a single trial data in a matrix
 data = cell2mat(cSweeps{fNum}(:, trialN))';
@@ -191,7 +200,7 @@ xlim([T(1) T(end)]);
 
 set(get(h_ax,'children'),'hittest','off');
 
-
+%}
 
 
 
