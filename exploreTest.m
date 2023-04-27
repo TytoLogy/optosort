@@ -61,8 +61,8 @@ load(tmpF);
 % specify file to examine
 %  path, dat file, _testdata.mat file
 %------------------------------------------------------------------------
-dpath = '/media/sshanbhag/SSData/Data/Mouse/Raw/BLA/1500/20230213';
-% dpath = '/Volumes/SSData/Data/Mouse/Raw/BLA/1500/20230213';
+% dpath = '/media/sshanbhag/SSData/Data/Mouse/Raw/BLA/1500/20230213';
+dpath = '/Volumes/SSData/Data/Mouse/Raw/BLA/1500/20230213';
 dname = '1500_20230213_01_0_3352_BBN.dat';
 tname = '1500_20230213_01_0_3352_BBN_testdata.mat';
 
@@ -80,10 +80,32 @@ F = defineSampleData({dpath}, {dname}, {tname});
 %------------------------------------------------------------------------
 Channels = 1:16;
 nChannels = length(Channels);
-BPfilt = [];
+%------------------------------------------------------------------------
+% filter parameters for raw neural data
+%------------------------------------------------------------------------
+% [highpass lowpass] cutoff frequencies in Hz
+BPfilt.Fc = [250 4000];
+% order of filter. note that the filtfilt() function in MATLAB is used,
+% so the effective order is doubled. typically use 5
+BPfilt.forder = 5;
+% ramp time (ms) to apply to each sweep in order to cutdown on onset/offset
+% transients from filtering
+BPfilt.ramp = 1;
+% filter type. 'bessel' or 'butter' (for butterworth). typically use butter
+% as bessel is low-pass only and we need to remove low frequency crap from
+% the raw data
+BPfilt.type = 'butter';
 resampleData = [];
+
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%% read and filter data, no resampling
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 [cSweeps, nexInfo] = read_data_for_export(F, Channels, ...
-                                                [], []);
+                                                BPfilt, resampleData);
+                 
+return
 %------------------------------------------------------------------------
 % get stimulus information
 %------------------------------------------------------------------------
@@ -96,30 +118,86 @@ offset = onset + nexInfo.FileInfo{1}.Dinf.audio.Duration;
 %% test multichanplot
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
-
-% define filter
-BPfilt = buildFilter(nexInfo.Fs);
-
+fNum = 1;
 
 % select trial
-trialN = 200;
-D = cSweeps{1}(:, trialN);
+trialN = 15;
 
-% filter the data
-for c = 1:length(D)
-   D{c} = filtfilt(BPfilt.b, BPfilt.a, ...
-							sin2array(D{c}, nexInfo.Fs, BPfilt.ramp));
+% get trial information
+if strcmpi(nexInfo.FileInfo{fNum}.testname, 'BBN')
+   if strcmpi(nexInfo.FileInfo{fNum}.testtype, 'LEVEL')
+      testvar = nexInfo.FileInfo{fNum}.Dinf.test.stimcache.LEVEL
+   end
+else
+   error('unsupport testname %s', nexInfo.FileInfo{fNum}.testname);
 end
 
+%{
 % transform cell array to matrix with time bins in rows, channels by column
 T = cell2mat(D)';
 % apply common average referencing to data
 Ta = common_avg_ref(T);
 % apply common median referencing to data
 Tm = common_med_ref(T);
+%}
+
+
+% get a single trial data in a matrix
+data = cell2mat(cSweeps{fNum}(:, trialN))';
+size(data)
+srate = nexInfo.Fs;
+winLen = size(data, 1)
+
+%% this is essentially multichanplot code
+
+% set up plot
+
+% find overall data min, max to set ylimits
+yLim = [min(data(:)) max(data(:))]
+% get n channels
+channels = 1:size(data,2);
+% set initial sample rate to 1
+srate = 1;
+% length of data sweeps
+L = size(data, 1);
+%  initialize window "location"
+loc = 1;
+% some storage
+yInterv = [];
+yTotal = [];
+nChan = [];
+winLen = round(winLen * srate);
+if winLen > L
+  warning(['Window size set to more than the length of the data:' ...
+               'setting it to maximum window size (' num2str(L/srate) ').']);
+  winLen = L;
+end
+% time vector
+T = (1:L) / srate;
+
+
+    function update_data
+        yInterv = yLim(2)-yLim(1);
+        nChan = length(channels);
+        yTotal = yInterv * nChan;
+        plotfig;
+    end
+
+
+
+
+
+
+
+
+
 
 %%
 
+
+
+
+%{
 multichanplot(T, 250, 'srate', 0.001*nexInfo.Fs)
 
 
@@ -163,4 +241,6 @@ function changeChannel(l,evtData,a,s,data)
 	%Rest Slider Position
 	s.Value = 1; 
 end
+%}
+
 %}
