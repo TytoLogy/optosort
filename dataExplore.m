@@ -27,78 +27,122 @@ Fs = nexInfo.Fs;
 
 % to initialize plot/gui, get a single trial data in a matrix
 trialdata = cell2mat(cSweeps{fileN}(:, trialN))';
-
 % length of trial data
 L = size(trialdata, 1);
 % x (time) axis vector
 T = (1:L) / Fs;
 
-% create 
-fig = uifigure;
+% create figure
+fig = figure;
 fig.Name = 'dataExplore';
+fig.Units = 'Normalized';
+fig.Position = [0.2236    0.7151    0.1626    0.2229];
 
-% use grid layout to set format of app window
-gl = uigridlayout(fig);
-% set row and column heights
-%     '1x' specifies variable width, equal to size of first column
-gl.RowHeight = {22, 22, '1x'};
-gl.ColumnWidth = {150, '2x'};
+
+% create axes
+ax = axes(fig);
 
 % set up button controls
 
-% previous trial button
-trialUp = uibutton(
+% place trial buttons in panel
+trialPanel = uipanel(fig, 'Title', 'Trial', 'Tag', 'trialPanel');
 
-% set up axes
-ax = uiaxes(gl);
-ax.Layout.Row = [1, 3];
-ax.Layout.Column = 2;
+% prev trial button
+trialDown = uicontrol(trialPanel, 'Style', 'pushbutton', ...
+                        'Tag', 'trialDown', 'String', '<<');
+trialDown.Units = 'normalized';
+trialDown.Callback = @change_trial;
+% next trial button
+trialUp = uicontrol(trialPanel, 'Style', 'pushbutton', ...
+                        'Tag', 'trialUp', 'String', '>>');
+trialUp.Units = 'normalized';
+trialUp.Callback = @change_trial;
+% trial indicator control
+trialNum = uicontrol(trialPanel, 'Style', 'edit', ...
+                        'Tag', 'trialNum', 'String', '1');
+trialNum.Units = 'normalized';
+trialNum.Callback = @change_trial;
 
-return
 
-% need to generate y data based on min max and # of channels
-yLim = [min(trialdata(:)) max(trialdata(:))];
-yInterv = yLim(2)-yLim(1);
-nChan = length(channels);
-yTotal = yInterv * nChan;
-yStart = (nChan:-1:1)*yInterv-(yInterv/2);
-% scale data appropriately
-data = bsxfun(@plus, trialdata, yStart);
+dataExploreLayout
 
-% create axes
-h_ax = axes(fig, 'Position',[0.1 0.125 0.8 0.75]);
-
-% plot data
-plot(h_ax, T, data);
-% set yticks
-set(h_ax,'ytick',yStart(end:-1:1),'yticklabel',channels(end:-1:1))
-% adjust limits
-ylim([0 yTotal]);
-xlim([T(1) T(end)]);
-
-h_tUp = uicontrol('Style','pushbutton','Parent',h_fig,...
-      'Units','normalized','Position',[0.01 0.01 0.05 0.05],...
-      'Value',0,'Callback',{@next_trial});
+update_plot
 
 
 %% Nested Functions
 
-function next_trial(hObject, eventdata, handles)
-   if trialN + 1 > ntrials
-      warning('at last trial');
-   else
-      trialN = trialN + 1;
+   function update_plot
+      % need to generate y data based on min max and # of channels
+      trialdata = cell2mat(cSweeps{fileN}(:, trialN))';
+      yLim = [min(trialdata(:)) max(trialdata(:))];
+      yInterv = yLim(2)-yLim(1);
+      nChan = length(channels);
+      yTotal = yInterv * nChan;
+      yStart = (nChan:-1:1)*yInterv-(yInterv/2);
+      % scale data appropriately
+      data = bsxfun(@plus, trialdata, yStart);
+      
+      % plot data
+      plot(ax, T, data);
+      % set yticks
+      set(ax,'ytick',yStart(end:-1:1),'yticklabel',channels(end:-1:1))
+      % adjust limits
+      ylim([0 yTotal]);
+      xlim([T(1) T(end)]);      
    end
-end
 
 
-function prev_trial(hObject, eventdata, handles)
-   if trialN - 1 < 1
-      warning('at first trial');
-   else
-      trialN = trialN - 1;
+   function change_trial(hObject, eventdata, handles)
+      switch(hObject.Tag)
+         case 'trialDown'
+            if trialN == 1
+               beep
+               sendmsg('At first trial');
+            else
+               trialN = trialN - 1;
+               update_ui_str(trialNum, trialN);
+               update_plot
+            end
+         case 'trialUp'
+            if trialN == ntrials
+               beep
+               sendmsg('At last trial');
+            else
+               trialN = trialN + 1;
+               update_ui_str(trialNum, trialN);
+               update_plot
+            end
+
+         case 'trialNum'
+            % get the value from string
+            tmp = read_ui_str(hObject, 'n');
+            if ~between(tmp, 1, ntrials)
+               beep
+               sendmsg('Trial # out of bounds');
+               update_ui_str(trialNum, trialN);
+            else
+               trialN = tmp;
+               update_plot
+            end
+      end
    end
-end
+
+   function next_trial(hObject, eventdata, handles)
+      if trialN + 1 > ntrials
+         warning('at last trial');
+      else
+         trialN = trialN + 1;
+      end
+   end
+   
+   
+   function prev_trial(hObject, eventdata, handles)
+      if trialN - 1 < 1
+         warning('at first trial');
+      else
+         trialN = trialN - 1;
+      end
+   end
 
 
 
