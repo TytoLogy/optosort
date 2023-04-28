@@ -1,4 +1,8 @@
 function testplot(cSweeps, Fs)
+% plot and step through trials in data - uses programmatic GUI 
+%
+% 27 Apr 2023: creatd dataExplore.m to try different approach using new app
+% building techniques in MATLAB
 
 if ~iscell(cSweeps)
    error

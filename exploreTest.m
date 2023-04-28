@@ -61,8 +61,11 @@ load(tmpF);
 % specify file to examine
 %  path, dat file, _testdata.mat file
 %------------------------------------------------------------------------
-% dpath = '/media/sshanbhag/SSData/Data/Mouse/Raw/BLA/1500/20230213';
-dpath = '/Volumes/SSData/Data/Mouse/Raw/BLA/1500/20230213';
+if strcmpi(computer, 'GLNXA64')
+   dpath = '/media/sshanbhag/SSData/Data/Mouse/Raw/BLA/1500/20230213';
+else
+   dpath = '/Volumes/SSData/Data/Mouse/Raw/BLA/1500/20230213';
+end
 dname = '1500_20230213_01_0_3352_BBN.dat';
 tname = '1500_20230213_01_0_3352_BBN_testdata.mat';
 
@@ -105,7 +108,6 @@ resampleData = [];
 [cSweeps, nexInfo] = read_data_for_export(F, Channels, ...
                                                 BPfilt, resampleData);
                  
-return
 %------------------------------------------------------------------------
 % get stimulus information
 %------------------------------------------------------------------------
@@ -126,7 +128,7 @@ trialN = 15;
 % get trial information
 if strcmpi(nexInfo.FileInfo{fNum}.testname, 'BBN')
    if strcmpi(nexInfo.FileInfo{fNum}.testtype, 'LEVEL')
-      testvar = nexInfo.FileInfo{fNum}.Dinf.test.stimcache.LEVEL
+      testvar = nexInfo.FileInfo{fNum}.Dinf.test.stimcache.LEVEL;
    end
 else
    error('unsupport testname %s', nexInfo.FileInfo{fNum}.testname);
@@ -146,7 +148,7 @@ Tm = common_med_ref(T);
 
 Fs = 0.001*nexInfo.Fs;
 
-testplot(cSweeps, Fs)
+dataExplore(cSweeps, nexInfo)
 
 
 
