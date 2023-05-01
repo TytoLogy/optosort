@@ -247,6 +247,11 @@ varargout{1} = fig;
                                  nexInfo.FileInfo{1}.Dinf.audio.Duration;
             levels_by_trial = ...
                cell2mat(nexInfo.FileInfo{1}.Dinf.test.stimcache.stimvar);
+         case WAV
+            
+            levels_by_trial = ...
+               cell2mat(nexInfo.FileInfo{1}.Dinf.test.stimcache.stimvar);
+            
 
       end
    end

@@ -116,7 +116,6 @@ resampleData = [];
 onset = nexInfo.FileInfo{1}.Dinf.audio.Delay;
 offset = onset + nexInfo.FileInfo{1}.Dinf.audio.Duration;
 
-
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 %% test multichanplot
@@ -150,6 +149,11 @@ Tm = common_med_ref(T);
 
 Fs = 0.001*nexInfo.Fs;
 
+% NOTE 1 May 2023: to simplify this, need to create vectors 1:Ntrials
+% with:
+%        stimulus type (BBN or WAV name)
+%        stimulus level
+%        stimulus [onset offset]
 dataExplore(cSweeps, nexInfo)
 
 
