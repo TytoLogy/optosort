@@ -66,8 +66,10 @@ if strcmpi(computer, 'GLNXA64')
 else
    dpath = '/Volumes/SSData/Data/Mouse/Raw/BLA/1500/20230213';
 end
-dname = '1500_20230213_01_0_3352_BBN.dat';
-tname = '1500_20230213_01_0_3352_BBN_testdata.mat';
+% dname = '1500_20230213_01_0_3352_BBN.dat';
+% tname = '1500_20230213_01_0_3352_BBN_testdata.mat';
+dname = '1500_20230213_01_0_3352_WAV.dat';
+tname = '1500_20230213_01_0_3352_WAV_testdata.mat';
 
 % define path to data file
 F = defineSampleData({dpath}, {dname}, {tname});

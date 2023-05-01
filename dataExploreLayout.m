@@ -18,22 +18,21 @@ trialnEdit.Units = 'characters';
 trialUpButton.Units = 'characters';
 trialDownButton.Units = 'characters';
 % GUI Elements: Position
-fig.Position = [135.8000 37.8221 98.8571 46.5625 ];
-refButtonGroup.Position = [1.2857 1.4375 27.2857 6.3125 ];
-stimInfoPanel.Position = [41.1429 6.4375 27.2857 6.9375 ];
-filenameText.Position = [5.5714 44.5625 50.1429 1.3125 ];
-trialPanel.Position = [1.2857 9.5625 38.7143 3.8125 ];
-ax.Position = [5.5714 15.8125 88.7143 26.9375 ];
+fig.Position = [125.4286 59.8750 99 53.1875];
+refButtonGroup.Position = [71.1429 0.6250 27.2857 6.3125 ];
+stimInfoPanel.Position = [41.4286 1.6875 27.2857 5.2500 ];
+filenameText.Position = [27.0000 51.3750 50.1429 1.3125 ];
+trialPanel.Position = [1.2857 3.1250 38.7143 3.8125 ];
+ax.Position = [8.2857 9.9375 88.7143 41.3125 ];
 medRadioButton.Position = [1.2857 0.8125 11.5714 1.0625 ];
 avgRadioButton.Position = [1.2857 2.3750 11.5714 1.0625 ];
 rawRadioButton.Position = [1.2857 3.9375 11.5714 1.0625 ];
-stimuluslevelText.Position = [1.2857 1.8125 24.5714 1.3125 ];
-onsetoffsetText.Position = [1.1429 3.0625 24.7143 1.3125 ];
-stimulusText.Position = [1.1429 4.3125 24.7143 1.3125 ];
+stimuluslevelText.Position = [1.2857 0.1250 24.5714 1.3125 ];
+onsetoffsetText.Position = [1.1429 1.3750 24.7143 1.3125 ];
+stimulusText.Position = [1.1429 2.6250 24.7143 1.3125 ];
 trialnEdit.Position = [28.2857 0.6250 8.7143 1.9375 ];
 trialUpButton.Position = [14.1429 0.5000 11.5714 2.0000 ];
 trialDownButton.Position = [1.2857 0.5625 11.5714 2.0000 ];
-
 %{
 
 %% set positions of trial objects (easier to do together)

@@ -23,7 +23,7 @@ function varargout = defineSampleData(varargin)
 
 
 Channels = [];
-nargout
+
 % check inputs 
 if nargin == 0
 	% initialize path and file arrays
