@@ -44,6 +44,8 @@ Fs = 0.001*nexInfo.Fs;
 
 % to initialize plot/gui, get a single trial data in a matrix
 trialdata = cell2mat(cSweeps{fileN}(:, trialN))';
+% initialize yLim
+yLim = [min(trialdata(:)) max(trialdata(:))];
 
 % length of trial data
 L = size(trialdata, 1);
@@ -91,17 +93,17 @@ rawRadioButton = uicontrol(refButtonGroup, 'Style', 'radiobutton', ...
                               'String', 'Raw', ...
                               'Tag', 'RAW', ...
                               'HandleVisibility', 'off', ...
-                              'Tooltip', 'r'); %#ok<NASGU> 
+                              'Tooltip', 'r');  
 avgRadioButton = uicontrol(refButtonGroup, 'Style', 'radiobutton', ...
                               'String', 'Average', ...
                               'Tag', 'AVG', ...
                               'HandleVisibility', 'off', ...
-                              'Tooltip', 'a'); %#ok<NASGU> 
+                              'Tooltip', 'a');  
 medRadioButton = uicontrol(refButtonGroup, 'Style', 'radiobutton', ...
                               'String', 'Median', ...
                               'Tag', 'MED', ...
                               'HandleVisibility', 'off', ...
-                              'Tooltip', 'm'); %#ok<NASGU> 
+                              'Tooltip', 'm');  
 
 
 % panel with stimulus information
@@ -166,6 +168,26 @@ varargout{1} = fig;
                update_ui_str(trialnEdit, trialN);
                update_plot
             end
+         
+         case 'downarrow'
+             Y = yLim(2)-yLim(1);
+             yLim(1) = yLim(1) - Y*0.05;
+             yLim(2) = yLim(2) + Y*0.05;
+             update_plot;
+         case 'uparrow'
+             Y = yLim(2)-yLim(1);
+             yLim(1) = yLim(1) + Y*0.05;
+             yLim(2) = yLim(2) - Y*0.05;
+             update_plot;
+         case 'y'
+             in = inputdlg('enter new y limits (ymin ymax): ', ...
+                                 'y limits',1,{num2str(yLim)});
+             if ~isempty(in)
+                 yLim = str2double(in{1});
+                 update_plot;
+             end         
+         
+         
          case 'r'
             refmode = 'RAW';
             refButtonGroup.SelectedObject = rawRadioButton;
@@ -207,7 +229,6 @@ varargout{1} = fig;
    function update_plot
       % need to generate y data based on min max and # of channels
       apply_reference;
-      yLim = [min(trialdata(:)) max(trialdata(:))];
       yInterv = yLim(2)-yLim(1);
       nChan = length(channels);
       yTotal = yInterv * nChan;
@@ -290,22 +311,43 @@ varargout{1} = fig;
       % build stimulus information string
       testname = nexInfo.FileInfo{1}.Dinf.test.Name;
 
+      % the rest will depend on test type
       switch testname
          case 'BBN'
+            % for broadband noise rate-level data, stimulus type is BBN
             stimtype = cell(ntrials, 1);
             for t = 1:ntrials
                stimtype{t} = 'BBN';
             end
-            stimtype = nexInfo.FileInfo{1}.Dinf.test.stimcache.stimtype;
             stimOnset = nexInfo.FileInfo{1}.Dinf.audio.Delay * ...
                                                          ones(ntrials, 1);
             stimOffset = stimOnset + ...
                                  nexInfo.FileInfo{1}.Dinf.audio.Duration;
             levels_by_trial = ...
                cell2mat(nexInfo.FileInfo{1}.Dinf.test.stimcache.stimvar);
+
          case 'WAV'
+            % WAV (vocalization) test is more complicated, use separate
+            % function to handle this
             [stimtype, stimOnset, stimOffset, levels_by_trial] = ...
                                  get_stimulus_parameters_WAV;
+         
+         case 'FREQ_TUNING'
+            % for broadband noise rate-level data, stimulus type is BBN
+            stimtype = cell(ntrials, 1);
+            for t = 1:ntrials
+               stimtype{t} = sprintf('%d', ...
+                     nexInfo.FileInfo{1}.Dinf.test.stimcache.stimvar{t});
+            end
+            stimOnset = nexInfo.FileInfo{1}.Dinf.audio.Delay * ...
+                                                         ones(ntrials, 1);
+            stimOffset = stimOnset + ...
+                                 nexInfo.FileInfo{1}.Dinf.audio.Duration;
+            levels_by_trial = ...
+                           nexInfo.FileInfo{1}.Dinf.test.stimcache.LEVEL;
+
+         otherwise
+            error('%s: unsupported file');
       end
    end
 

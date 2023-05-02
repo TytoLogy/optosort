@@ -22,8 +22,12 @@ else
 end
 % dname = '1500_20230213_01_0_3352_BBN.dat';
 % tname = '1500_20230213_01_0_3352_BBN_testdata.mat';
-dname = '1500_20230213_01_0_3352_WAV.dat';
-tname = '1500_20230213_01_0_3352_WAV_testdata.mat';
+% dname = '1500_20230213_01_0_3352_WAV.dat';
+% tname = '1500_20230213_01_0_3352_WAV_testdata.mat';
+dname = '1500_20230213_01_0_3352_FREQ_TUNING_60dB.dat';
+tname = '1500_20230213_01_0_3352_FREQ_TUNING_60dB_testdata.mat';
+
+
 
 % define path to data file
 F = defineSampleData({dpath}, {dname}, {tname});
@@ -75,5 +79,7 @@ resampleData = [];
 %------------------------------------------------------------------------
 cfig = common_ref_viewer(cSweeps, nexInfo);
 
+%%
 
+testplot(cSweeps, nexInfo.Fs)
 
