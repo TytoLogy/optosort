@@ -1,7 +1,9 @@
-function varargout = dataExplore(cSweeps, nexInfo)
+function varargout = common_ref_viewer(cSweeps, nexInfo)
 %------------------------------------------------------------------------
+% fig = common_ref_viewer(cSweeps, nexInfo)
 %------------------------------------------------------------------------
-% used to examine data from opto program.
+% used to examine data from opto program and apply common average or 
+% median referencing across channels
 %
 %	cSweeps     {nfiles, 1} cell array with each element holding an
 % 	            {nChannels X ntrials} cell array of data for each file
@@ -16,7 +18,7 @@ if nargin ~= 2
 end
 
 % get number of files in cSweeps and set file index number
-nFiles = length(cSweeps);
+nFiles = length(cSweeps); %#ok<NASGU> 
 fileN = 1;
 
 % get number of channels, number of trials for current file, set 
@@ -24,7 +26,6 @@ fileN = 1;
 [nchannels, ntrials] = size(cSweeps{fileN});
 channels = 1:nchannels;
 trialN = 1;
-
 
 % reference type
 refmode = 'RAW';
@@ -52,9 +53,8 @@ T = (1:L) / Fs;
 % create figure
 fig = figure;
 fig.Name = 'dataExplore';
-fig.Units = 'Normalized';
 fig.Position = [0.2236    0.7151    0.1626    0.2229];
-
+set(fig, 'KeyPressFcn', @figKeyPress);
 
 % create axes
 ax = axes(fig);
@@ -64,7 +64,7 @@ ax = axes(fig);
 filenameText = uicontrol(fig, 'Style', 'Text', ...
                            'String', nexInfo.FileInfo{1}.F.file, ...
                            'FontWeight', 'Bold', ...
-                           'HorizontalAlignment', 'center');
+                           'HorizontalAlignment', 'center'); %#ok<NASGU> 
 % set up trial controls
 % place trial buttons in panel
 trialPanel = uipanel(fig, 'Title', sprintf('Trial (1 - %d)', ntrials), ...
@@ -90,15 +90,18 @@ refButtonGroup = uibuttongroup(fig, 'SelectionChangedFcn', @change_ref, ...
 rawRadioButton = uicontrol(refButtonGroup, 'Style', 'radiobutton', ...
                               'String', 'Raw', ...
                               'Tag', 'RAW', ...
-                              'HandleVisibility', 'off');
+                              'HandleVisibility', 'off', ...
+                              'Tooltip', 'r'); %#ok<NASGU> 
 avgRadioButton = uicontrol(refButtonGroup, 'Style', 'radiobutton', ...
                               'String', 'Average', ...
                               'Tag', 'AVG', ...
-                              'HandleVisibility', 'off');
+                              'HandleVisibility', 'off', ...
+                              'Tooltip', 'a'); %#ok<NASGU> 
 medRadioButton = uicontrol(refButtonGroup, 'Style', 'radiobutton', ...
                               'String', 'Median', ...
                               'Tag', 'MED', ...
-                              'HandleVisibility', 'off');
+                              'HandleVisibility', 'off', ...
+                              'Tooltip', 'm'); %#ok<NASGU> 
 
 
 % panel with stimulus information
@@ -133,9 +136,54 @@ varargout{1} = fig;
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
+
+   %---------------------------------------------------------------------
+   % implements some key commands for the GUI
+   %---------------------------------------------------------------------
+   function figKeyPress(hObject, eventdata) %#ok<INUSD> 
+      % leftarrow decreases trial
+      % rightarrow increases trial
+      % r selects RAW (no common ref)
+      % a selects AVG ref
+      % m selects MED ref
+
+      switch hObject.CurrentKey
+         case 'leftarrow'
+            if trialN == 1
+               beep
+               sendmsg('At first trial');
+            else
+               trialN = trialN - 1;
+               update_ui_str(trialnEdit, trialN);
+               update_plot
+            end
+         case 'rightarrow'
+            if trialN == ntrials
+               beep
+               sendmsg('At last trial');
+            else
+               trialN = trialN + 1;
+               update_ui_str(trialnEdit, trialN);
+               update_plot
+            end
+         case 'r'
+            refmode = 'RAW';
+            refButtonGroup.SelectedObject = rawRadioButton;
+            update_plot;
+         case 'a'
+            refmode = 'AVG';
+            refButtonGroup.SelectedObject = avgRadioButton;
+            update_plot;
+         case 'm'
+            refmode = 'MED';
+            refButtonGroup.SelectedObject = medRadioButton;
+            update_plot;
+      end
+   end
+
    %---------------------------------------------------------------------
    %---------------------------------------------------------------------
-   function change_ref(hObject, eventdata, handles)
+   function change_ref(hObject, eventdata, handles) %#ok<INUSD> 
       refmode = hObject.SelectedObject.Tag;
       update_plot;
    end
@@ -192,7 +240,7 @@ varargout{1} = fig;
 
    %---------------------------------------------------------------------
    %---------------------------------------------------------------------
-   function change_trial(hObject, eventdata, handles)
+   function change_trial(hObject, eventdata, handles) %#ok<INUSD> 
       switch(hObject.Tag)
          case 'trialDownButton'
             if trialN == 1
@@ -212,7 +260,6 @@ varargout{1} = fig;
                update_ui_str(trialnEdit, trialN);
                update_plot
             end
-
          case 'trialnEdit'
             % get the value from string
             tmp = read_ui_str(hObject, 'n');
@@ -225,16 +272,16 @@ varargout{1} = fig;
                update_plot
             end
       end
-
    end
 
    function update_stimulus_info
       update_ui_str(stimulusText, ...
                            sprintf('%s  %s', testname, stimtype{trialN}));
-      update_ui_str(stimuluslevelText, sprintf('%d', ...
+      update_ui_str(onsetoffsetText, ...
+               sprintf('[%d %.0f]', stimOnset(trialN), ...
+                                          stimOffset(trialN)));
+      update_ui_str(stimuluslevelText, sprintf('%d dB SPL', ...
                                                 levels_by_trial(trialN)));
-      update_ui_str(onsetoffsetText, sprintf('[%d %d]', ...
-                                                   stimOnset, stimOffset));
    end
 
    %---------------------------------------------------------------------
@@ -250,7 +297,8 @@ varargout{1} = fig;
                stimtype{t} = 'BBN';
             end
             stimtype = nexInfo.FileInfo{1}.Dinf.test.stimcache.stimtype;
-            stimOnset = nexInfo.FileInfo{1}.Dinf.audio.Delay;
+            stimOnset = nexInfo.FileInfo{1}.Dinf.audio.Delay * ...
+                                                         ones(ntrials, 1);
             stimOffset = stimOnset + ...
                                  nexInfo.FileInfo{1}.Dinf.audio.Duration;
             levels_by_trial = ...
@@ -273,8 +321,8 @@ varargout{1} = fig;
       % for WAV, this will need to be obtained from stimulus struct
       % see APANalyze - the values in stimList are for TDT HW trigger and don't 
       % account for the offset within the .wav files 
-      sOn = zeros(nstim, 2);
-      sOff = zeros(nstim, 2);
+      sOn = zeros(nstim, 1);
+      sOff = zeros(nstim, 1);
       
       % init ANApath object
       AP = ANApath;
@@ -308,7 +356,7 @@ varargout{1} = fig;
             case 'noise'
                sName{s} = 'BBN';
                sOn(s) = S.Delay;
-               sOff(s) = S.Delay + [0 S.Duration];
+               sOff(s) = S.Delay + S.Duration;
             case 'wav'
                % remove _adj
                sName{s} = deAdjWAVName(S.signal.WavFile);
@@ -329,8 +377,8 @@ varargout{1} = fig;
    %---------------------------------------------------------------------
    function draw_onsetoffset
       hold on
-      plot(ax, stimOnset, ax.YLim(1), 'g.', 'MarkerSize', 12);
-      plot(ax, stimOffset, ax.YLim(1), 'r.', 'MarkerSize', 12);
+      plot(ax, stimOnset(trialN), ax.YLim(1), 'g.', 'MarkerSize', 12);
+      plot(ax, stimOffset(trialN), ax.YLim(1), 'r.', 'MarkerSize', 12);
       hold off
    end
 
