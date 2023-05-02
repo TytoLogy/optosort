@@ -30,7 +30,7 @@ trialN = 1;
 refmode = 'RAW';
 
 % variables for stimulus settings
-stimtype = '';
+stimtype = {};
 testname = '';
 stimOnset = [];
 stimOffset = [];
@@ -114,14 +114,18 @@ onsetoffsetText = uicontrol(stimInfoPanel, 'Style', 'Text', ...
                                     'String', '[onset offset]', ...
                                     'HorizontalAlignment', 'center');
 
-
-
+% set locations and size of controls
 dataExploreLayout
-
+% update plot
 update_plot
+% draw dots for stimulus onset and offset
 draw_onsetoffset
-
+% assign output
 varargout{1} = fig;
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -177,7 +181,7 @@ varargout{1} = fig;
       % change figure name - eases saving of figure as png, or jpg
       figname = sprintf('%s_%s_t%d_%ddB_%s', ...
                                     nexInfo.FileInfo{1}.F.base, ...
-                                    stimtype, ...
+                                    stimtype{trialN}, ...
                                     trialN, ...
                                     levels_by_trial(trialN), ...
                                     refmode);
@@ -225,7 +229,8 @@ varargout{1} = fig;
    end
 
    function update_stimulus_info
-      update_ui_str(stimulusText, sprintf('%s  %s', testname, stimtype));
+      update_ui_str(stimulusText, ...
+                           sprintf('%s  %s', testname, stimtype{trialN}));
       update_ui_str(stimuluslevelText, sprintf('%d', ...
                                                 levels_by_trial(trialN)));
       update_ui_str(onsetoffsetText, sprintf('[%d %d]', ...
@@ -235,25 +240,89 @@ varargout{1} = fig;
    %---------------------------------------------------------------------
    %---------------------------------------------------------------------
    function get_stimulus_parameters
-      stimtype = nexInfo.FileInfo{1}.Dinf.test.stimcache.stimtype;
-
       % build stimulus information string
       testname = nexInfo.FileInfo{1}.Dinf.test.Name;
 
       switch testname
          case 'BBN'
+            stimtype = cell(ntrials, 1);
+            for t = 1:ntrials
+               stimtype{t} = 'BBN';
+            end
+            stimtype = nexInfo.FileInfo{1}.Dinf.test.stimcache.stimtype;
             stimOnset = nexInfo.FileInfo{1}.Dinf.audio.Delay;
             stimOffset = stimOnset + ...
                                  nexInfo.FileInfo{1}.Dinf.audio.Duration;
             levels_by_trial = ...
                cell2mat(nexInfo.FileInfo{1}.Dinf.test.stimcache.stimvar);
-         case WAV
-            
-            levels_by_trial = ...
-               cell2mat(nexInfo.FileInfo{1}.Dinf.test.stimcache.stimvar);
-            
-
+         case 'WAV'
+            [stimtype, stimOnset, stimOffset, levels_by_trial] = ...
+                                 get_stimulus_parameters_WAV;
       end
+   end
+
+   function [sName, sOn, sOff, sLevel] = get_stimulus_parameters_WAV
+      % nexInfo.FileInfo{1}.Dinf.test.stimIndices(1:# of trials) 
+      % holds indices into nexInfo.FileInfo{1}.Dinf.stimList struct that 
+      % has stimulus information     
+      stimIndices = nexInfo.FileInfo{1}.Dinf.test.stimIndices;
+      nstim = length(stimIndices);
+      
+      sName = cell(nstim, 1);
+      sLevel = zeros(nstim, 1);
+      % for WAV, this will need to be obtained from stimulus struct
+      % see APANalyze - the values in stimList are for TDT HW trigger and don't 
+      % account for the offset within the .wav files 
+      sOn = zeros(nstim, 2);
+      sOff = zeros(nstim, 2);
+      
+      % init ANApath object
+      AP = ANApath;
+      %------------------------------------------------------------------------
+      % stimulus onset/offset data from IC Paper Table 1 (with adjusted
+      % onsets/durations)- saved by checkStimDurations script
+      %------------------------------------------------------------------------
+      table1Path = AP.ssPath;
+      % table1FileName = 'ICPaper1_Table1.mat';
+      table1FileName = 'ICPaper1_Table1_StimTiming_13Mar2023.mat';
+      % load Table 1
+      sendmsg('Loading stimulus timing information');
+      load(fullfile(table1Path, table1FileName), 'Table1');
+      %{
+      Assume onset is 100 ms for everything
+      For WAV stimuli:
+      offset = onset + Table1.Durations_AdjStim(tI);
+      %}
+      
+      % loop through the stimulus indices
+      for s = 1:nstim
+         % get audio portion of stimulus struct for this trial (don't need opto)
+         S = nexInfo.FileInfo{1}.Dinf.stimList(stimIndices(s)).audio;
+         % save stimulus name and stimulus onset/offset
+         % need to account for 'null', 'noise' and 'wav'
+         switch lower(S.signal.Type)
+            case 'null'
+               sName{s} = 'null';
+               sOn(s) = 100;
+               sOff(s) = 200;
+            case 'noise'
+               sName{s} = 'BBN';
+               sOn(s) = S.Delay;
+               sOff(s) = S.Delay + [0 S.Duration];
+            case 'wav'
+               % remove _adj
+               sName{s} = deAdjWAVName(S.signal.WavFile);
+               % find stimulus name in Table1.Syllable
+               sindx = strcmp(sName{s}, Table1.Syllable);
+               sOn(s) = 100;
+               sOff(s) = 100 + Table1.Durations_AdjStim(sindx);
+            otherwise
+               error('Unknown stimulus type: %s', S.signal.Type);
+         end
+         % save stimulus level
+         sLevel(s) = S.Level;
+      end
+
    end
 
    %---------------------------------------------------------------------

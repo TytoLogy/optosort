@@ -116,49 +116,90 @@ resampleData = [];
 onset = nexInfo.FileInfo{1}.Dinf.audio.Delay;
 offset = onset + nexInfo.FileInfo{1}.Dinf.audio.Duration;
 
+
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
-%% test multichanplot
+%% NOTE 1 May 2023: to simplify this, need to create vectors 1:Ntrials
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
-fNum = 1;
-
-% select trial
-trialN = 15;
-
-% get trial information
-if strcmpi(nexInfo.FileInfo{fNum}.testname, 'BBN')
-   if strcmpi(nexInfo.FileInfo{fNum}.testtype, 'LEVEL')
-      testvar = nexInfo.FileInfo{fNum}.Dinf.test.stimcache.LEVEL;
-   end
-else
-   error('unsupport testname %s', nexInfo.FileInfo{fNum}.testname);
-end
-
-%{
-% transform cell array to matrix with time bins in rows, channels by column
-T = cell2mat(D)';
-% apply common average referencing to data
-Ta = common_avg_ref(T);
-% apply common median referencing to data
-Tm = common_med_ref(T);
-%}
-
-%%
-
-
-Fs = 0.001*nexInfo.Fs;
-
-% NOTE 1 May 2023: to simplify this, need to create vectors 1:Ntrials
 % with:
 %        stimulus type (BBN or WAV name)
 %        stimulus level
 %        stimulus [onset offset]
+
+% nexInfo.FileInfo{1}.Dinf.test.stimIndices(1:# of trials) holds indices
+% into nexInfo.FileInfo{1}.Dinf.stimList struct that has 
+% stimulus information
+
+stimIndices = nexInfo.FileInfo{1}.Dinf.test.stimIndices;
+nstim = length(stimIndices);
+
+stimulusname = cell(nstim, 1);
+stimuluslevel = zeros(nstim, 1);
+% for WAV, this will need to be obtained from stimulus struct
+% see APANalyze - the values in stimList are for TDT HW trigger and don't 
+% account for the offset within the .wav files 
+stimulusonoff = zeros(nstim, 2);
+
+% init ANApath object
+AP = ANApath;
+%------------------------------------------------------------------------
+% stimulus onset/offset data from IC Paper Table 1 (with adjusted
+% onsets/durations)- saved by checkStimDurations script
+%------------------------------------------------------------------------
+table1Path = AP.ssPath;
+% table1FileName = 'ICPaper1_Table1.mat';
+table1FileName = 'ICPaper1_Table1_StimTiming_13Mar2023.mat';
+% load Table 1
+sendmsg('Loading stimulus timing information');
+load(fullfile(table1Path, table1FileName), 'Table1');
+%{
+Assume onset is 100 ms for everything
+For WAV stimuli:
+offset = onset + Table1.Durations_AdjStim(tI);
+%}
+
+% loop through the stimulus indices
+for s = 1:nstim
+   % get audio portion of stimulus struct for this trial (don't need opto)
+   S = nexInfo.FileInfo{1}.Dinf.stimList(stimIndices(s)).audio;
+   % save stimulus name and stimulus onset/offset
+   % need to account for 'null', 'noise' and 'wav'
+   switch lower(S.signal.Type)
+      case 'null'
+         stimulusname{s} = 'null';
+         stimulusonoff(s, :) = [100 200];
+      case 'noise'
+         stimulusname{s} = 'BBN';
+         stimulusonoff(s, :) = S.Delay + [0 S.Duration];
+      case 'wav'
+         % remove _adj
+         stimulusname{s} = deAdjWAVName(S.signal.WavFile);
+         % find stimulus name in Table1.Syllable
+         sindx = strcmp(stimulusname{s}, Table1.Syllable);
+         stimulusonoff(s, :) = 100 + [0 Table1.Durations_AdjStim(sindx)];
+      otherwise
+         error('Unknown stimulus type: %s', S.signal.Type);
+   end
+   % save stimulus level
+   stimuluslevel(s) = S.Level;
+end
+
+
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%% call dataExplore with sweep data and nexInfo
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 dataExplore(cSweeps, nexInfo)
 
 
 
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 %%
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 
 %{
 %% this is essentially multichanplot code
