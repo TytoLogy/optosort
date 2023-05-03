@@ -1,9 +1,37 @@
 function viewTrialData(varargin)
+%------------------------------------------------------------------------
+% viewTrialData(datfile)
+%------------------------------------------------------------------------
+% optosort project
+%------------------------------------------------------------------------
+% reads in data from .dat files created by the opto program
+% Then opens common_ref_viewer() to allow user to page through data trials
+% and view 16 channels of recorded data. 
+% User can apply common average reference or common median reference to
+% trial data to explore effects on recording
+%
+% Limitations: 
+%  .dat files must have 16 channels of data recorded
+%------------------------------------------------------------------------
+% Input Args:
+%  datfile     (optional) filename for .dat file (with path prepended)
+%
+% Output Args: 
+%  none
+%------------------------------------------------------------------------
+% See also: common_ref_viewer, opto program
+%------------------------------------------------------------------------
 
+%------------------------------------------------------------------------
+% Created: 2 May, 2023 Sharad Shanbhag  sshanbhag@neomed.edu
+% 
+% Revisions:
+%
+%------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
-% settings
+%% settings
 %------------------------------------------------------------------------
 % read in all 16 channels
 Channels = 1:16;
@@ -26,7 +54,10 @@ BPfilt.type = 'butter';
 % don't resample data (pass in empty value)
 resampleData = [];
 
-
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%% Data file - provided as input or get from user
+%------------------------------------------------------------------------
 if isempty(varargin)
    % get .dat file from user 
    [datfile, datpath] = uigetfile('*.dat', ...
@@ -43,8 +74,9 @@ else
    end
 end
 
-
-% build testdata filename
+%------------------------------------------------------------------------
+% build _testdata.mat filename
+%------------------------------------------------------------------------
 [~, tbase] = fileparts(datfile);
 tname = [tbase '_testdata.mat'];
 % check that it exists

@@ -79,7 +79,4 @@ resampleData = [];
 %------------------------------------------------------------------------
 cfig = common_ref_viewer(cSweeps, nexInfo);
 
-%%
-
-testplot(cSweeps, nexInfo.Fs)
 
