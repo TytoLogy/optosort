@@ -96,25 +96,42 @@ nexInfo.InfoFileName = fullfile(NexFilePath, [baseName '_nexinfo.mat']);
 
 % copy of cSweepsRaw for storing avg ref data
 cSweepsAvg = cSweepsRaw;
-
 % loop through files
 for f = 1:1
    nSweeps = size(cSweeps{f}, 2);
    % loop through sweeps (aka trials)
-   for s = 1:1
+   for s = 1:nSweeps
       % channels are in rows, trials in columns of the cell array 
-      cSweepsRaw{f}(:, s)
-
-      % convert to mat
-      tmpmat = cell2mat(cSweepsRaw{f}(:, s));
+      % convert to mat (channels, samples)
+      m = cell2mat(cSweepsRaw{f}(:, s));
+      % apply common avg ref
+      a = common_avg_ref(m);
+      % convert to cell (channels, 1)
+      c = mat2cell(a, ones(1, size(m, 1)));
+      % assign to cSweepsAvg
+      cSweepsAvg{f}(:, s) = c;
    end
-
-
-
-
 end
 
 
+% copy of cSweepsRaw for storing avg ref data
+cSweepsMed = cSweepsRaw;
+% loop through files
+for f = 1:1
+   nSweeps = size(cSweeps{f}, 2);
+   % loop through sweeps (aka trials)
+   for s = 1:nSweeps
+      % channels are in rows, trials in columns of the cell array 
+      % convert to mat (channels, samples)
+      m = cell2mat(cSweepsRaw{f}(:, s));
+      % apply common med ref
+      a = common_med_ref(m);
+      % convert to cell (channels, 1)
+      c = mat2cell(a, ones(1, size(m, 1)));
+      % assign to cSweepsAvg
+      cSweepsMed{f}(:, s) = c;
+   end
+end
 
 
 
