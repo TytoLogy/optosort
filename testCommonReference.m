@@ -3,12 +3,10 @@
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
-% 
 % script to test common avg/median reference for spike data
-%
-% 
 %------------------------------------------------------------------------
-% See also: exportTest (script)
+% See also: exportTest (script), export_for_plexon, common_avg_ref, 
+%           common_med_ref
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
@@ -18,6 +16,11 @@
 % Created: 12 April, 2023(SJS)
 %
 % Revisions:
+%  3 May 2023 (SJS): implemented ref viewer, now need to create exported
+%  test data where 1 channel is exported in 3 versions:
+%     raw
+%     common avg ref
+%     common med ref
 %------------------------------------------------------------------------
 
 %{
@@ -28,8 +31,11 @@ Things to do:
 3) display and compare pre/post data across channels
 questions:
 - how to exclude channels?
-- idea: 
-   select a channel
+   since export_for_plexon already selects channels for export (from user
+   input arg), maybe no need to worry about this?
+
+- idea for evaluation: 
+   select a channel from test data
    export three "channels" of data
       raw
       c.a.r.
@@ -42,12 +48,17 @@ questions:
 % path, dat file, _testdata.mat file
 %------------------------------------------------------------------------
 dpath = '/media/sshanbhag/SSData/Data/Mouse/Raw/BLA/1500/20230213';
-dpath = '/Volumes/SSData/Data/Mouse/Raw/BLA/1500/20230213';
+% dpath = '/Volumes/SSData/Data/Mouse/Raw/BLA/1500/20230213';
 dname = '1500_20230213_01_0_3352_BBN.dat';
 tname = '1500_20230213_01_0_3352_BBN_testdata.mat';
 
-% define path to data file and 
+% define path to data file and return as OptoFileName object
 F = defineSampleData({dpath}, {dname}, {tname});
+% determine # of files
+nFiles = length(F);
+
+% output (export) path and file
+NexFilePath = pwd;
 
 %------------------------------------------------------------------------
 %% load data
@@ -59,38 +70,87 @@ F = defineSampleData({dpath}, {dname}, {tname});
 % use empty values for BPfilt (arg 3) and resampleData (arg 4) so 
 % that no filtering or resampling is done
 %------------------------------------------------------------------------
+% specify channel to import
 Channels = 1:16;
 nChannels = length(Channels);
-BPfilt = [];
-resampleData = [];
-[cSweeps, nexInfo] = read_data_for_export(F, Channels, ...
-                                                [], []);
 
-%%
+% specify channel to export
+exportChannel = 1;
+BPfilt = buildFilter;
+resampleData = [];
+[cSweepsRaw, nexInfo] = read_data_for_export(F, Channels, ...
+                                                BPfilt, resampleData);
+
+%% export data for testing sorting
+% output (export) path and file
+NexFileName = sprintf('%s_CH%d_reftest.nex', F.base, exportChannel);
+
+% some of this code is pulled from export_for_plexon
+nexInfo.FileName = fullfile(NexFilePath, NexFileName);
+% create output _nexinfo.mat file name - base is same as .nex file
+[~, baseName] = fileparts(nexInfo.FileName);
+nexInfo.InfoFileName = fullfile(NexFilePath, [baseName '_nexinfo.mat']);
+
+%% apply common referencing before concatenating data - this should save on
+% memory and time... hopefully
+
+% copy of cSweepsRaw for storing avg ref data
+cSweepsAvg = cSweepsRaw;
+
+% loop through files
+for f = 1:1
+   nSweeps = size(cSweeps{f}, 2);
+   % loop through sweeps (aka trials)
+   for s = 1:1
+      % channels are in rows, trials in columns of the cell array 
+      cSweepsRaw{f}(:, s)
+
+      % convert to mat
+      tmpmat = cell2mat(cSweepsRaw{f}(:, s));
+   end
+
+
+
+
+end
+
+
+
+
+
+
+
+%------------------------------------------------------------------------
+%% process data for single trial
+%------------------------------------------------------------------------
+% this section was used during initial testing
+%{
+% read data without filtering, resampling
+% [cSweepsRaw, nexInfo] = read_data_for_export(F, Channels, [], []);
+
+% define filter using internal function
+BPfilt = buildFilter(nexInfo.Fs);
+
 % get stimulus information
 onset = nexInfo.FileInfo{1}.Dinf.audio.Delay;
 offset = onset + nexInfo.FileInfo{1}.Dinf.audio.Duration;
-%%
-%{
-% set up raw data plot
-[r.fH, ar.X, r.pH] = tracePlot([], cell2mat(cSweeps{1}(:, 1))', nexInfo.Fs);
-r.fH.Name = 'RAW';
-% set up avg data plot
-[a.fH, a.aX, a.pH] = tracePlot([], cell2mat(cSweeps{1}(:, 1))', nexInfo.Fs);
-a.fH.Name = 'AVG';
-% set up med data plot
-[m.fH, m.aX, m.pH] = tracePlot([], cell2mat(cSweeps{1}(:, 1))', nexInfo.Fs);
-m.fH.Name = 'MED';
-%}
 
-% define filter
-BPfilt = buildFilter(nexInfo.Fs);
-
-%% process data
+% % set up raw data plot
+% [r.fH, ar.X, r.pH] = tracePlot(cell2mat(cSweepsRaw{1}(:, 1))', ...
+%                                                                nexInfo.Fs);
+% r.fH.Name = 'RAW';
+% % set up avg data plot
+% [a.fH, a.aX, a.pH] = tracePlot(cell2mat(cSweepsRaw{1}(:, 1))', ...
+%                                                                nexInfo.Fs);
+% a.fH.Name = 'AVG';
+% % set up med data plot
+% [m.fH, m.aX, m.pH] = tracePlot(cell2mat(cSweepsRaw{1}(:, 1))', ...
+%                                                                nexInfo.Fs);
+% m.fH.Name = 'MED';
 
 % select trial
 trialN = 100;
-D = cSweeps{1}(:, trialN);
+D = cSweepsRaw{1}(:, trialN);
 
 % filter the data
 for c = 1:length(D)
@@ -98,8 +158,8 @@ for c = 1:length(D)
 							sin2array(D{c}, nexInfo.Fs, BPfilt.ramp));
 end
 
-% transform cell array to matrix with time bins in rows, channels by column
-T = cell2mat(D)';
+% transform cell array to matrix with time bins in columns, channels by rows
+T = cell2mat(D);
 % apply common average referencing to data
 Ta = common_avg_ref(T);
 % apply common median referencing to data
@@ -113,7 +173,7 @@ tl.Padding = 'compact';
 
 % plot raw data
 nexttile
-[r.pH, r.aX, r.fH] = tracePlot(T, nexInfo.Fs);
+[r.pH, r.aX, r.fH] = tracePlot(T', nexInfo.Fs);
 title(r.aX, 'RAW');
 % draw onset/offset lines
 line([onset onset], r.aX.YLim, 'Color', 'g');
@@ -121,13 +181,13 @@ line([offset offset], r.aX.YLim, 'Color', 'r');
 
 % plot avg data
 nexttile
-[a.pH, a.aX, a.fH] = tracePlot(Ta, nexInfo.Fs);
+[a.pH, a.aX, a.fH] = tracePlot(Ta', nexInfo.Fs);
 title(a.aX, 'AVG');
 line([onset onset], r.aX.YLim, 'Color', 'g');
 line([offset offset], r.aX.YLim, 'Color', 'r');
 % plot med data
 nexttile;
-[m.pH, m.aX, m.fH] = tracePlot(Tm, nexInfo.Fs);
+[m.pH, m.aX, m.fH] = tracePlot(Tm', nexInfo.Fs);
 title(m.aX, 'MED');
 line([onset onset], r.aX.YLim, 'Color', 'g');
 line([offset offset], r.aX.YLim, 'Color', 'r');
@@ -135,16 +195,9 @@ line([offset offset], r.aX.YLim, 'Color', 'r');
 r.fH.Name = sprintf('%s_Sweep%d', F.base, trialN);
 r.fH.FileName = sprintf('%s_Sweep%d', F.base, trialN);
 r.fH.PaperOrientation = 'landscape';
-%{
-   % assign data to plot
-   for c = 1:nchan
-      % update plot
-      set(pH(c), 'YData', T(:, c) + c*yabsmax);
-   end
-   % update plots
-   refreshdata(ancestor(pH(1), 'figure'));
-end
 %}
+
+
 
 
 
@@ -214,22 +267,22 @@ end
 % apply common average reference to matrix of channel data [samples,
 % channels]
 function Tout = common_avg_ref(Tin)
-   A = mean(Tin, 2);
+   A = mean(Tin);
    Tout = Tin - A;
 end
 
 % apply common median reference to matrix of channel data [samples,
 % channels]
 function Tout = common_med_ref(Tin)
-   A = median(Tin, 2);
+   A = median(Tin);
    Tout = Tin - A;
 end
 
 
-function BPfilt = buildFilter(Fs)
+function BPfilt = buildFilter(varargin)
    %---------------------------------------------------------------------
-   % define filter
-   %---------------------------------------------------------------------
+   % define filter parameters
+   %---------------------------------------------------------------------  
    % [highpass lowpass] cutoff frequencies in Hz
    BPfilt.Fc = [250 4000];
    % order of filter. note that the filtfilt() function in MATLAB is used,
@@ -243,17 +296,22 @@ function BPfilt = buildFilter(Fs)
    % crap from the raw data
    BPfilt.type = 'butter';
    
-   BPfilt.Fs = Fs;
-   BPfilt.Fnyq = Fs / 2;
-   BPfilt.cutoff = BPfilt.Fc / BPfilt.Fnyq;
-   if strcmpi(BPfilt.type, 'bessel')
-	   [BPfilt.b, BPfilt.a] = besself(BPfilt.forder, BPfilt.cutoff, ...
-                                          'bandpass');
-   elseif strcmpi(BPfilt.type, 'butter')
-	   [BPfilt.b, BPfilt.a] = butter(BPfilt.forder, BPfilt.cutoff, ...
-                                          'bandpass');
-   else
-	   error('%s: unknown filter type %s', mfilename, BPfilt.type)
+   %---------------------------------------------------------------------
+   % if sample rate was provided, generate coefficients
+   %---------------------------------------------------------------------
+   if ~isempty(varargin)
+      Fs = varargin{1};
+      BPfilt.Fs = Fs;
+      BPfilt.Fnyq = Fs / 2;
+      BPfilt.cutoff = BPfilt.Fc / BPfilt.Fnyq;
+      if strcmpi(BPfilt.type, 'bessel')
+	      [BPfilt.b, BPfilt.a] = besself(BPfilt.forder, BPfilt.cutoff, ...
+                                             'bandpass');
+      elseif strcmpi(BPfilt.type, 'butter')
+	      [BPfilt.b, BPfilt.a] = butter(BPfilt.forder, BPfilt.cutoff, ...
+                                             'bandpass');
+      else
+	      error('%s: unsupported filter type %s', mfilename, BPfilt.type)
+      end
    end
-
 end

@@ -9,7 +9,8 @@ function varargout = export_for_plexon(varargin)
 % (Neural Explorere) format
 %
 % Will require toolbox from Neural Explorer:
-% https://www.neuroexplorer.com/downloads/HowToReadAndWriteNexAndNex5FilesInMatlab.zip
+% https://www.neuroexplorer.com/downloads
+%           /HowToReadAndWriteNexAndNex5FilesInMatlab.zip
 % 
 %------------------------------------------------------------------------
 % Input Arguments:
@@ -86,6 +87,16 @@ function varargout = export_for_plexon(varargin)
 %		value
 % 		if empty or not specified, no change will be made to sampling rate.
 % 
+%  exportInfo.referenceData
+%     Default: 'raw'
+%     Options:
+%        'avg'    common average reference - at each bin, computes 
+%                 average across channels, subtracts this value from 
+%                 each channel
+%        'med'    common median reference - at each bin, computes 
+%                 median across channels, subtracts this value from 
+%                 each channel
+%       
 %	exportInfo.testData
 % 		true	fake data will be created
 % 		false	no fake data!
@@ -129,35 +140,38 @@ function varargout = export_for_plexon(varargin)
 %	26 Mar 2020 (SJS): reworking for real world use. 
 %		- added filter 'type' to exportOpts.BPfilt struct
 %	10 Apr, 2020 (SJS): cInfo converted to cell array instead of array of
-%	CurveInfo objects - this was done in order to include WAVInfo objects
-%	(which is subclass of CurveInfo) to be included in the array. will need
-%	to update downstream code.
+%	   CurveInfo objects - this was done in order to include WAVInfo objects
+%	   (which is subclass of CurveInfo) to be included in the array. 
+%	   will need to update downstream code.
 % 9 June 2020 (SJS): added resampleData field to exportOptions
 % 16 Jun 2020 (SJS): added testData as option to build test data for plx
 % 29 Jun 2020 (SJS): add stimulus specific event timestamps to nex file
 % 15 Jun 2021 (SJS): moving NEX_UTIL_PATH out of here - should be defined
-% in user's path!
+%     in user's path!
 % 19 Jul 2021 (SJS): adding option to change which events get written to
-% .nex file. This is to (1) enable testing/probing of errors in writing
-% the imported .nex file to .plx format within Plexon OFS (offline sorter)
-% and (2) to allow user to control the event entries that are written to
-% the .nex file
+%     .nex file. This is to (1) enable testing/probing of errors in writing
+%     the imported .nex file to .plx format within Plexon OFS 
+%     (offline sorter) and (2) to allow user to control the event 
+%     entries that are written to the .nex file
+% 3 May 2023 (SJS): adding common avg/median referencing option
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
-% Initial things to define
+% Initial things to define: defaults
 %------------------------------------------------------------------------
 sepstr = '----------------------------------------------------';
 % NEX_UTIL_PATH = ['~/Work/Code/Matlab/stable/Toolbox/NeuroExplorer' ...
 % 					'/NexTools'];
-% filter info
+% default filter is... no filter (indicated by [] empty val)
 defaultFilter = [];
-% resample data? default is no
+% resample data? default is no (again, indicate by [])
 defaultResampleRate = [];
-% build test data?
+% build test data? default is no
 testData = false;
+% default for common referencing is none (use raw data)
+defaultreferenceData = 'raw';
 
 %------------------------------------------------------------------------
 % Setup
@@ -232,11 +246,16 @@ if nargin == 1
 		BPfilt = defaultFilter;
 	end
 	% resample?
-	if isfield(tmp, 'resampleData')
-		resampleData = tmp.resampleData;
-	else
-		resampleData = defaultResampleRate;
-	end
+   if isfield(tmp, 'resampleData')
+      resampleData = tmp.resampleData;
+   else
+      resampleData = defaultResampleRate;
+   end
+   if isfield(tmp, 'referenceData')
+      referenceData = tmp.referenceData;
+   else
+      referenceData = defaultreferenceData;
+   end
 	% test data?
    if isfield(tmp, 'testData')
       testData = tmp.testData;
@@ -322,6 +341,21 @@ if testData == false
 else
 	[cSweeps, nexInfo] = test_data_for_export(F, Channels, ...
                                                 BPfilt, resampleData);
+end
+
+%------------------------------------------------------------------------
+% Apply common reference here
+%------------------------------------------------------------------------
+switch referenceData
+   case 'raw'
+      % do nothing
+   case 'avg'
+      % need common avg fcn
+   case 'med'
+      % need common med fcn
+   otherwise
+      error('%s: invalid referenceData option: %s', ...
+                  mfilename, referenceData);
 end
 
 %------------------------------------------------------------------------
