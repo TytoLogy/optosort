@@ -580,10 +580,11 @@ function out = applyCommonReference(sweepCell, refFunctionHandle)
          % channels are in rows, trials in columns of the cell array 
          % convert to mat (channels, samples)
          m = cell2mat(sweepCell{f}(:, s));
-         % apply function
-         a = refFunctionHandle(cell2mat(sweepCell{f}(:, s)));
+         % apply function, 
+%          a = refFunctionHandle(m);
          % convert to cell (channels, 1) and assign to cSweepsAvg
-         out{f}(:, s) = mat2cell(a, ones(1, size(m, 1)));
+         out{f}(:, s) = mat2cell(refFunctionHandle(m), ...
+                                                ones(1, size(m, 1)));
       end
    end
 end

@@ -146,7 +146,7 @@ end
 %% some diagnostics - plot raw, avg, med ref data
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
-
+%{
 for f = 1:nFiles
    nSweeps = size(cSweepsRaw{f}, 2);
    % loop through sweeps (aka trials)
@@ -525,9 +525,10 @@ function out = applyCommonReference(sweepCell, refFunctionHandle)
          % convert to mat (channels, samples)
          m = cell2mat(sweepCell{f}(:, s));
          % apply function
-         a = refFunctionHandle(m);
+%          a = refFunctionHandle(m);
          % convert to cell (channels, 1) and assign to cSweepsAvg
-         out{f}(:, s) = mat2cell(a, ones(1, size(m, 1)));
+         out{f}(:, s) = mat2cell(refFunctionHandle(m), ...
+                                       ones(1, size(m, 1)));
       end
    end
 end
