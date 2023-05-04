@@ -4,10 +4,11 @@ function Tout = common_med_ref(Tin)
 % channels]
 %---------------------------------------------------------------------
 % Created: 26 April 2023 (SJS)
-% Originally nested in testCommonReference script
-%
+%     Originally nested in testCommonReference script
+% Revised:
+%  4 May 2023 (SJS): making changes to account for row-oriented data
 %---------------------------------------------------------------------
 % To Do:
 %---------------------------------------------------------------------
-A = median(Tin, 2);
+A = median(Tin);
 Tout = Tin - A;

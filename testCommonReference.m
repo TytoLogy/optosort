@@ -81,7 +81,9 @@ resampleData = [];
 [cSweepsRaw, nexInfo] = read_data_for_export(F, Channels, ...
                                                 BPfilt, resampleData);
 
-%% export data for testing sorting
+%------------------------------------------------------------------------
+%% specify export file for plexon
+%------------------------------------------------------------------------
 % output (export) path and file
 NexFileName = sprintf('%s_CH%d_reftest.nex', F.base, exportChannel);
 
@@ -91,14 +93,20 @@ nexInfo.FileName = fullfile(NexFilePath, NexFileName);
 [~, baseName] = fileparts(nexInfo.FileName);
 nexInfo.InfoFileName = fullfile(NexFilePath, [baseName '_nexinfo.mat']);
 
+%------------------------------------------------------------------------
 %% apply common referencing before concatenating data - this should save on
 % memory and time... hopefully
+%------------------------------------------------------------------------
 
+cSweepsAvg = applyCommonReference(cSweepsRaw, @common_avg_ref);
+cSweepsMed = applyCommonReference(cSweepsRaw, @common_med_ref);
+
+%{
 % copy of cSweepsRaw for storing avg ref data
 cSweepsAvg = cSweepsRaw;
 % loop through files
-for f = 1:1
-   nSweeps = size(cSweeps{f}, 2);
+for f = 1:nFiles
+   nSweeps = size(cSweepsRaw{f}, 2);
    % loop through sweeps (aka trials)
    for s = 1:nSweeps
       % channels are in rows, trials in columns of the cell array 
@@ -113,12 +121,11 @@ for f = 1:1
    end
 end
 
-
 % copy of cSweepsRaw for storing avg ref data
 cSweepsMed = cSweepsRaw;
 % loop through files
-for f = 1:1
-   nSweeps = size(cSweeps{f}, 2);
+for f = 1:nFiles
+   nSweeps = size(cSweepsRaw{f}, 2);
    % loop through sweeps (aka trials)
    for s = 1:nSweeps
       % channels are in rows, trials in columns of the cell array 
@@ -132,13 +139,181 @@ for f = 1:1
       cSweepsMed{f}(:, s) = c;
    end
 end
+%}
 
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%% some diagnostics - plot raw, avg, med ref data
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 
+for f = 1:nFiles
+   nSweeps = size(cSweepsRaw{f}, 2);
+   % loop through sweeps (aka trials)
+   for s = 1:nSweeps
+      if f == 1 && s == 1
+         fig = plotRawAvgMedRef([], ...
+                                 cSweepsRaw{f}(:, s), ...
+                                 cSweepsAvg{f}(:, s), ...
+                                 cSweepsMed{f}(:, s), ...
+                                 nexInfo.Fs);
+      else
+         plotRawAvgMedRef(fig, ...
+                                 cSweepsRaw{f}(:, s), ...
+                                 cSweepsAvg{f}(:, s), ...
+                                 cSweepsMed{f}(:, s), ...
+                                 nexInfo.Fs);
+      end
+      fig.Name = sprintf('%s_Trial%d', F.base, s);
+      pause
+   end
+end
+%}
 
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+%% export to nex file
+%-------------------------
+% using code from export_for_plexon()
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
+sendmsg('Adding continuous and event data to nex struct:');
+fprintf('Exporting data to %s\n', nexInfo.FileName);
+
+% write all events
+eventsToWrite = {'all'};
+
+% start new nex file data struct
+nD = nexCreateFileData(nexInfo.Fs);
+
+%------------------------------------------------------------------------
+% RAW channel data
+%------------------------------------------------------------------------
+% this will be a matrix of format
+% 	[# channels, (# sweeps) * (# samples per sweep)
+cVector = cell(1, nFiles);
+for f = 1:nFiles
+	cVector{1, f} = cSweepsRaw{f}(exportChannel, :);
+end
+% for each channels's data, concatenate cell array, convert to vector, 
+% add to nex struct
+% steps:
+%	concatenate: tmp = [cVector{:}];
+%	tmpVector = cell2mat(tmp);
+%  add to nex struct:
+%     [nexFile] = nexAddContinuous(nexFile, startTime, ...
+%                                    adFreq, values, name)
+nD = nexAddContinuous(nD, nexInfo.fileStartTime(1), nexInfo.Fs, ...
+								cell2mat([cVector{:}]), ...
+								sprintf('RAW_chan_%d', exportChannel));
+% clear cVector to save memory
+clear cVector
+
+%------------------------------------------------------------------------
+% AVG channel data
+%------------------------------------------------------------------------
+cVector = cell(1, nFiles);
+for f = 1:nFiles
+	cVector{1, f} = cSweepsAvg{f}(exportChannel, :);
+end
+nD = nexAddContinuous(nD, nexInfo.fileStartTime(1), nexInfo.Fs, ...
+								cell2mat([cVector{:}]), ...
+								sprintf('AVG_chan_%d', exportChannel));
+% clear cVector to save memory
+clear cVector
+
+%------------------------------------------------------------------------
+% MED channel data
+%------------------------------------------------------------------------
+cVector = cell(1, nFiles);
+for f = 1:nFiles
+	cVector{1, f} = cSweepsMed{f}(exportChannel, :);
+end
+nD = nexAddContinuous(nD, nexInfo.fileStartTime(1), nexInfo.Fs, ...
+								cell2mat([cVector{:}]), ...
+								sprintf('MED_chan_%d', exportChannel));
+% clear cVector to save memory
+clear cVector
 
 
 %------------------------------------------------------------------------
+% Add Events (aka timestamps, markers)
+%------------------------------------------------------------------------
+% add start sweep time stamps as event - assume consistent across channels!
+if any(strcmpi('all', eventsToWrite) | ...
+               strcmpi('startsweep', eventsToWrite))
+   %  [nexFile] = nexAddEvent( nexFile, timestamps, name )
+   % events must be in column format...?
+   nD = nexAddEvent(nD, force_col(nexInfo.startTimeVector), 'startsweep');
+end
+
+% add end sweep time stamps as event - assume consistent across channels!
+% this is technically redundant, as startsweep event should be 1 sample or
+% time interval greater than endsweep. there is little overhead involved in
+% adding it so for now keep it here
+if any(strcmpi('all', eventsToWrite) | ...
+               strcmpi('endsweep', eventsToWrite))
+   nD = nexAddEvent(nD, force_col(nexInfo.endTimeVector), 'endsweep');
+end
+
+% add file start times as single event type
+if any(strcmpi('all', eventsToWrite) | strcmpi('filestart', eventsToWrite))
+   nD = nexAddEvent(nD, force_col(nexInfo.fileStartTime), 'filestart');
+end
+
+% add file end times as single event type
+if any(strcmpi('all', eventsToWrite) | strcmpi('fileend', eventsToWrite))
+   nD = nexAddEvent(nD, force_col(nexInfo.fileEndTime), 'fileend');
+end
+
+% Add individual event for each file with filename as event name
+if any(strcmpi('all', eventsToWrite) | strcmpi('filename', eventsToWrite))
+   for f = 1:nFiles
+      nD = nexAddEvent(nD, nexInfo.fileStartTime(f), ...
+                        nexInfo.FileInfo{f}.F.base);
+   end
+end
+
+% add stimulus onset ...
+if any(strcmpi('all', eventsToWrite) | strcmpi('stimstart', eventsToWrite))
+   nD = nexAddEvent(nD, force_col(nexInfo.stimStartTimeVector), ...
+                        'stimstart');
+end
+% ... and offset times
+if any(strcmpi('all', eventsToWrite) | strcmpi('stimend', eventsToWrite))
+   nD = nexAddEvent(nD, force_col(nexInfo.stimEndTimeVector), 'stimend');
+end
+
+% add stimulus-specific onset times
+if any(strcmpi('all', eventsToWrite) | strcmpi('stim_id', eventsToWrite))
+   for f = 1:nFiles
+      events = nexInfo.stimEventTimesForFile(f);
+      fprintf('Adding events from file %s\n', nexInfo.FileInfo{f}.F.file);
+      for n = 1:length(events)
+         fprintf('\t%s\n', events(n).name);
+         nD = nexAddEvent(nD, force_col(events(n).timestamps), events(n).name);
+      end
+   end
+end
+
+%------------------------------------------------------------------------
+% write to nexfile
+%------------------------------------------------------------------------
+sendmsg(sprintf('Writing nex file %s:', nexInfo.FileName));
+writeNexFile(nD, nexInfo.FileName);
+
+%------------------------------------------------------------------------
+% write useful information to _nexinfo.mat file 
+%------------------------------------------------------------------------
+% save to matfile
+sendmsg(sprintf('Writing _nexinfo.mat file %s:', ...
+											nexInfo.InfoFileName));
+save(nexInfo.InfoFileName, 'nexInfo', '-MAT');
+
+%------------------------------------------------------------------------
+%------------------------------------------------------------------------
 %% process data for single trial
+%------------------------------------------------------------------------
 %------------------------------------------------------------------------
 % this section was used during initial testing
 %{
@@ -215,9 +390,6 @@ r.fH.PaperOrientation = 'landscape';
 %}
 
 
-
-
-
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -226,6 +398,51 @@ r.fH.PaperOrientation = 'landscape';
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 
+function varargout = plotRawAvgMedRef(figH, raw, avg, med, Fs)
+
+   % transform cell array to matrix with time bins in columns, channels by rows
+   T = cell2mat(raw);
+   % apply common average referencing to data
+   Ta = cell2mat(avg);
+   % apply common median referencing to data
+   Tm = cell2mat(med);
+   
+   % Plot data
+   if isempty(figH)
+      figH = figure;
+   else
+      figure(figH);
+   end
+
+   tl = tiledlayout(1, 3);
+   tl.TileSpacing = 'compact';
+   tl.Padding = 'compact';
+   
+   % plot raw data
+   nexttile
+   [r.pH, r.aX, r.fH] = tracePlot(T', Fs);
+   title(r.aX, 'RAW');
+%    % draw onset/offset lines
+%    line([onset onset], r.aX.YLim, 'Color', 'g');
+%    line([offset offset], r.aX.YLim, 'Color', 'r');
+   
+   % plot avg data
+   nexttile
+   [a.pH, a.aX, a.fH] = tracePlot(Ta', Fs);
+   title(a.aX, 'AVG');
+%    line([onset onset], r.aX.YLim, 'Color', 'g');
+%    line([offset offset], r.aX.YLim, 'Color', 'r');
+   % plot med data
+   nexttile;
+   [m.pH, m.aX, m.fH] = tracePlot(Tm', Fs);
+   title(m.aX, 'MED');
+%    line([onset onset], r.aX.YLim, 'Color', 'g');
+%    line([offset offset], r.aX.YLim, 'Color', 'r');
+   
+   varargout{1} = figH;
+end
+
+% plot traces of data
 function varargout = tracePlot(T, Fs, varargin)
    % figure and axes background grey level ( 0 = black, 1 = white)
    bgcol = 1;
@@ -295,6 +512,25 @@ function Tout = common_med_ref(Tin)
    Tout = Tin - A;
 end
 
+function out = applyCommonReference(sweepCell, refFunctionHandle)
+   % make a copy of input cell
+   out = sweepCell;
+   nFiles = length(sweepCell);
+   % loop through files
+   for f = 1:nFiles
+      nSweeps = size(sweepCell{f}, 2);
+      % loop through sweeps (aka trials)
+      for s = 1:nSweeps
+         % channels are in rows, trials in columns of the cell array 
+         % convert to mat (channels, samples)
+         m = cell2mat(sweepCell{f}(:, s));
+         % apply function
+         a = refFunctionHandle(m);
+         % convert to cell (channels, 1) and assign to cSweepsAvg
+         out{f}(:, s) = mat2cell(a, ones(1, size(m, 1)));
+      end
+   end
+end
 
 function BPfilt = buildFilter(varargin)
    %---------------------------------------------------------------------

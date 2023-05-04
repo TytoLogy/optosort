@@ -349,10 +349,13 @@ end
 switch referenceData
    case 'raw'
       % do nothing
+      nexInfo.referenceMode = 'raw';
    case 'avg'
-      % need common avg fcn
+      nexInfo.referenceMode = 'average';
+      cSweeps = applyCommonReference(cSweeps, @common_avg_ref);
    case 'med'
-      % need common med fcn
+      nexInfo.referenceMode = 'median';
+      cSweeps = applyCommonReference(cSweeps, @common_med_ref);
    otherwise
       error('%s: invalid referenceData option: %s', ...
                   mfilename, referenceData);
@@ -562,5 +565,25 @@ function eventsToWrite = checkEventsToWrite(tmp)
       % default: write all events
       sendmsg('Writing all events')
       eventsToWrite = {'all'};
+   end
+end
+
+function out = applyCommonReference(sweepCell, refFunctionHandle)
+   % make a copy of input cell
+   out = sweepCell;
+   nFiles = length(sweepCell);
+   % loop through files
+   for f = 1:nFiles
+      nSweeps = size(sweepCell{f}, 2);
+      % loop through sweeps (aka trials)
+      for s = 1:nSweeps
+         % channels are in rows, trials in columns of the cell array 
+         % convert to mat (channels, samples)
+         m = cell2mat(sweepCell{f}(:, s));
+         % apply function
+         a = refFunctionHandle(cell2mat(sweepCell{f}(:, s)));
+         % convert to cell (channels, 1) and assign to cSweepsAvg
+         out{f}(:, s) = mat2cell(a, ones(1, size(m, 1)));
+      end
    end
 end
