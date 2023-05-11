@@ -21,6 +21,7 @@
 %     raw
 %     common avg ref
 %     common med ref
+% 11 May 2023: functionalized
 %------------------------------------------------------------------------
 
 %{

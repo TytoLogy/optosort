@@ -205,7 +205,7 @@ varargout{1} = fig;
       yTotal = yInterv * nChan;
       yStart = (nChan:-1:1)*yInterv-(yInterv/2);
       % scale data appropriately
-      data = bsxfun(@plus, trialdata, yStart);
+      data = bsxfun(@plus, trialdata, yStart');
       
       % plot data
       plot(ax, T, data);
@@ -244,7 +244,7 @@ varargout{1} = fig;
    % apply reference method (or none) to data
    %---------------------------------------------------------------------
    function apply_reference
-      data = cell2mat(cSweeps{fileN}(:, trialN))';
+      data = cell2mat(cSweeps{fileN}(:, trialN));
       switch refmode
          case 'RAW'
             trialdata = data;
