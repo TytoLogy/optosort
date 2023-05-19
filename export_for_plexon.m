@@ -90,6 +90,8 @@ function varargout = export_for_plexon(varargin)
 %  exportInfo.referenceData
 %     Default: 'raw'
 %     Options:
+%        'raw'    no common reference applied (but data will be filtered 
+%                 as set by BPfilt option)
 %        'avg'    common average reference - at each bin, computes 
 %                 average across channels, subtracts this value from 
 %                 each channel
@@ -154,6 +156,7 @@ function varargout = export_for_plexon(varargin)
 %     (offline sorter) and (2) to allow user to control the event 
 %     entries that are written to the .nex file
 % 3 May 2023 (SJS): adding common avg/median referencing option
+% 19 May 2023 (SJS): updated documentation
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -251,6 +254,7 @@ if nargin == 1
    else
       resampleData = defaultResampleRate;
    end
+   % apply reference?
    if isfield(tmp, 'referenceData')
       referenceData = tmp.referenceData;
    else
