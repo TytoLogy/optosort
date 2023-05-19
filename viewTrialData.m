@@ -1,4 +1,4 @@
-function viewTrialData(varargin)
+function varargout = viewTrialData(varargin)
 %------------------------------------------------------------------------
 % viewTrialData(datfile)
 %------------------------------------------------------------------------
@@ -17,7 +17,7 @@ function viewTrialData(varargin)
 %  datfile     (optional) filename for .dat file (with path prepended)
 %
 % Output Args: 
-%  none
+%  figure handle
 %------------------------------------------------------------------------
 % See also: common_ref_viewer, opto program
 %------------------------------------------------------------------------
@@ -104,4 +104,6 @@ F = defineSampleData({datpath}, {datfile}, {tname});
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
 cfig = common_ref_viewer(cSweeps, nexInfo);
+
+varargout{1} = cfig;
 
