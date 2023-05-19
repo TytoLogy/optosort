@@ -4,7 +4,22 @@ function testCommonReference(varargin)
 %------------------------------------------------------------------------
 % TytoLogy:Experiments:optosort
 %------------------------------------------------------------------------
-% script to test common avg/median reference for spike data
+% function to test common avg/median reference for spike data
+% given an input .dat file from opto program and channel #, 
+% testCommonReference will generate a .nex file (for Plexon OFS import) 
+% that has the raw channel data and the same data with common average
+% reference and with common median reference applied
+% 
+% Input Args:
+%    none     function will ask for .dat file, .nex output path, and 
+%             channel number
+%    
+%    testCommonReference(datfile, nexpath, channel)
+%    
+%    e.g.
+%       testCommonReference('/a/path/name/1918.dat', '/nexoutputpath', 4)
+%    will read in 1918.dat file, export raw, avg and med referenced 
+%    data for channel 4 to /nexoutputpath/1918.nex
 %------------------------------------------------------------------------
 % See also: exportTest (script), export_for_plexon, common_avg_ref, 
 %           common_med_ref
