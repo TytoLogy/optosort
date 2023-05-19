@@ -18,7 +18,7 @@ trialnEdit.Units = 'characters';
 trialUpButton.Units = 'characters';
 trialDownButton.Units = 'characters';
 % GUI Elements: Position
-fig.Position = [125.4286 59.8750 99 53.1875];
+% fig.Position = [125.4286 59.8750 99 53.1875];
 refButtonGroup.Position = [71.1429 0.6250 27.2857 6.3125 ];
 stimInfoPanel.Position = [41.4286 1.6875 27.2857 5.2500 ];
 filenameText.Position = [27.0000 51.3750 50.1429 1.3125 ];

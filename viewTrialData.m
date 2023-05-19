@@ -72,6 +72,8 @@ else
    if ~exist(varargin{1}, 'file')
       error('%s: datafile not found %s', mfilename, varargin{1});
    end
+   [datpath, datfile, dext] = fileparts(varargin{1});
+   datfile = [datfile dext];
 end
 
 %------------------------------------------------------------------------
