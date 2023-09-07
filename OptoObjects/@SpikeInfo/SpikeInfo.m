@@ -10,6 +10,8 @@ classdef SpikeInfo
 % Created: ? 2020 (SJS)
 %
 % Revisions:
+%  7 Sep 2023 (SJS): adding referenceMode property to store common
+%                    referencing status for data
 %------------------------------------------------------------------------
 % TO DO: how to handle multiple channels?????
 %------------------------------------------------------------------------
@@ -30,6 +32,8 @@ classdef SpikeInfo
 		% startBinVector	[total # sweeps, 1] sample for start of each sweep
 		% endBinVector	[total # sweeps, 1] sample for end of each sweep
 		% ADchannel		list of AD channels exported within .nex file
+      % dataFilter
+      % referenceMode   'raw', 'average', 'median'
 		FileName
 		InfoFileName
  		FileInfo
@@ -45,6 +49,7 @@ classdef SpikeInfo
 		stimEndBin = {};
 		ADchannel
 		dataFilter
+      referenceMode = '';
 	end	% END properties (main)
 	properties (Dependent)
 		fileStartTime

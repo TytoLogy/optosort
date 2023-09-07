@@ -206,6 +206,7 @@ exportOpts.TestFile = {	'1382_20191212_02_02_3200_FRA_testdata.mat'};
 exportOpts.OutputFile = 'FRA.nex';
 %}
 
+%{
 % 1407 multichannel
 exportOpts.DataPath = '/Users/sshanbhag/Work/Data/TestData/MT/1407';
 % write to D drive on PETROL for testing with Plexon OFS
@@ -218,9 +219,21 @@ exportOpts.TestFile = { '1407_20200309_03_01_1350_BBN_testdata.mat', ...
 								'1407_20200309_03_01_1350_FREQ_TUNING_testdata.mat'};
 exportOpts.OutputFile = '1407_20200309_03_01_1350_MERGE.nex';
 exportOpts.Channels = [4, 5, 7, 15];
+%}
 %---------------------------------------
 %---------------------------------------
 
+
+% 1429 common ref
+exportOpts.DataPath = '/media/sshanbhag/SSData/Data/Mouse/Raw/IC/1429/20200707';
+exportOpts.OutputPath = '/media/sshanbhag/SSData/Data/Mouse/IC/test/commonrefexport';
+exportOpts.DataFile = {	'1429_20200707_01_01_2942_WAV.dat', ...
+								'1429_20200707_01_01_2942_FREQ_TUNING.dat'};
+exportOpts.TestFile = { '1429_20200707_01_01_2942_WAV_testdata.mat', ...
+								'1429_20200707_01_01_2942_FREQ_TUNING_testdata.mat'};
+exportOpts.OutputFile = '1429_20200707_01_01_2942_MERGE.nex';
+exportOpts.Channels = 1:16;
+exportOpts.referenceData = 'avg';
 
 %------------------------------------------------------------------------
 % filter parameters for raw neural data
