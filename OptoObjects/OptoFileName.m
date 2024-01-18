@@ -11,9 +11,11 @@ classdef OptoFileName
 %
 % Revisions:
 %	3 March 2020 (SJS): altered OptoFileName to deal with plexon sorted 
-%								data without "other" element in name
+%							  data without "other" element in name
 %	10 Mar 2020 (SJS): added newname method to build new filename with
-%							additional string and new extension
+%							 additional string and new extension
+%  18 Jan 2024 (sJS) added method str = fileWithOther(obj), fullstring
+%  property
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -29,6 +31,7 @@ classdef OptoFileName
 		penetration
 		depth
 		other
+      fullstring
 	end
 	
 	methods
@@ -47,7 +50,8 @@ classdef OptoFileName
 				[p, f, ext] = fileparts(tmpstr);
 			else
 				[p, f, ext] = fileparts(varargin{1});
-			end
+         end
+         obj.fullstring = varargin{1};
 			obj.path = p;
 			obj.file = [f ext];
 			f = parseOptoFileName(obj.file);
@@ -70,8 +74,21 @@ classdef OptoFileName
 								obj.unit '_' ...
 								obj.penetration '_' ...
 								obj.depth ];
-		end
-		
+      end
+
+		%-------------------------------------------------
+		% return base name WITH "other" (test name), e.g.
+		%	1372_20191126_03_01_1500_BBN
+		%-------------------------------------------------
+		function str = fileWithOther(obj)
+			str = [	obj.animal '_' ...
+								obj.datecode '_' ...
+								obj.unit '_' ...
+								obj.penetration '_' ...
+								obj.depth '_' ...
+                        obj.other];
+      end
+      
 		%-------------------------------------------------
 		% utility to create new file using base
 		% e.g., [base]_append_str.ext_str
