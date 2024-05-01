@@ -293,6 +293,7 @@ fclose(fileID);
 %------------------------------------------------------------------------
 %% as a check, read in binary data
 %------------------------------------------------------------------------
+nC = length(exportOpts.Channels);
 
 fp = fopen(fullfile(exportOpts.OutputPath, exportOpts.OutputFile), ...
                   'rb');
