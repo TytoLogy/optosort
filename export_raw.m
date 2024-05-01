@@ -62,23 +62,34 @@ function varargout = export_raw(varargin)
 % 	 if blank/unspecified, no filter will be applied to data
 % 		[highpass lowpass] cutoff frequencies in Hz:
 % 		 exportOpts.BPfilt.Fc = [300 4000];
-% 		order of filter. note that the filtfilt() function in MATLAB is used,
+% 		Order of filter. note that the filtfilt() function in MATLAB is used,
 % 		so the effective order is doubled. typically use 5:
 % 		 exportOpts.BPfilt.forder = 5;
 % 		ramp time (ms) to apply to each sweep in order to cutdown on onset/offset
 % 		transients from filtering:
 % 		 exportOpts.BPfilt.ramp = 1;
-%		filter type is either 'bessel' or 'butter' (butterworth)
-%		 exportOpts.BPfilet.type = 'bessel';
+%		Filter type is either 'bessel' or 'butter' (butterworth)
+%		 exportOpts.BPfilt.type = 'bessel';
 % 
 %	exportInfo.resampleData
 % 		change data sampling rate to resampleData rate (samples/second)
 %		Default: no resampling
-% 		For exporting to many software packages for sorting, integer values are
-% 		needed.
-% 		if value is provided, A/D data will be resampled i.e., original
-%		rate of 48828.125 samples/second will be converted to resampleData value 
-% 		if empty or not specified, no change will be made to sampling rate.
+% 		For exporting to many software packages for sorting, integer values 
+% 		are needed.
+% 		If value is provided, A/D data will be resampled i.e., original
+%		rate of 48828.125 samples/second will be converted to 
+%     resampleData value 
+% 		If empty or not specified, no change will be made to sampling rate.
+
+%  exportInfo.OutputShape
+%     specify output data "shape" (i.e., orientation of channels 
+%     and samples in output data matrix) 
+%          'ChannelsSamples':
+%              [channels, samples]  default, used by SpykingCircus
+%          'SamplesChannels':
+%              [samples, channels]  used by SpikeInterface, maybe
+%                                   kilosort(?)
+%     https://spikeinterface.readthedocs.io/en/latest/how_to/load_matlab_data.html
 % 
 % Output Arguments:
 % 	nD		NeuroExplorer nex data struct written to output file
@@ -95,12 +106,20 @@ function varargout = export_raw(varargin)
 %
 % Revisions:
 % 9 June 2020 (SJS): added resampleData field to exportOptions
+% 1 May 2024 (SJS): adding option OutputShape to specify output data in 
+%                   format:
+%                    [channels, samples]   default, used by SpykingCircus
+%                    [samples, channels]   used by SpikeInterface, maybe
+%                                          kilosort(?)
+% https://spikeinterface.readthedocs.io/en/latest/how_to/load_matlab_data.html
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
 
 %------------------------------------------------------------------------
+%------------------------------------------------------------------------
 % Initial things to define
+%------------------------------------------------------------------------
 %------------------------------------------------------------------------
 sepstr = '----------------------------------------------------';
 % filter info
@@ -110,8 +129,13 @@ defaultResampleRate = [];
 % valid output formats (binary)
 ValidFormats =	{	'int16', 'uint16', 'int8', ...
 						'float32', 'float64', 'single', 'double'};
+OutputShape = 'ChannelsSamples';
+ValidOutputShapes = {'ChannelsSamples', 'SamplesChannels'};
+
+%------------------------------------------------------------------------
 %------------------------------------------------------------------------
 % Setup
+%------------------------------------------------------------------------
 %------------------------------------------------------------------------
 fprintf('\n%s\n%s\n', sepstr, sepstr);
 fprintf('%s running...\n', mfilename);
@@ -125,15 +149,24 @@ if ~exist('readOptoData', 'file')
 end
 
 %------------------------------------------------------------------------
+%------------------------------------------------------------------------
 % Check inputs
+%------------------------------------------------------------------------
 %------------------------------------------------------------------------
 if nargin == 1
 	tmp = varargin{1};
 	if ~isstruct(tmp)
 		error('%s: input must be a valid sample data struct!');
 	end
+   %---------------------------------------------------------------------
+   %---------------------------------------------------------------------
 	% assign values, fixing some things as necessary
-	% if file elements are not cells (i.e., just strings), convert to cell.
+   %---------------------------------------------------------------------
+   %---------------------------------------------------------------------
+
+   %---------------------------------------------------------------------
+   % if file elements are not cells (i.e., just strings), convert to cell.
+   %---------------------------------------------------------------------
 	if ~iscell(tmp.DataPath)
 		tmp.DataPath = {tmp.DataPath};
 	else
@@ -149,13 +182,17 @@ if nargin == 1
 	else
 		tmp.TestFile = tmp.TestFile;
 	end
+   %---------------------------------------------------------------------
 	% check Channels
+   %---------------------------------------------------------------------
 	if ~isnumeric(tmp.Channels)
 		error('%s: Channels must be a numeric array!', mfilename);
 	else
 		Channels = tmp.Channels;
 	end
+   %---------------------------------------------------------------------
 	% check output format
+   %---------------------------------------------------------------------
 	if isfield(tmp, 'format')
 		if ~any(strcmpi(tmp.OutputFormat, ValidFormats))
 			error('%s: invalid output format %s\n', mfilename, tmp.OutputFormat);
@@ -165,24 +202,30 @@ if nargin == 1
 	else
 		OutputFormat = 'float32';
 	end
+   %---------------------------------------------------------------------
 	% filter options
+   %---------------------------------------------------------------------
 	if isfield(tmp, 'BPfilt')
 		BPfilt = tmp.BPfilt;
 	else
 		% use default
 		BPfilt = defaultFilter;
 	end
+   %---------------------------------------------------------------------
 	% resample?
+   %---------------------------------------------------------------------
 	if isfield(tmp, 'resampleData')
 		resampleData = tmp.resampleData;
 	else
 		resampleData = defaultResampleRate;
 	end
-	
+   %---------------------------------------------------------------------	
 	% define path to data file and data file for testing
+   %---------------------------------------------------------------------
 	F = defineSampleData(tmp.DataPath, tmp.DataFile, tmp.TestFile);
-	
-	% checks for output path and file
+   %---------------------------------------------------------------------	
+	% check for output path and file
+   %---------------------------------------------------------------------
 	if isfield(tmp, 'OutputPath')
 		if ~isempty(tmp.OutputPath)
 			% if not empty, make sure path exists
@@ -195,13 +238,25 @@ if nargin == 1
 		% create empty field
 		OutputPath = '';
 	end
-	
+   %---------------------------------------------------------------------
+	% check for output file
+   %---------------------------------------------------------------------
 	if isfield(tmp, 'OutputFile')
 		RawFileName = tmp.OutputFile;
 	else
 		% if no OutputFile field, create empty field
 		RawFileName = '';
-	end
+   end
+   %---------------------------------------------------------------------
+   % output data shape ([channels, samples] or [samples, channels])
+   %---------------------------------------------------------------------
+   if isfield(tmp, 'OutputShape')
+      if any(strcmpi(tmp.OutputShape, ValidOutputShapes))
+         OutputShape = tmp.OutputShape;
+      else
+         error('%s: invalid OutputShape: %s', mfilename, tmp.OutputShape);
+      end
+   end
 	
 	clear tmp
 else
@@ -281,8 +336,14 @@ fp = fopen(expInfo.FileName, 'wb');
 % loop through files
 for f = 1:nFiles
 	fprintf('Writing data for %s\n', F(f).file);
-	% write data for this file
-	nw = fwrite(fp, cell2mat([cSweeps{f}]), OutputFormat);
+	% write data for this file, specify shape based on outputShape setting
+   switch OutputShape
+      case 'ChannelsSamples'
+      	nw = fwrite(fp, cell2mat([cSweeps{f}]), OutputFormat);
+      case 'SamplesChannels'
+         nw = fwrite(fp, cell2mat([cSweeps{f}])', OutputFormat);
+   end
+   
 	% could also:
 	%	concatenate: tmp = [cVector{:}];
 	%	fwrite(fp, cell2mat(tmp), 'float64');
