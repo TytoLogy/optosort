@@ -193,7 +193,7 @@ if nargin == 1
    %---------------------------------------------------------------------
 	% check output format
    %---------------------------------------------------------------------
-	if isfield(tmp, 'format')
+	if isfield(tmp, 'OutputFormat')
 		if ~any(strcmpi(tmp.OutputFormat, ValidFormats))
 			error('%s: invalid output format %s\n', mfilename, tmp.OutputFormat);
 		else
@@ -230,22 +230,27 @@ if nargin == 1
 		if ~isempty(tmp.OutputPath)
 			% if not empty, make sure path exists
 			if ~exist(tmp.OutputPath, 'dir')
-				error('%s: output directory %s not found', mfilename, tmp.OutputPath);
+            % create directory
+				fprintf('%s: output directory\n %s\nnot found\n', ...
+                           mfilename, ...
+                           tmp.OutputPath);
+            fprintf('Creating directory\n');
+            mkdir(tmp.OutputPath);
 			end
 		end
 		OutputPath = tmp.OutputPath;
 	else
-		% create empty field
+		% create empty field (use current directory)
 		OutputPath = '';
 	end
    %---------------------------------------------------------------------
 	% check for output file
    %---------------------------------------------------------------------
-	if isfield(tmp, 'OutputFile')
-		RawFileName = tmp.OutputFile;
-	else
-		% if no OutputFile field, create empty field
-		RawFileName = '';
+   if isfield(tmp, 'OutputFile')
+      RawFileName = tmp.OutputFile;
+   else
+   % if no OutputFile field, create empty field
+      RawFileName = '';
    end
    %---------------------------------------------------------------------
    % output data shape ([channels, samples] or [samples, channels])
@@ -285,11 +290,13 @@ fprintf('Animal: %s\n', F(1).animal);
 %------------------------------------------------------------------------
 % get the data and information from the raw files
 %------------------------------------------------------------------------
-[cSweeps, expInfo] = read_data_for_export(F, Channels, BPfilt, resampleData);
+[cSweeps, expInfo] = read_data_for_export(F, Channels, ...
+                                                BPfilt, resampleData);
 
 %------------------------------------------------------------------------
-% If not provided, create output .nex file name - adjust depending on # of files
-%	assume data from first file is consistent with others!!!!!!!!!
+% If not provided, create output .nex file name - adjust depending 
+% on # of files
+% Assume data from first file is consistent with others!!!!!!!!!
 %------------------------------------------------------------------------
 if isempty(RawFileName)
 	if nFiles > 1
@@ -310,9 +317,10 @@ expInfo.InfoFileName = fullfile(OutputPath, [baseName '_info.mat']);
 %------------------------------------------------------------------------
 % get default params struct
 % filename is <output path>/<filename>.params
-params = default_spyking_params(fullfile(OutputPath, [baseName '.params']));
+params = default_spyking_params( ...
+                              fullfile(OutputPath, [baseName '.params']));
 params.Fs = expInfo.Fs;
-params.OutputFormat = 'float32';
+params.OutputFormat = OutputFormat;
 params.nChannels = nChannels;
 params.DataOffset = 0;
 params.DataOffsetFormat = 'auto';
@@ -337,13 +345,15 @@ fp = fopen(expInfo.FileName, 'wb');
 for f = 1:nFiles
 	fprintf('Writing data for %s\n', F(f).file);
 	% write data for this file, specify shape based on outputShape setting
+   % 1 May 2024: this may not have any effect since binary files store
+   % everything in 1D format!!!!
    switch OutputShape
       case 'ChannelsSamples'
       	nw = fwrite(fp, cell2mat([cSweeps{f}]), OutputFormat);
       case 'SamplesChannels'
          nw = fwrite(fp, cell2mat([cSweeps{f}])', OutputFormat);
    end
-   
+
 	% could also:
 	%	concatenate: tmp = [cVector{:}];
 	%	fwrite(fp, cell2mat(tmp), 'float64');
@@ -366,6 +376,7 @@ if nargout
 	varargout{1} = cSweeps;
 	if nargout > 1
 		varargout{2} = expInfo;
+      varargout{3} = nw;
 	end
 end
 %------------------------------------------------------------------------
