@@ -307,7 +307,7 @@ size(M2)
 
 
 %{
-%% do a test
+%% do a simple test
 nC = length(exportOpts.Channels);
 
 a = ones(nC, 20);
