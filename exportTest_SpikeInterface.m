@@ -222,7 +222,7 @@ exportOpts.Channels = [4, 5, 7, 15];
 
 
 
-% Wav Only
+% Wav Only, BLA data
 exportOpts.DataPath = '/media/Data/NeuroData/Mouse/Raw/BLA/1500/20230213';
 exportOpts.OutputPath = '/media/Data/NeuroData/TestData/exports/SI';
 exportOpts.DataFile = {	'1500_20230213_01_0_3352_WAV.dat'};
