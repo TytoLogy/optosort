@@ -243,7 +243,7 @@ exportOpts.Channels = 1:16;
 %------------------------------------------------------------------------
 % filter parameters for raw neural data
 %------------------------------------------------------------------------
-%{
+%
 % [highpass lowpass] cutoff frequencies in Hz
 exportOpts.BPfilt.Fc = [300 4000];
 % order of filter. note that the filtfilt() function in MATLAB is used,
@@ -256,12 +256,12 @@ exportOpts.BPfilt.ramp = 1;
 % as bessel is low-pass only and we need to remove low frequency crap from
 % the raw data
 exportOpts.BPfilt.type = 'butter';
-%}
+%
 % no filtering
-exportOpts.BPfilt = [];
+% exportOpts.BPfilt = [];
 
 % Common referencing?
-exportOpts.referenceMode = '';
+exportOpts.referenceData = 'median';
 
 %------------------------------------------------------------------------
 % Specify output shape as [samples, channels] as needed for SpikeInterface
@@ -316,6 +316,8 @@ fprintf('Size of data read from file: [%d, %d]\n', sM(1), sM(2));
 M2 = reshape(M, [numel(M)/nC, nC]);
 size(M2)
 
+%% plot data
+plot((M2(1:100000, :)+(1:2:32)))
 
 %{
 %% do a simple test

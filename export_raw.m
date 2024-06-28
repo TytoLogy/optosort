@@ -239,7 +239,7 @@ if nargin == 1
    % apply reference?
    %---------------------------------------------------------------------	
    if isfield(tmp, 'referenceData')
-      referenceData = tmp.referenceData;
+      referenceData = lower(tmp.referenceData);
    else
       referenceData = defaultreferenceData;
    end
@@ -332,10 +332,10 @@ switch referenceData
    case {'raw', ''}
       % do nothing
       expInfo.referenceMode = 'raw';
-   case 'avg'
+   case {'avg', 'average'}
       expInfo.referenceMode = 'average';
       cSweeps = applyCommonReference(cSweeps, @common_avg_ref);
-   case 'med'
+   case {'med', 'median'}
       expInfo.referenceMode = 'median';
       cSweeps = applyCommonReference(cSweeps, @common_med_ref);
    otherwise
@@ -518,4 +518,27 @@ function params = default_spyking_params(varargin)
 	params.DataOffsetFormat = 'auto';
 	params.Gain = 1;
 end
+
+
+function out = applyCommonReference(sweepCell, refFunctionHandle)
+   % make a copy of input cell
+   out = sweepCell;
+   nFiles = length(sweepCell);
+   % loop through files
+   for f = 1:nFiles
+      nSweeps = size(sweepCell{f}, 2);
+      % loop through sweeps (aka trials)
+      for s = 1:nSweeps
+         % channels are in rows, trials in columns of the cell array 
+         % convert to mat (channels, samples)
+         m = cell2mat(sweepCell{f}(:, s));
+         % apply function, 
+%          a = refFunctionHandle(m);
+         % convert to cell (channels, 1) and assign to cSweepsAvg
+         out{f}(:, s) = mat2cell(refFunctionHandle(m), ...
+                                                ones(1, size(m, 1)));
+      end
+   end
+end
+
 

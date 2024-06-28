@@ -273,7 +273,7 @@ if nargin == 1
    % apply reference?
    %---------------------------------------------------------------------	
    if isfield(tmp, 'referenceData')
-      referenceData = tmp.referenceData;
+      referenceData = lower(tmp.referenceData);
    else
       referenceData = defaultreferenceData;
    end
@@ -383,10 +383,10 @@ switch referenceData
    case {'raw', ''}
       % do nothing
       nexInfo.referenceMode = 'raw';
-   case 'avg'
+   case {'avg', 'average'}
       nexInfo.referenceMode = 'average';
       cSweeps = applyCommonReference(cSweeps, @common_avg_ref);
-   case 'med'
+   case {'med', 'median'}
       nexInfo.referenceMode = 'median';
       cSweeps = applyCommonReference(cSweeps, @common_med_ref);
    otherwise
