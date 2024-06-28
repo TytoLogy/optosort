@@ -211,15 +211,24 @@ if ~exist('readOptoData', 'file')
 end
 
 %------------------------------------------------------------------------
+%------------------------------------------------------------------------
 % Check inputs
+%------------------------------------------------------------------------
 %------------------------------------------------------------------------
 if nargin == 1
 	tmp = varargin{1};
 	if ~isstruct(tmp)
 		error('%s: input must be a valid sample data struct!');
 	end
+   %---------------------------------------------------------------------	
+   %---------------------------------------------------------------------	
 	% assign values, fixing some things as necessary
-	% if file elements are not cells (i.e., just strings), convert to cell.
+   %---------------------------------------------------------------------	
+   %---------------------------------------------------------------------	
+
+   %---------------------------------------------------------------------	
+   % if file elements are not cells (i.e., just strings), convert to cell.
+   %---------------------------------------------------------------------	
 	if ~iscell(tmp.DataPath)
 		tmp.DataPath = {tmp.DataPath};
 	else
@@ -235,42 +244,54 @@ if nargin == 1
 	else
 		tmp.TestFile = tmp.TestFile;
 	end
+   %---------------------------------------------------------------------	
 	% check Channels
+   %---------------------------------------------------------------------	
 	if ~isnumeric(tmp.Channels)
 		error('%s: Channels must be a numeric array!', mfilename);
 	else
 		Channels = tmp.Channels;
 	end
+   %---------------------------------------------------------------------	
 	% filter options
+   %---------------------------------------------------------------------	
 	if isfield(tmp, 'BPfilt')
 		BPfilt = tmp.BPfilt;
 	else
 		% use default
 		BPfilt = defaultFilter;
 	end
+   %---------------------------------------------------------------------	
 	% resample?
+   %---------------------------------------------------------------------	
    if isfield(tmp, 'resampleData')
       resampleData = tmp.resampleData;
    else
       resampleData = defaultResampleRate;
    end
+   %---------------------------------------------------------------------	
    % apply reference?
+   %---------------------------------------------------------------------	
    if isfield(tmp, 'referenceData')
       referenceData = tmp.referenceData;
    else
       referenceData = defaultreferenceData;
    end
+   %---------------------------------------------------------------------	
 	% test data?
+   %---------------------------------------------------------------------	
    if isfield(tmp, 'testData')
       testData = tmp.testData;
    else
       testData = false;
    end
-   	
+   %---------------------------------------------------------------------	
 	% define path to data file and data file for testing
+   %---------------------------------------------------------------------	
 	F = defineSampleData(tmp.DataPath, tmp.DataFile, tmp.TestFile);
-	
+   %---------------------------------------------------------------------	
 	% checks for output path and file
+   %---------------------------------------------------------------------	
 	if isfield(tmp, 'OutputPath')
 		if ~isempty(tmp.OutputPath)
 			% if not empty, make sure path exists
@@ -287,21 +308,27 @@ if nargin == 1
 		% create empty field
 		NexFilePath = '';
 	end
-	
+   %---------------------------------------------------------------------
+	% check for output file
+   %---------------------------------------------------------------------
    if isfield(tmp, 'OutputFile')
       NexFileName = tmp.OutputFile;
    else
-   % if no OutputFile field, create empty field
+      % if no OutputFile field, create empty field
       NexFileName = '';
    end
-
+   %---------------------------------------------------------------------
    % events
+   %---------------------------------------------------------------------
    eventsToWrite = checkEventsToWrite(tmp);
-      
+   %---------------------------------------------------------------------
    % clear tmp var
+   %---------------------------------------------------------------------
 	clear tmp
 else
+   %---------------------------------------------------------------------
 	% define path to data file and data file for testing
+   %---------------------------------------------------------------------
 	[F, Channels] = defineSampleData();
 	if isempty(F)
 		fprintf('%s: cancelled\n', mfilename);
@@ -310,8 +337,10 @@ else
 		end
 		return
 	end
+   %---------------------------------------------------------------------
 	% for now use default filter - probably want to have UI for user to
 	% specify
+   %---------------------------------------------------------------------
 	BPfilt = defaultFilter;
 	resampleData = defaultResampleRate;
 	NexFileName = '';
@@ -351,7 +380,7 @@ end
 % Apply common reference here
 %------------------------------------------------------------------------
 switch referenceData
-   case 'raw'
+   case {'raw', ''}
       % do nothing
       nexInfo.referenceMode = 'raw';
    case 'avg'
@@ -366,8 +395,9 @@ switch referenceData
 end
 
 %------------------------------------------------------------------------
-% If not provided, create output .nex file name - adjust depending on # of
-% files. assume data from first file is consistent with others!!!!!!!!!
+% If not provided, create output .nex file name - adjust depending 
+% on # of files
+% Assume data from first file is consistent with others!!!!!!!!!
 %------------------------------------------------------------------------
 if isempty(NexFileName)
 	if nFiles > 1

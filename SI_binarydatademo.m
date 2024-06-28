@@ -71,8 +71,10 @@ end
 %------------------------------------------------------------------------
 sendmsg(sprintf('Exporting raw binary data to %s', 'syndata.bin'));
 
-% format for writing matrix
+% format for writing matrix, can be in samples (rows) X channels (columns)
+% or channels (rows) X samples (columns)
 OutputShape = 'SamplesChannels';
+% OutputShape = 'ChannelsSamples';
 
 % open raw file
 fp = fopen('syndata.bin', 'wb');

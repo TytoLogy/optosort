@@ -80,7 +80,19 @@ function varargout = export_raw(varargin)
 %		rate of 48828.125 samples/second will be converted to 
 %     resampleData value 
 % 		If empty or not specified, no change will be made to sampling rate.
-
+% 
+%  exportInfo.referenceData
+%     Default: 'raw'
+%     Options:
+%        'raw'    no common reference applied (but data will be filtered 
+%                 as set by BPfilt option)
+%        'avg'    common average reference - at each bin, computes 
+%                 average across channels, subtracts this value from 
+%                 each channel
+%        'med'    common median reference - at each bin, computes 
+%                 median across channels, subtracts this value from 
+%                 each channel
+% 
 %  exportInfo.OutputShape
 %     specify output data "shape" (i.e., orientation of channels 
 %     and samples in output data matrix) 
@@ -112,6 +124,8 @@ function varargout = export_raw(varargin)
 %                    [samples, channels]   used by SpikeInterface, maybe
 %                                          kilosort(?)
 % https://spikeinterface.readthedocs.io/en/latest/how_to/load_matlab_data.html
+% 28 Jun 2024 (SJS): adding common avg/median referencing option (code used
+%                    from export_for_plexon
 %------------------------------------------------------------------------
 % TO DO:
 %------------------------------------------------------------------------
@@ -131,6 +145,8 @@ ValidFormats =	{	'int16', 'uint16', 'int8', ...
 						'float32', 'float64', 'single', 'double'};
 OutputShape = 'ChannelsSamples';
 ValidOutputShapes = {'ChannelsSamples', 'SamplesChannels'};
+% default for common referencing is none (use raw data)
+defaultreferenceData = 'raw';
 
 %------------------------------------------------------------------------
 %------------------------------------------------------------------------
@@ -220,6 +236,14 @@ if nargin == 1
 		resampleData = defaultResampleRate;
 	end
    %---------------------------------------------------------------------	
+   % apply reference?
+   %---------------------------------------------------------------------	
+   if isfield(tmp, 'referenceData')
+      referenceData = tmp.referenceData;
+   else
+      referenceData = defaultreferenceData;
+   end
+   %---------------------------------------------------------------------	
 	% define path to data file and data file for testing
    %---------------------------------------------------------------------
 	F = defineSampleData(tmp.DataPath, tmp.DataFile, tmp.TestFile);
@@ -249,7 +273,7 @@ if nargin == 1
    if isfield(tmp, 'OutputFile')
       RawFileName = tmp.OutputFile;
    else
-   % if no OutputFile field, create empty field
+      % if no OutputFile field, create empty field
       RawFileName = '';
    end
    %---------------------------------------------------------------------
@@ -262,15 +286,23 @@ if nargin == 1
          error('%s: invalid OutputShape: %s', mfilename, tmp.OutputShape);
       end
    end
-	
+   %---------------------------------------------------------------------
+   % clear tmp var
+   %---------------------------------------------------------------------
 	clear tmp
 else
+   %---------------------------------------------------------------------
 	% define path to data file and data file for testing
+   %---------------------------------------------------------------------
 	[F, Channels] = defineSampleData();
+   %---------------------------------------------------------------------
 	% for now use default filter - probably want to have UI for user to
 	% specify
+   %---------------------------------------------------------------------
 	BPfilt = defaultFilter;
+   %---------------------------------------------------------------------
 	% default output format is 32 bit floating point
+   %---------------------------------------------------------------------
 	OutputFormat = 'float32';
 end
 
@@ -294,7 +326,25 @@ fprintf('Animal: %s\n', F(1).animal);
                                                 BPfilt, resampleData);
 
 %------------------------------------------------------------------------
-% If not provided, create output .nex file name - adjust depending 
+% Apply common reference here, save reference mode in expInfo struct
+%------------------------------------------------------------------------
+switch referenceData
+   case {'raw', ''}
+      % do nothing
+      expInfo.referenceMode = 'raw';
+   case 'avg'
+      expInfo.referenceMode = 'average';
+      cSweeps = applyCommonReference(cSweeps, @common_avg_ref);
+   case 'med'
+      expInfo.referenceMode = 'median';
+      cSweeps = applyCommonReference(cSweeps, @common_med_ref);
+   otherwise
+      error('%s: invalid referenceData option: %s', ...
+                  mfilename, referenceData);
+end
+
+%------------------------------------------------------------------------
+% If not provided, create output .bin file name - adjust depending 
 % on # of files
 % Assume data from first file is consistent with others!!!!!!!!!
 %------------------------------------------------------------------------

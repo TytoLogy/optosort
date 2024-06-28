@@ -222,12 +222,19 @@ exportOpts.Channels = [4, 5, 7, 15];
 
 
 
+%---------------------------------------
+%---------------------------------------
 % Wav Only, BLA data
+%---------------------------------------
+%---------------------------------------
+% paths
 exportOpts.DataPath = '/media/Data/NeuroData/Mouse/Raw/BLA/1500/20230213';
 exportOpts.OutputPath = '/media/Data/NeuroData/TestData/exports/SI';
+% files
 exportOpts.DataFile = {	'1500_20230213_01_0_3352_WAV.dat'};
 exportOpts.TestFile = {	'1500_20230213_01_0_3352_WAV_testdata.mat'};
 exportOpts.OutputFile = '1500_20230213_01_0_3352_WAV.bin';
+% Channels
 exportOpts.Channels = 1:16;
 %---------------------------------------
 %---------------------------------------
@@ -252,6 +259,9 @@ exportOpts.BPfilt.type = 'butter';
 %}
 % no filtering
 exportOpts.BPfilt = [];
+
+% Common referencing?
+exportOpts.referenceMode = '';
 
 %------------------------------------------------------------------------
 % Specify output shape as [samples, channels] as needed for SpikeInterface
