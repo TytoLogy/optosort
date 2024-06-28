@@ -44,26 +44,35 @@ fwrite(fileID, data, 'double');
 fclose(fileID);
 %}
 
-%% create syndata cell with synthetic arrays of data - this is how data
-% are read in by our matlab code, although with many more Reps
+%% create syndata cell with synthetic arrays of data
+% this is how data are returned from our custom raw binary file 
+% by our matlab code (although typically with *many* more Reps)
 
-% use 2 reps, 19531 samples per sweep
+% data for each channel will be a linearly increasing vector (for each sweep) with
+% starting value equal to 
+%   (((Channel #)+(0.1*Rep#))*[1:19531])+[1e-6:19531e-6]
+
+% use 16 Channels, 2 reps, 19531 samples per sweep
+nChannels = 16;
 nReps = 2;
 swpPoints = 19531;
 
 syndata{1} = cell(nChannels, nReps);
 for c = 1:nChannels
    for s = 1:nReps
-      syndata{1}{c, s} = (c+0.1*s)*ones(1, 19531)++1e-6*(1:19531);
+      syndata{1}{c, s} = ((c+0.1*s)*ones(1, 19531))+1e-6*(1:19531);
    end
 end
 
 %------------------------------------------------------------------------
-%%
+%% Write to .bin file
 % convert (concatenate) syndata to [nchannels, nsamples] matrix and write
 % to binary output file
 %------------------------------------------------------------------------
 sendmsg(sprintf('Exporting raw binary data to %s', 'syndata.bin'));
+
+% format for writing matrix
+OutputShape = 'SamplesChannels';
 
 % open raw file
 fp = fopen('syndata.bin', 'wb');
@@ -72,12 +81,12 @@ fprintf('Writing data\n');
 % write data for this file, specify shape based on outputShape setting
 % 1 May 2024: this may not have any effect since binary files store
 % everything in 1D format!!!!
-switch exportOpts.OutputShape
+switch OutputShape
    case 'ChannelsSamples'
-      tmpmat = cell2mat([syndata{f}]);
+      tmpmat = cell2mat([syndata{1}]);
       nw = fwrite(fp, tmpmat, 'double');
    case 'SamplesChannels'
-      tmpmat = cell2mat([syndata{f}])';
+      tmpmat = cell2mat([syndata{1}])';
       nw = fwrite(fp, tmpmat, 'double');
 end
 
@@ -97,7 +106,7 @@ fclose(fp);
 sM = size(M);
 fprintf('read %d elements\n', numel(M));
 fprintf('Size of data read from file: [%d, %d]\n', sM(1), sM(2));
-M2 = reshape(M, [numel(M)/nC, nC]);
+M2 = reshape(M, [numel(M)/nChannels, nChannels]);
 size(M2)
 
 % plot the data, these should be 16 parallel lines
